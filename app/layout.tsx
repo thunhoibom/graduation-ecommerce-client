@@ -1,15 +1,12 @@
-export const dynamic = 'force-dynamic';
-
-import { AuthProvider } from 'src/shared/hooks/use-auth';
-import { CartProvider } from 'components/cart/cart-context';
-import { Navbar } from 'components/layout/navbar';
-import { WelcomeToast } from 'components/welcome-toast';
-import { GeistSans } from 'geist/font/sans';
-import { getCart } from 'lib/shopify';
-import { ReactNode } from 'react';
-import { Toaster } from 'sonner';
-import './globals.css';
-import { baseUrl } from 'lib/utils';
+import { CartProvider } from "components/cart/cart-context";
+import { Navbar } from "components/layout/navbar";
+import { WelcomeToast } from "components/welcome-toast";
+import { GeistSans } from "geist/font/sans";
+import { getCart } from "lib/shopify";
+import { ReactNode } from "react";
+import { Toaster } from "sonner";
+import "./globals.css";
+import { baseUrl } from "lib/utils";
 
 const { SITE_NAME } = process.env;
 
@@ -30,23 +27,20 @@ export default async function RootLayout({
 }: {
   children: ReactNode;
 }) {
-  // Keep existing Shopify-based cart for now
-  // TODO: migrate to backend CartService when implemented
+  // Don't await the fetch, pass the Promise to the context provider
   const cart = getCart();
 
   return (
-    <html lang="vi" className={GeistSans.variable}>
+    <html lang="en" className={GeistSans.variable}>
       <body className="bg-neutral-50 text-black selection:bg-teal-300 dark:bg-neutral-900 dark:text-white dark:selection:bg-pink-500 dark:selection:text-white">
-        <AuthProvider>
-          <CartProvider cartPromise={cart}>
-            <Navbar />
-            <main>
-              {children}
-              <Toaster closeButton />
-              <WelcomeToast />
-            </main>
-          </CartProvider>
-        </AuthProvider>
+        <CartProvider cartPromise={cart}>
+          <Navbar />
+          <main>
+            {children}
+            <Toaster closeButton />
+            <WelcomeToast />
+          </main>
+        </CartProvider>
       </body>
     </html>
   );

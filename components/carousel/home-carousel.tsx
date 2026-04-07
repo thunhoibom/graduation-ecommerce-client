@@ -63,7 +63,7 @@ export function HomeCarousel({ products }: HomeCarouselProps) {
           >
             {products.map((product) => (
               <Link
-                key={product.id}
+                key={product.barcode}
                 href={`/product/${product.barcode}`}
                 className="group flex-none w-[240px] md:w-[260px]"
               >

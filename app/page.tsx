@@ -1,7 +1,7 @@
-import HeroSection from "@/components/home/hero-section";
-import { ThreeItemGrid } from "@/components/grid/three-items";
-import { CollectionsGrid } from "@/components/home/collections-grid";
-import { Carousel } from "@/components/carousel";
+import { HeroSection } from "@/components/home/sections/hero-section";
+import { ThreeItemGrid } from "@/components/home/sections/three-item-grid";
+import { CollectionsGrid } from "@/components/home/sections/collections-grid";
+import { FeaturedCarousel } from "@/components/home/sections/featured-carousel";
 import Footer from "@/components/layout/footer";
 
 export const metadata = {
@@ -11,13 +11,16 @@ export const metadata = {
   openGraph: { type: "website" },
 };
 
-export default function HomePage() {
+// ISR — revalidate homepage every 5 minutes
+export const revalidate = 300;
+
+export default async function HomePage() {
   return (
     <>
       <HeroSection />
       <ThreeItemGrid />
       <CollectionsGrid />
-      <Carousel />
+      <FeaturedCarousel />
       <Footer />
     </>
   );

@@ -1,10 +1,11 @@
 /**
  * Collection / Category REST API service
  *
- * OpenAPI endpoints:
- *   GET  /api/data/product_categories           — list categories
- *   GET  /api/data/product_categories/tree     — full category tree
- *   GET  /api/data/product_categories/{code}   — single category
+ * OpenAPI endpoints (from apidocs.md):
+ *   GET  /api/data/product_categories              — list top-level categories
+ *   GET  /api/data/product_categories/tree         — full category tree
+ *   GET  /api/data/product_categories/{code}      — single category by code
+ *   GET  /api/data/product_categories/{code}/products — products in category
  */
 
 import { api } from "../app-api";
@@ -12,11 +13,9 @@ import type { Collection, CollectionListItem } from "@/types/collection";
 import type { PaginatedResponse } from "@/types/api";
 import type { ProductListItem } from "@/types/product";
 
-/** GET /api/data/product_categories — all top-level collections */
+/** GET /api/data/product_categories — all categories */
 export async function getCollections(): Promise<CollectionListItem[]> {
-  const { data } = await api.get<CollectionListItem[]>(
-    "/api/data/product_categories"
-  );
+  const { data } = await api.get<CollectionListItem[]>("/api/data/product_categories");
   return data;
 }
 
@@ -26,13 +25,13 @@ export async function getCategoryTree(): Promise<Collection[]> {
   return data;
 }
 
-/** GET /api/data/product_categories/{code} — single collection by code */
+/** GET /api/data/product_categories/{code} — single category by code */
 export async function getCollection(code: string): Promise<Collection> {
   const { data } = await api.get<Collection>(`/api/data/product_categories/${code}`);
   return data;
 }
 
-/** GET /api/data/product_categories/{code}/products — products in a collection */
+/** GET /api/data/product_categories/{code}/products — products in a category */
 export async function getCollectionProducts(
   code: string,
   options: {

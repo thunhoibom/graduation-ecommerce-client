@@ -1,49 +1,29 @@
 "use client";
 
-import { Fragment, useEffect } from "react";
-import Image from "next/image";
+import { Fragment } from "react";
 import Link from "next/link";
 import { Dialog, Transition } from "@headlessui/react";
 import { X, Trash, Minus, Plus, ShoppingBag } from "@phosphor-icons/react";
 import { useCart } from "./cart-context";
 import { Button } from "@/components/ui/button";
+import { formatMoney } from "@/lib/utils";
 
-function formatVND(amount: number | string) {
-  return new Intl.NumberFormat("vi-VN", {
-    style: "currency",
-    currency: "VND",
-    minimumFractionDigits: 0,
-  }).format(Number(amount));
-}
-
-function CartItemRow({ item }: { item: NonNullable<NonNullable<ReturnType<typeof useCart>["cart"]>["items"]>[number] }) {
+function CartItemRow({
+  item,
+}: {
+  item: NonNullable<NonNullable<ReturnType<typeof useCart>["cart"]>["items"]>[number];
+}) {
   const { updateItem, removeItem } = useCart();
 
   const sizeColor =
-    [item.variantSize, item.variantColor].filter(Boolean).join(" / ") ||
-    undefined;
+    [item.variantSize, item.variantColor].filter(Boolean).join(" / ") || undefined;
 
   return (
-    <li className="flex w-full flex-col border-b border-neutral-100 py-4 dark:border-neutral-800 first:pt-0 last:border-0">
+    <li className="flex w-full flex-col border-b border-neutral-100 py-4 last:border-0 dark:border-neutral-800 first:pt-0">
       <div className="flex gap-3">
-        {/* Image placeholder — backend may not return images per item */}
-        <div className="relative h-16 w-16 shrink-0 overflow-hidden rounded border border-neutral-200 bg-neutral-100 dark:border-neutral-800 dark:bg-neutral-900">
-          {item.productBarcode ? (
-            <Image
-              src={`/api/public/products/${item.productBarcode}/images/0`}
-              alt={item.productName}
-              fill
-              className="object-cover"
-              sizes="64px"
-              onError={(e) => {
-                (e.target as HTMLImageElement).style.display = "none";
-              }}
-            />
-          ) : (
-            <div className="flex h-full w-full items-center justify-center">
-              <ShoppingBag className="size-6 text-neutral-300 dark:text-neutral-700" />
-            </div>
-          )}
+        {/* Image — no public image endpoint in spec; show placeholder */}
+        <div className="flex h-16 w-16 shrink-0 items-center justify-center rounded border border-neutral-200 bg-neutral-100 dark:border-neutral-800 dark:bg-neutral-900">
+          <ShoppingBag className="size-6 text-neutral-300 dark:text-neutral-700" />
         </div>
 
         {/* Info */}
@@ -51,7 +31,7 @@ function CartItemRow({ item }: { item: NonNullable<NonNullable<ReturnType<typeof
           <div>
             <Link
               href={`/product/${item.productBarcode}`}
-              className="line-clamp-2 text-sm font-medium leading-tight text-neutral-900 dark:text-white hover:underline"
+              className="line-clamp-2 text-sm font-medium leading-tight text-neutral-900 hover:underline dark:text-white"
             >
               {item.productName}
             </Link>
@@ -63,7 +43,7 @@ function CartItemRow({ item }: { item: NonNullable<NonNullable<ReturnType<typeof
           </div>
           <div className="flex items-end justify-between">
             <span className="text-sm font-semibold text-neutral-900 dark:text-white">
-              {formatVND(item.lineTotal)}
+              {formatMoney(item.lineTotal)}
             </span>
             <div className="flex items-center gap-1">
               <button
@@ -95,10 +75,10 @@ function CartItemRow({ item }: { item: NonNullable<NonNullable<ReturnType<typeof
         </button>
       </div>
 
-      {/* Unit price row */}
+      {/* Unit price */}
       <div className="mt-1 flex justify-end">
         <span className="text-xs text-neutral-400 dark:text-neutral-500">
-          {formatVND(item.unitPrice)} / cái
+          {formatMoney(item.unitPrice)} / cái
         </span>
       </div>
     </li>
@@ -116,7 +96,7 @@ export default function CartModal() {
 
   return (
     <>
-      {/* Trigger — button lives in Navbar via OpenCart */}
+      {/* Trigger */}
       <button
         aria-label={`Giỏ hàng (${itemCount} sản phẩm)`}
         onClick={() => setIsOpen(true)}
@@ -155,7 +135,7 @@ export default function CartModal() {
             leaveFrom="translate-x-0"
             leaveTo="translate-x-full"
           >
-            <Dialog.Panel className="fixed bottom-0 right-0 top-0 flex h-full w-full flex-col border-l border-neutral-200 bg-white dark:border-neutral-700 dark:bg-neutral-950 md:w-[390px]">
+            <Dialog.Panel className="fixed bottom-0 right-0 top-0 flex w-full flex-col border-l border-neutral-200 bg-white dark:border-neutral-700 dark:bg-neutral-950 md:w-[390px]">
               {/* Header */}
               <div className="flex items-center justify-between border-b border-neutral-100 px-5 py-4 dark:border-neutral-800">
                 <Dialog.Title className="text-base font-semibold text-neutral-900 dark:text-white">
@@ -181,11 +161,7 @@ export default function CartModal() {
                   <p className="text-lg font-medium text-neutral-500 dark:text-neutral-400">
                     Giỏ hàng trống
                   </p>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => setIsOpen(false)}
-                  >
+                  <Button variant="outline" size="sm" onClick={() => setIsOpen(false)}>
                     Tiếp tục mua sắm
                   </Button>
                 </div>
@@ -201,20 +177,16 @@ export default function CartModal() {
                   <div className="border-t border-neutral-100 px-5 py-4 dark:border-neutral-800">
                     {discountAmount > 0 && (
                       <div className="mb-2 flex justify-between text-sm">
-                        <span className="text-neutral-500 dark:text-neutral-400">
-                          Giảm giá
-                        </span>
+                        <span className="text-neutral-500 dark:text-neutral-400">Giảm giá</span>
                         <span className="text-green-600 dark:text-green-400">
-                          -{formatVND(discountAmount)}
+                          -{formatMoney(discountAmount)}
                         </span>
                       </div>
                     )}
                     <div className="mb-4 flex justify-between">
-                      <span className="font-medium text-neutral-900 dark:text-white">
-                        Tổng cộng
-                      </span>
+                      <span className="font-medium text-neutral-900 dark:text-white">Tổng cộng</span>
                       <span className="font-semibold text-neutral-900 dark:text-white">
-                        {formatVND(total)}
+                        {formatMoney(total)}
                       </span>
                     </div>
                     <p className="mb-1 text-xs text-neutral-400 dark:text-neutral-500">

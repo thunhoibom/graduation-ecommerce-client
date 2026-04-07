@@ -8,17 +8,17 @@ export const HEADER_MENU: MenuItem[] = [
   {
     id: 1,
     title: "Sản phẩm",
-    path: "/collection/all",
+    path: "/collections/all",
   },
   {
     id: 2,
     title: "Bộ sưu tập",
     path: "/search",
     children: [
-      { id: 21, title: "Áo thun", path: "/collection/ao-thun" },
-      { id: 22, title: "Áo polo", path: "/collection/ao-polo" },
-      { id: 23, title: "Quần", path: "/collection/quan" },
-      { id: 24, title: "Phụ kiện", path: "/collection/phu-kien" },
+      { id: 21, title: "Áo thun", path: "/collections/ao-thun" },
+      { id: 22, title: "Áo polo", path: "/collections/ao-polo" },
+      { id: 23, title: "Quần", path: "/collections/quan" },
+      { id: 24, title: "Phụ kiện", path: "/collections/phu-kien" },
     ],
   },
   {

@@ -1,9 +1,8 @@
 /**
- * Shared common types — Menu, Page, SEO, etc.
+ * Shared common types — Menu, Page, SEO, Shipping, Discount, etc.
  */
 
-import type { ProductImage } from "./product";
-import type { SEO } from "./product";
+import type { ProductImage, SEO } from "./product";
 
 // ─── Menu ─────────────────────────────────────────────────────────────────────
 
@@ -26,47 +25,13 @@ export interface Menu {
 export interface Page {
   id: number;
   title: string;
-  slug: string; // maps to backend `name`
+  slug: string;
   content?: string;
   contentHtml?: string;
   seo?: SEO;
   image?: ProductImage;
   createdAt?: string;
   updatedAt?: string;
-}
-
-// ─── Customer / Auth ─────────────────────────────────────────────────────────
-
-export interface Customer {
-  id: number;
-  email: string;
-  firstName?: string;
-  lastName?: string;
-  phone?: string;
-  birthday?: string;
-  gender?: "MALE" | "FEMALE" | "OTHER";
-  isGuest?: boolean;
-  createdAt?: string;
-}
-
-export interface Address {
-  id: number;
-  fullName: string;
-  phone: string;
-  addressLine1: string;
-  addressLine2?: string;
-  city: string;
-  province: string;
-  postalCode: string;
-  country: string;
-  isDefault?: boolean;
-}
-
-export interface AuthTokens {
-  accessToken: string;
-  refreshToken?: string;
-  expiresIn?: number;
-  tokenType?: string;
 }
 
 // ─── Shipping Method — mirrors backend ShippingMethodPojo ─────────────────────
@@ -120,10 +85,7 @@ export interface WishlistItem {
   productId: number;
   productName: string;
   slug: string;
-  price: {
-    amount: string;
-    currencyCode: string;
-  };
+  price: number;   // VND (integer)
   featuredImage?: ProductImage;
   addedAt?: string;
 }

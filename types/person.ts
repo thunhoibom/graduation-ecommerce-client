@@ -1,6 +1,6 @@
 /**
  * PersonPojo — mirrors backend PersonPojo schema
- * Source: /data/people endpoint, /account/profile response
+ * Source: /api/data/people, /api/account/profile
  */
 
 export interface PersonPojo {
@@ -12,6 +12,9 @@ export interface PersonPojo {
   phone2?: string;
 }
 
+// ─── Address ──────────────────────────────────────────────────────────────────
+
+/** Raw address fields */
 export interface AddressPojo {
   firstLine: string;
   secondLine?: string;
@@ -21,9 +24,18 @@ export interface AddressPojo {
   notes?: string;
 }
 
-export interface FullNamePojo {
-  firstName: string;
-  lastName: string;
+/**
+ * Address book entry — mirrors backend AddressBookPojo schema
+ * Used for: list, create, update addresses in the authenticated user's address book
+ */
+export interface AddressBookPojo {
+  id?: number;
+  label: string;
+  defaultShipping?: boolean;
+  defaultBilling?: boolean;
+  address: AddressPojo;
+  createdAt?: string;
+  updatedAt?: string;
 }
 
 // ─── Product Category ────────────────────────────────────────────────────────
@@ -34,16 +46,62 @@ export interface ProductCategoryPojo {
   parent?: ProductCategoryPojo;
 }
 
-// ─── Login / Register ────────────────────────────────────────────────────────
+// ─── Cart Session ────────────────────────────────────────────────────────────
+
+/** Mirrors backend CartSessionPojo */
+export interface CartSessionPojo {
+  id?: number;
+  token: string;
+  items?: CartItemPojo[];
+  subtotal?: number;
+  itemCount?: number;
+  totalUnits?: number;
+  appliedDiscountCode?: string;
+  discountAmount?: number;
+  totalAfterDiscount?: number;
+  createdAt?: string;
+  updatedAt?: string;
+  expiresAt?: string;
+  expired?: boolean;
+}
+
+/** Mirrors backend CartItemPojo */
+export interface CartItemPojo {
+  id?: number;
+  sessionToken?: string;
+  variantSku: string;
+  quantity: number;
+  variantSkuResolved?: string;
+  variantSize?: string;
+  variantColor?: string;
+  productName: string;
+  productBarcode: string;
+  productBasePrice: number;
+  priceModifier?: number;
+  unitPrice: number;
+  lineTotal: number;
+  availableStock?: number;
+  inStock?: boolean;
+  active?: boolean;
+  addedAt?: string;
+  updatedAt?: string;
+}
+
+// ─── Auth ────────────────────────────────────────────────────────────────────
 
 export interface LoginPayload {
   name: string;
   password: string;
 }
 
+/**
+ * Response from POST /api/public/auth/login
+ * ASSUMPTION: backend returns { token, ...optionalFields }
+ */
 export interface LoginResponse {
   token?: string;
   message?: string;
+  [key: string]: unknown;
 }
 
 export interface RegistrationPayload {

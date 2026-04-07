@@ -3,21 +3,25 @@
  * Connects to Spring Boot backend at http://localhost:8080
  *
  * OpenAPI endpoints (from apidocs.md):
- *   GET  /data/products                    — list products (admin, paginated)
- *   GET  /data/products/{barcode}         — single product by barcode (admin)
- *   GET  /public/products/{barcode}/reviews       — product reviews
- *   GET  /public/products/{barcode}/reviews/stats — review stats
+ *   GET  /api/data/products           — list products (admin, paginated)
+ *   GET  /api/data/product-variants — list product variants (admin, paginated)
+ *   GET  /api/data/product-reviews  — list reviews (admin)
+ *
+ * ASSUMED (not in spec):
+ *   GET  /api/data/products?barcode=xxx — get single product by barcode filter
  */
 
 import { api } from "../app-api";
-import type { Product, ProductListItem, ProductReviewPojo, ReviewStats } from "@/types/product";
+import type { Product, ProductListItem, ProductVariantPojo, ProductReviewPojo } from "@/types/product";
 import type { PaginatedResponse } from "@/types/api";
 
 // ─── List products ─────────────────────────────────────────────────────────────
 
 export interface ProductFilters {
   query?: string;
+  barcode?: string;
   category?: string;
+  categorySlug?: string;
   minPrice?: number;
   maxPrice?: number;
   inStock?: boolean;
@@ -27,13 +31,14 @@ export interface ProductFilters {
   sortDir?: "asc" | "desc";
 }
 
-/** GET /data/products — list products (admin, paginated) */
+/** GET /api/data/products — list products (paginated) */
 export async function getProducts(
   filters: ProductFilters = {}
 ): Promise<PaginatedResponse<ProductListItem>> {
   const params: Record<string, string> = {};
 
   if (filters.query) params["query"] = filters.query;
+  if (filters.barcode) params["barcode"] = filters.barcode;
   if (filters.category) params["category"] = filters.category;
   if (filters.minPrice != null) params["minPrice"] = String(filters.minPrice);
   if (filters.maxPrice != null) params["maxPrice"] = String(filters.maxPrice);
@@ -50,32 +55,59 @@ export async function getProducts(
   return data;
 }
 
-// ─── Single product ────────────────────────────────────────────────────────────
+// ─── Single product by barcode ─────────────────────────────────────────────────
 
-/** GET /data/products/{barcode} — get product by barcode */
+/** GET /api/data/products?barcode=xxx — get product by barcode */
 export async function getProduct(barcode: string): Promise<Product> {
-  const { data } = await api.get<Product>(`/api/data/products/${barcode}`);
+  const { data } = await api.get<PaginatedResponse<Product>>("/api/data/products", {
+    params: { barcode, pageSize: 1 },
+  });
+  if (!data?.items?.length) {
+    throw new Error(`Product not found: ${barcode}`);
+  }
+  return data.items[0]!;
+}
+
+// ─── Product variants ─────────────────────────────────────────────────────────
+
+/** GET /api/data/product-variants — list variants (admin) */
+export async function getProductVariants(
+  params: {
+    productBarcode?: string;
+    page?: number;
+    pageSize?: number;
+    allRequestParams?: Record<string, string>;
+  } = {}
+): Promise<PaginatedResponse<ProductVariantPojo>> {
+  const { data } = await api.get<PaginatedResponse<ProductVariantPojo>>(
+    "/api/data/product-variants",
+    { params: params.allRequestParams ?? {
+      ...(params.productBarcode ? { productBarcode: params.productBarcode } : {}),
+      page: String(params.page ?? 1),
+      pageSize: String(params.pageSize ?? 50),
+    }}
+  );
   return data;
 }
 
-// ─── Reviews ──────────────────────────────────────────────────────────────────
+// ─── Product reviews (public + admin) ─────────────────────────────────────────
 
-/** GET /public/products/{barcode}/reviews */
+/** GET /api/data/product-reviews — list reviews (admin, all including unapproved) */
 export async function getProductReviews(
-  barcode: string
-): Promise<ProductReviewPojo[]> {
-  const { data } = await api.get<ProductReviewPojo[]>(
-    `/api/public/products/${barcode}/reviews`
-  );
-  return data ?? [];
-}
-
-/** GET /public/products/{barcode}/reviews/stats */
-export async function getProductReviewStats(
-  barcode: string
-): Promise<ReviewStats> {
-  const { data } = await api.get<ReviewStats>(
-    `/api/public/products/${barcode}/reviews/stats`
+  params: {
+    productBarcode?: string;
+    page?: number;
+    pageSize?: number;
+    allRequestParams?: Record<string, string>;
+  } = {}
+): Promise<PaginatedResponse<ProductReviewPojo>> {
+  const { data } = await api.get<PaginatedResponse<ProductReviewPojo>>(
+    "/api/data/product-reviews",
+    { params: params.allRequestParams ?? {
+      ...(params.productBarcode ? { productBarcode: params.productBarcode } : {}),
+      page: String(params.page ?? 1),
+      pageSize: String(params.pageSize ?? 10),
+    }}
   );
   return data;
 }

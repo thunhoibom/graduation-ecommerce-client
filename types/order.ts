@@ -1,11 +1,61 @@
 /**
- * Order domain types
+ * Order domain types — aligned with Spring Boot backend OrderPojo / OrderDetailPojo
+ * All monetary values are integers in VND
  */
 
-import type { Money } from "./product";
-import type { CartItem } from "./cart";
+import type { PersonPojo, AddressPojo } from "./person";
+import type { ProductPojo } from "./product";
 
-export type OrderStatus =
+// Re-export for convenience
+export type { ProductPojo };
+
+// ─── Order ────────────────────────────────────────────────────────────────────
+
+export interface OrderPojo {
+  buyOrder?: number;
+  cartSessionToken?: string;
+  date?: string;
+  details: OrderDetailPojo[];
+  netValue?: number;           // VND subtotal
+  taxValue?: number;            // VND
+  transportValue?: number;      // VND shipping
+  totalValue?: number;          // VND grand total
+  totalItems?: number;
+  totalRefundedAmount?: number; // VND
+  discountCode?: string;
+  discountValue?: number;      // VND
+  status?: string;
+  billingType?: string;
+  paymentType: string;
+  customer?: PersonPojo;
+  salesperson?: PersonPojo;
+  shipper?: string;
+  billingCompany?: BillingCompanyPojo;
+  billingAddress?: AddressPojo;
+  shippingAddress?: AddressPojo;
+}
+
+// ─── Order Detail ─────────────────────────────────────────────────────────────
+
+export interface OrderDetailPojo {
+  id?: number;
+  units: number;
+  unitValue: number;     // VND per unit
+  description?: string;
+  product?: ProductPojo;
+  variantId?: number;
+}
+
+// ─── Billing ──────────────────────────────────────────────────────────────────
+
+export interface BillingCompanyPojo {
+  idNumber?: string;
+  name?: string;
+}
+
+// ─── Order Status ─────────────────────────────────────────────────────────────
+
+export type OrderStatusCode =
   | "PENDING"
   | "CONFIRMED"
   | "PROCESSING"
@@ -17,59 +67,41 @@ export type OrderStatus =
   | "RETURN_APPROVED"
   | "REFUNDED";
 
-export interface OrderAddress {
+export interface OrderStatusPojo {
+  code: number;
+  name: string;
+}
+
+// ─── Return Request ───────────────────────────────────────────────────────────
+
+export interface ReturnRequestPojo {
   id?: number;
-  fullName: string;
-  phone: string;
-  addressLine1: string;
-  addressLine2?: string;
-  city: string;
-  province: string;
-  postalCode: string;
-  country: string;
-  isDefault?: boolean;
+  date?: string;
+  lastModified?: string;
+  reason: string;
+  adminNotes?: string;
+  status: string;
+  refundMethod: string;
+  refundAmount?: number;  // VND
+  trackingNumber?: string;
+  orderId?: number;
+  items: ReturnRequestItemPojo[];
 }
 
-export interface OrderItem {
-  id: number;
-  productId: number;
-  productName: string;
-  variantId?: number;
-  variantTitle?: string;
-  sku?: string;
+export interface ReturnRequestItemPojo {
+  id?: number;
   quantity: number;
-  unitPrice: Money;
-  totalPrice: Money;
-  imageUrl?: string;
+  reason?: string;
+  productId?: number;
+  product?: ProductPojo;
+  variantId?: number;
+  active?: boolean;
 }
 
-export interface Order {
-  id: number;
-  orderNumber: string;
-  status: OrderStatus;
-  items: OrderItem[];
-  subtotal: Money;
-  shippingCost?: Money;
-  taxAmount?: Money;
-  discountAmount?: Money;
-  discountCode?: string;
-  total: Money;
-  shippingMethod?: string;
-  shippingAddress: OrderAddress;
-  billingAddress?: OrderAddress;
-  paymentMethod?: string;
-  paymentStatus?: string;
-  notes?: string;
-  createdAt: string;
-  updatedAt?: string;
-  estimatedDelivery?: string;
-}
+// ─── Helpers ──────────────────────────────────────────────────────────────────
 
-export interface OrderSummary {
-  id: number;
-  orderNumber: string;
-  status: OrderStatus;
-  total: Money;
-  itemCount: number;
-  createdAt: string;
+/** Format VND number to locale string */
+export function formatVND(amount: number | undefined): string {
+  if (amount == null) return "0 ₫";
+  return new Intl.NumberFormat("vi-VN").format(amount) + " ₫";
 }

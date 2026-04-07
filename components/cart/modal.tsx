@@ -1,228 +1,237 @@
 "use client";
 
-import clsx from "clsx";
-import { Dialog, Transition } from "@headlessui/react";
-import { ShoppingCartIcon, XMarkIcon } from "@heroicons/react/24/outline";
-import LoadingDots from "components/loading-dots";
-import Price from "components/price";
-import { createUrl } from "lib/utils";
+import { Fragment, useEffect } from "react";
 import Image from "next/image";
 import Link from "next/link";
-import { Fragment, useEffect, useRef, useState } from "react";
-import { useFormStatus } from "react-dom";
-import { redirectToCheckout } from "./actions";
+import { Dialog, Transition } from "@headlessui/react";
+import { X, Trash, Minus, Plus, ShoppingBag } from "@phosphor-icons/react";
 import { useCart } from "./cart-context";
-import { DeleteItemButton } from "./delete-item-button";
-import { EditItemQuantityButton } from "./edit-item-quantity-button";
-import OpenCart from "./open-cart";
+import { Button } from "@/components/ui/button";
+
+function formatVND(amount: number | string) {
+  return new Intl.NumberFormat("vi-VN", {
+    style: "currency",
+    currency: "VND",
+    minimumFractionDigits: 0,
+  }).format(Number(amount));
+}
+
+function CartItemRow({ item }: { item: NonNullable<NonNullable<ReturnType<typeof useCart>["cart"]>["items"]>[number] }) {
+  const { updateItem, removeItem } = useCart();
+
+  const sizeColor =
+    [item.variantSize, item.variantColor].filter(Boolean).join(" / ") ||
+    undefined;
+
+  return (
+    <li className="flex w-full flex-col border-b border-neutral-100 py-4 dark:border-neutral-800 first:pt-0 last:border-0">
+      <div className="flex gap-3">
+        {/* Image placeholder — backend may not return images per item */}
+        <div className="relative h-16 w-16 shrink-0 overflow-hidden rounded border border-neutral-200 bg-neutral-100 dark:border-neutral-800 dark:bg-neutral-900">
+          {item.productBarcode ? (
+            <Image
+              src={`/api/public/products/${item.productBarcode}/images/0`}
+              alt={item.productName}
+              fill
+              className="object-cover"
+              sizes="64px"
+              onError={(e) => {
+                (e.target as HTMLImageElement).style.display = "none";
+              }}
+            />
+          ) : (
+            <div className="flex h-full w-full items-center justify-center">
+              <ShoppingBag className="size-6 text-neutral-300 dark:text-neutral-700" />
+            </div>
+          )}
+        </div>
+
+        {/* Info */}
+        <div className="flex flex-1 flex-col justify-between overflow-hidden">
+          <div>
+            <Link
+              href={`/product/${item.productBarcode}`}
+              className="line-clamp-2 text-sm font-medium leading-tight text-neutral-900 dark:text-white hover:underline"
+            >
+              {item.productName}
+            </Link>
+            {sizeColor && (
+              <p className="mt-0.5 text-xs text-neutral-500 dark:text-neutral-400">
+                {sizeColor}
+              </p>
+            )}
+          </div>
+          <div className="flex items-end justify-between">
+            <span className="text-sm font-semibold text-neutral-900 dark:text-white">
+              {formatVND(item.lineTotal)}
+            </span>
+            <div className="flex items-center gap-1">
+              <button
+                onClick={() => updateItem(item.variantSku, item.quantity - 1)}
+                className="flex h-7 w-7 items-center justify-center rounded border border-neutral-200 text-neutral-600 hover:border-neutral-400 dark:border-neutral-700 dark:text-neutral-400 dark:hover:border-neutral-500"
+                aria-label="Giảm số lượng"
+              >
+                <Minus className="size-3" />
+              </button>
+              <span className="w-8 text-center text-sm">{item.quantity}</span>
+              <button
+                onClick={() => updateItem(item.variantSku, item.quantity + 1)}
+                className="flex h-7 w-7 items-center justify-center rounded border border-neutral-200 text-neutral-600 hover:border-neutral-400 dark:border-neutral-700 dark:text-neutral-400 dark:hover:border-neutral-500"
+                aria-label="Tăng số lượng"
+              >
+                <Plus className="size-3" />
+              </button>
+            </div>
+          </div>
+        </div>
+
+        {/* Remove */}
+        <button
+          onClick={() => removeItem(item.variantSku)}
+          className="ml-1 self-start p-1 text-neutral-400 hover:text-red-500 dark:text-neutral-600 dark:hover:text-red-400"
+          aria-label="Xóa sản phẩm"
+        >
+          <Trash className="size-4" />
+        </button>
+      </div>
+
+      {/* Unit price row */}
+      <div className="mt-1 flex justify-end">
+        <span className="text-xs text-neutral-400 dark:text-neutral-500">
+          {formatVND(item.unitPrice)} / cái
+        </span>
+      </div>
+    </li>
+  );
+}
 
 export default function CartModal() {
-  const { cart, updateCartItem } = useCart();
-  const [isOpen, setIsOpen] = useState(false);
-  const quantityRef = useRef(cart?.itemCount);
-  const openCart = () => setIsOpen(true);
-  const closeCart = () => setIsOpen(false);
+  const { cart, isOpen, setIsOpen, isLoading } = useCart();
 
-  useEffect(() => {
-    if (
-      cart?.itemCount &&
-      cart?.itemCount !== quantityRef.current &&
-      cart?.itemCount > 0
-    ) {
-      if (!isOpen) {
-        setIsOpen(true);
-      }
-      quantityRef.current = cart?.itemCount;
-    }
-  }, [isOpen, cart?.itemCount, quantityRef]);
+  const itemCount = cart?.itemCount ?? 0;
+  const items = cart?.items ?? [];
+  const subtotal = cart?.subtotal ?? 0;
+  const discountAmount = cart?.discountAmount ?? 0;
+  const total = cart?.totalAfterDiscount ?? subtotal;
 
   return (
     <>
-      <button aria-label="Mở giỏ hàng" onClick={openCart}>
-        <OpenCart quantity={cart?.itemCount} />
+      {/* Trigger — button lives in Navbar via OpenCart */}
+      <button
+        aria-label={`Giỏ hàng (${itemCount} sản phẩm)`}
+        onClick={() => setIsOpen(true)}
+        className="relative flex items-center gap-1.5"
+      >
+        <ShoppingBag className="size-5" />
+        {itemCount > 0 && (
+          <span className="absolute -right-1.5 -top-1.5 flex h-4 w-4 items-center justify-center rounded-full bg-black text-[10px] font-bold text-white dark:bg-white dark:text-black">
+            {itemCount > 9 ? "9+" : itemCount}
+          </span>
+        )}
       </button>
-      <Transition show={isOpen}>
-        <Dialog onClose={closeCart} className="relative z-50">
+
+      <Transition show={isOpen} as={Fragment}>
+        <Dialog onClose={() => setIsOpen(false)} className="relative z-50">
+          {/* Backdrop */}
           <Transition.Child
             as={Fragment}
-            enter="transition-all ease-in-out duration-300"
-            enterFrom="opacity-0 backdrop-blur-none"
-            enterTo="opacity-100 backdrop-blur-[.5px]"
-            leave="transition-all ease-in-out duration-200"
-            leaveFrom="opacity-100 backdrop-blur-[.5px]"
-            leaveTo="opacity-0 backdrop-blur-none"
+            enter="transition-opacity duration-300"
+            enterFrom="opacity-0"
+            enterTo="opacity-100"
+            leave="transition-opacity duration-200"
+            leaveFrom="opacity-100"
+            leaveTo="opacity-0"
           >
-            <div className="fixed inset-0 bg-black/30" aria-hidden="true" />
+            <div className="fixed inset-0 bg-black/30 backdrop-blur-sm" />
           </Transition.Child>
+
+          {/* Panel */}
           <Transition.Child
             as={Fragment}
-            enter="transition-all ease-in-out duration-300"
+            enter="transition-transform duration-300"
             enterFrom="translate-x-full"
             enterTo="translate-x-0"
-            leave="transition-all ease-in-out duration-200"
+            leave="transition-transform duration-200"
             leaveFrom="translate-x-0"
             leaveTo="translate-x-full"
           >
-            <Dialog.Panel className="fixed bottom-0 right-0 top-0 flex h-full w-full flex-col border-l border-neutral-200 bg-white/80 p-6 text-black backdrop-blur-xl md:w-[390px] dark:border-neutral-700 dark:bg-black/80 dark:text-white">
-              <div className="flex items-center justify-between">
-                <p className="text-lg font-semibold">Giỏ hàng của tôi</p>
-                <button aria-label="Đóng giỏ hàng" onClick={closeCart}>
-                  <CloseCart />
+            <Dialog.Panel className="fixed bottom-0 right-0 top-0 flex h-full w-full flex-col border-l border-neutral-200 bg-white dark:border-neutral-700 dark:bg-neutral-950 md:w-[390px]">
+              {/* Header */}
+              <div className="flex items-center justify-between border-b border-neutral-100 px-5 py-4 dark:border-neutral-800">
+                <Dialog.Title className="text-base font-semibold text-neutral-900 dark:text-white">
+                  Giỏ hàng của tôi
+                </Dialog.Title>
+                <button
+                  onClick={() => setIsOpen(false)}
+                  aria-label="Đóng giỏ hàng"
+                  className="flex h-9 w-9 items-center justify-center rounded border border-neutral-200 text-neutral-600 hover:border-neutral-400 dark:border-neutral-700 dark:text-neutral-400 dark:hover:border-neutral-500"
+                >
+                  <X className="size-4" />
                 </button>
               </div>
 
-              {!cart || cart.items.length === 0 ? (
-                <div className="mt-20 flex w-full flex-col items-center justify-center overflow-hidden">
-                  <ShoppingCartIcon className="h-16" />
-                  <p className="mt-6 text-center text-2xl font-bold">
-                    Giỏ hàng trống.
+              {/* Body */}
+              {isLoading ? (
+                <div className="flex flex-1 items-center justify-center">
+                  <div className="h-6 w-6 animate-spin rounded-full border-2 border-neutral-300 border-t-neutral-900 dark:border-neutral-700 dark:border-t-neutral-100" />
+                </div>
+              ) : items.length === 0 ? (
+                <div className="flex flex-1 flex-col items-center justify-center gap-4 px-5">
+                  <ShoppingBag className="size-16 text-neutral-200 dark:text-neutral-800" />
+                  <p className="text-lg font-medium text-neutral-500 dark:text-neutral-400">
+                    Giỏ hàng trống
                   </p>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setIsOpen(false)}
+                  >
+                    Tiếp tục mua sắm
+                  </Button>
                 </div>
               ) : (
-                <div className="flex h-full flex-col justify-between overflow-hidden p-1">
-                  <ul className="grow overflow-auto py-4">
-                    {cart.items
-                      .sort((a, b) =>
-                        a.product.name.localeCompare(b.product.name),
-                      )
-                      .map((item) => {
-                        const variantParams: Record<string, string> = {};
-
-                        item.variant.selectedOptions.forEach(({ name, value }) => {
-                          if (value !== "Default Title") {
-                            variantParams[name.toLowerCase()] = value;
-                          }
-                        });
-
-                        const productUrl = createUrl(
-                          `/product/${item.product.slug}`,
-                          new URLSearchParams(variantParams),
-                        );
-
-                        return (
-                          <li
-                            key={item.id}
-                            className="flex w-full flex-col border-b border-neutral-300 dark:border-neutral-700"
-                          >
-                            <div className="relative flex w-full flex-row justify-between px-1 py-4">
-                              <div className="absolute z-40 -ml-1 -mt-2">
-                                <DeleteItemButton
-                                  item={item}
-                                  optimisticUpdate={updateCartItem}
-                                />
-                              </div>
-                              <div className="flex flex-row">
-                                <div className="relative h-16 w-16 overflow-hidden rounded-md border border-neutral-300 bg-neutral-300 dark:border-neutral-700 dark:bg-neutral-900 dark:hover:bg-neutral-800">
-                                  <Image
-                                    className="h-full w-full object-cover"
-                                    width={64}
-                                    height={64}
-                                    alt={
-                                      item.product.featuredImage?.altText ??
-                                      item.product.name
-                                    }
-                                    src={
-                                      item.product.featuredImage?.url ?? "/placeholder.png"
-                                    }
-                                  />
-                                </div>
-                                <Link
-                                  href={productUrl}
-                                  onClick={closeCart}
-                                  className="z-30 ml-2 flex flex-row space-x-4"
-                                >
-                                  <div className="flex flex-1 flex-col text-base">
-                                    <span className="leading-tight">
-                                      {item.product.name}
-                                    </span>
-                                    {item.variant.title !==
-                                    "Default Title" ? (
-                                      <p className="text-sm text-neutral-500 dark:text-neutral-400">
-                                        {item.variant.title}
-                                      </p>
-                                    ) : null}
-                                  </div>
-                                </Link>
-                              </div>
-                              <div className="flex h-16 flex-col justify-between">
-                                <Price
-                                  className="flex justify-end space-y-2 text-right text-sm"
-                                  amount={item.totalPrice.amount}
-                                  currencyCode={item.totalPrice.currencyCode}
-                                />
-                                <div className="ml-auto flex h-9 flex-row items-center rounded-full border border-neutral-200 dark:border-neutral-700">
-                                  <EditItemQuantityButton
-                                    item={item}
-                                    type="minus"
-                                    optimisticUpdate={updateCartItem}
-                                  />
-                                  <p className="w-6 text-center">
-                                    <span className="w-full text-sm">
-                                      {item.quantity}
-                                    </span>
-                                  </p>
-                                  <EditItemQuantityButton
-                                    item={item}
-                                    type="plus"
-                                    optimisticUpdate={updateCartItem}
-                                  />
-                                </div>
-                              </div>
-                            </div>
-                          </li>
-                        );
-                      })}
+                <>
+                  <ul className="flex-1 overflow-y-auto px-5 py-4">
+                    {items.map((item) => (
+                      <CartItemRow key={item.variantSku} item={item} />
+                    ))}
                   </ul>
-                  <div className="py-4 text-sm text-neutral-500 dark:text-neutral-400">
-                    <div className="mb-3 flex items-center justify-between border-b border-neutral-200 pb-1 pt-1 dark:border-neutral-700">
-                      <p>Phí vận chuyển</p>
-                      <p className="text-right">Tính khi checkout</p>
+
+                  {/* Summary */}
+                  <div className="border-t border-neutral-100 px-5 py-4 dark:border-neutral-800">
+                    {discountAmount > 0 && (
+                      <div className="mb-2 flex justify-between text-sm">
+                        <span className="text-neutral-500 dark:text-neutral-400">
+                          Giảm giá
+                        </span>
+                        <span className="text-green-600 dark:text-green-400">
+                          -{formatVND(discountAmount)}
+                        </span>
+                      </div>
+                    )}
+                    <div className="mb-4 flex justify-between">
+                      <span className="font-medium text-neutral-900 dark:text-white">
+                        Tổng cộng
+                      </span>
+                      <span className="font-semibold text-neutral-900 dark:text-white">
+                        {formatVND(total)}
+                      </span>
                     </div>
-                    <div className="mb-3 flex items-center justify-between border-b border-neutral-200 pb-1 pt-1 dark:border-neutral-700">
-                      <p>Tổng cộng</p>
-                      <Price
-                        className="text-right text-base text-black dark:text-white"
-                        amount={cart.total.amount}
-                        currencyCode={cart.total.currencyCode}
-                      />
-                    </div>
+                    <p className="mb-1 text-xs text-neutral-400 dark:text-neutral-500">
+                      Phí vận chuyển được tính khi thanh toán.
+                    </p>
+                    <Link href="/checkout" onClick={() => setIsOpen(false)}>
+                      <Button className="mt-3 w-full" size="lg">
+                        Thanh toán
+                      </Button>
+                    </Link>
                   </div>
-                  <form action={redirectToCheckout}>
-                    <CheckoutButton />
-                  </form>
-                </div>
+                </>
               )}
             </Dialog.Panel>
           </Transition.Child>
         </Dialog>
       </Transition>
     </>
-  );
-}
-
-function CloseCart({ className }: { className?: string }) {
-  return (
-    <div className="relative flex h-11 w-11 items-center justify-center rounded-md border border-neutral-200 text-black transition-colors dark:border-neutral-700 dark:text-white">
-      <XMarkIcon
-        className={clsx(
-          "h-6 transition-all ease-in-out hover:scale-110",
-          className,
-        )}
-      />
-    </div>
-  );
-}
-
-function CheckoutButton() {
-  const { pending } = useFormStatus();
-
-  return (
-    <button
-      className="block w-full rounded-full bg-black p-3 text-center text-sm font-medium text-white dark:bg-white dark:text-black"
-      type="submit"
-      disabled={pending}
-    >
-      {pending ? <LoadingDots className="bg-white dark:bg-black" /> : "Thanh toán"}
-    </button>
   );
 }

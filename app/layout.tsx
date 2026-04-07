@@ -3,20 +3,22 @@ import Navbar from "components/layout/navbar";
 import { GeistSans } from "geist/font/sans";
 import { ReactNode } from "react";
 import { Toaster } from "sonner";
-import "./globals.css";
-import { baseUrl } from "lib/utils";
 import { JetBrains_Mono } from "next/font/google";
 import { cn } from "@/lib/utils";
+import { baseUrl } from "@/lib/utils";
+import { AuthProvider } from "@/hooks/use-auth";
 
-const jetbrainsMono = JetBrains_Mono({subsets:['latin'],variable:'--font-mono'});
+import "./globals.css";
 
-const { SITE_NAME } = process.env;
+const jetbrainsMono = JetBrains_Mono({ subsets: ["latin"], variable: "--font-mono" });
+
+const SITE_NAME = "Mono Studio";
 
 export const metadata = {
   metadataBase: new URL(baseUrl),
   title: {
-    default: SITE_NAME ?? "Mono Studio",
-    template: `%s | ${SITE_NAME ?? "Mono Studio"}`,
+    default: SITE_NAME,
+    template: `%s | ${SITE_NAME}`,
   },
   robots: {
     follow: true,
@@ -30,15 +32,15 @@ export default async function RootLayout({
   children: ReactNode;
 }) {
   return (
-    <html lang="vi" className={cn("font-mono", jetbrainsMono.variable)}>
+    <html lang="vi" className={cn("font-sans", GeistSans.variable, jetbrainsMono.variable)}>
       <body className="bg-neutral-50 text-black selection:bg-teal-300 dark:bg-neutral-900 dark:text-white dark:selection:bg-pink-500 dark:selection:text-white">
-        <CartProvider>
-          <Navbar />
-          <main>
-            {children}
-            <Toaster closeButton />
-          </main>
-        </CartProvider>
+        <AuthProvider>
+          <CartProvider>
+            <Navbar />
+            <main>{children}</main>
+            <Toaster closeButton richColors position="bottom-right" />
+          </CartProvider>
+        </AuthProvider>
       </body>
     </html>
   );

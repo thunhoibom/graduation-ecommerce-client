@@ -11,7 +11,7 @@
     }
   ],
   "paths": {
-    "/public/address-book/{id}": {
+    "/api/public/address-book/{id}": {
       "get": {
         "tags": [
           "Address Book"
@@ -30,8 +30,8 @@
           }
         ],
         "responses": {
-          "400": {
-            "description": "Bad Request",
+          "404": {
+            "description": "Not Found",
             "content": {
               "*/*": {
                 "schema": {
@@ -40,8 +40,8 @@
               }
             }
           },
-          "404": {
-            "description": "Not Found",
+          "400": {
+            "description": "Bad Request",
             "content": {
               "*/*": {
                 "schema": {
@@ -140,8 +140,8 @@
           }
         ],
         "responses": {
-          "400": {
-            "description": "Bad Request",
+          "404": {
+            "description": "Not Found",
             "content": {
               "*/*": {
                 "schema": {
@@ -150,8 +150,8 @@
               }
             }
           },
-          "404": {
-            "description": "Not Found",
+          "400": {
+            "description": "Bad Request",
             "content": {
               "*/*": {
                 "schema": {
@@ -229,7 +229,7 @@
         }
       }
     },
-    "/data/users": {
+    "/api/data/users": {
       "get": {
         "tags": [
           "Users management"
@@ -250,8 +250,8 @@
           }
         ],
         "responses": {
-          "400": {
-            "description": "Bad Request",
+          "404": {
+            "description": "Not Found",
             "content": {
               "*/*": {
                 "schema": {
@@ -260,8 +260,8 @@
               }
             }
           },
-          "404": {
-            "description": "Not Found",
+          "400": {
+            "description": "Bad Request",
             "content": {
               "*/*": {
                 "schema": {
@@ -425,7 +425,7 @@
         }
       }
     },
-    "/data/user_roles": {
+    "/api/data/user_roles": {
       "get": {
         "tags": [
           "Params management"
@@ -446,8 +446,8 @@
           }
         ],
         "responses": {
-          "400": {
-            "description": "Bad Request",
+          "404": {
+            "description": "Not Found",
             "content": {
               "*/*": {
                 "schema": {
@@ -456,8 +456,8 @@
               }
             }
           },
-          "404": {
-            "description": "Not Found",
+          "400": {
+            "description": "Bad Request",
             "content": {
               "*/*": {
                 "schema": {
@@ -595,8 +595,8 @@
           }
         ],
         "responses": {
-          "400": {
-            "description": "Bad Request",
+          "404": {
+            "description": "Not Found",
             "content": {
               "*/*": {
                 "schema": {
@@ -605,8 +605,8 @@
               }
             }
           },
-          "404": {
-            "description": "Not Found",
+          "400": {
+            "description": "Bad Request",
             "content": {
               "*/*": {
                 "schema": {
@@ -621,7 +621,7 @@
         }
       }
     },
-    "/data/shipping-methods": {
+    "/api/data/shipping-methods": {
       "get": {
         "tags": [
           "Shipping methods management"
@@ -642,8 +642,8 @@
           }
         ],
         "responses": {
-          "400": {
-            "description": "Bad Request",
+          "404": {
+            "description": "Not Found",
             "content": {
               "*/*": {
                 "schema": {
@@ -652,8 +652,8 @@
               }
             }
           },
-          "404": {
-            "description": "Not Found",
+          "400": {
+            "description": "Bad Request",
             "content": {
               "*/*": {
                 "schema": {
@@ -791,8 +791,8 @@
           }
         ],
         "responses": {
-          "400": {
-            "description": "Bad Request",
+          "404": {
+            "description": "Not Found",
             "content": {
               "*/*": {
                 "schema": {
@@ -801,8 +801,8 @@
               }
             }
           },
-          "404": {
-            "description": "Not Found",
+          "400": {
+            "description": "Bad Request",
             "content": {
               "*/*": {
                 "schema": {
@@ -875,7 +875,7 @@
         }
       }
     },
-    "/data/shippers": {
+    "/api/data/shippers": {
       "get": {
         "tags": [
           "Shippers management"
@@ -896,8 +896,8 @@
           }
         ],
         "responses": {
-          "400": {
-            "description": "Bad Request",
+          "404": {
+            "description": "Not Found",
             "content": {
               "*/*": {
                 "schema": {
@@ -906,8 +906,8 @@
               }
             }
           },
-          "404": {
-            "description": "Not Found",
+          "400": {
+            "description": "Bad Request",
             "content": {
               "*/*": {
                 "schema": {
@@ -1045,8 +1045,8 @@
           }
         ],
         "responses": {
-          "400": {
-            "description": "Bad Request",
+          "404": {
+            "description": "Not Found",
             "content": {
               "*/*": {
                 "schema": {
@@ -1055,8 +1055,8 @@
               }
             }
           },
-          "404": {
-            "description": "Not Found",
+          "400": {
+            "description": "Bad Request",
             "content": {
               "*/*": {
                 "schema": {
@@ -1129,7 +1129,7 @@
         }
       }
     },
-    "/data/salespeople": {
+    "/api/data/salespeople": {
       "get": {
         "tags": [
           "People management"
@@ -1150,8 +1150,8 @@
           }
         ],
         "responses": {
-          "400": {
-            "description": "Bad Request",
+          "404": {
+            "description": "Not Found",
             "content": {
               "*/*": {
                 "schema": {
@@ -1160,8 +1160,8 @@
               }
             }
           },
-          "404": {
-            "description": "Not Found",
+          "400": {
+            "description": "Bad Request",
             "content": {
               "*/*": {
                 "schema": {
@@ -1299,8 +1299,8 @@
           }
         ],
         "responses": {
-          "400": {
-            "description": "Bad Request",
+          "404": {
+            "description": "Not Found",
             "content": {
               "*/*": {
                 "schema": {
@@ -1309,8 +1309,8 @@
               }
             }
           },
-          "404": {
-            "description": "Not Found",
+          "400": {
+            "description": "Bad Request",
             "content": {
               "*/*": {
                 "schema": {
@@ -1325,7 +1325,7 @@
         }
       }
     },
-    "/data/return-requests": {
+    "/api/data/return-requests": {
       "get": {
         "tags": [
           "Return Requests management"
@@ -1346,8 +1346,8 @@
           }
         ],
         "responses": {
-          "400": {
-            "description": "Bad Request",
+          "404": {
+            "description": "Not Found",
             "content": {
               "*/*": {
                 "schema": {
@@ -1356,8 +1356,8 @@
               }
             }
           },
-          "404": {
-            "description": "Not Found",
+          "400": {
+            "description": "Bad Request",
             "content": {
               "*/*": {
                 "schema": {
@@ -1495,8 +1495,8 @@
           }
         ],
         "responses": {
-          "400": {
-            "description": "Bad Request",
+          "404": {
+            "description": "Not Found",
             "content": {
               "*/*": {
                 "schema": {
@@ -1505,8 +1505,8 @@
               }
             }
           },
-          "404": {
-            "description": "Not Found",
+          "400": {
+            "description": "Bad Request",
             "content": {
               "*/*": {
                 "schema": {
@@ -1579,7 +1579,7 @@
         }
       }
     },
-    "/data/products": {
+    "/api/data/products": {
       "get": {
         "tags": [
           "Products management"
@@ -1600,8 +1600,8 @@
           }
         ],
         "responses": {
-          "400": {
-            "description": "Bad Request",
+          "404": {
+            "description": "Not Found",
             "content": {
               "*/*": {
                 "schema": {
@@ -1610,8 +1610,8 @@
               }
             }
           },
-          "404": {
-            "description": "Not Found",
+          "400": {
+            "description": "Bad Request",
             "content": {
               "*/*": {
                 "schema": {
@@ -1749,8 +1749,8 @@
           }
         ],
         "responses": {
-          "400": {
-            "description": "Bad Request",
+          "404": {
+            "description": "Not Found",
             "content": {
               "*/*": {
                 "schema": {
@@ -1759,8 +1759,8 @@
               }
             }
           },
-          "404": {
-            "description": "Not Found",
+          "400": {
+            "description": "Bad Request",
             "content": {
               "*/*": {
                 "schema": {
@@ -1833,7 +1833,7 @@
         }
       }
     },
-    "/data/product_lists": {
+    "/api/data/product_lists": {
       "get": {
         "tags": [
           "Product Lists management"
@@ -1854,8 +1854,8 @@
           }
         ],
         "responses": {
-          "400": {
-            "description": "Bad Request",
+          "404": {
+            "description": "Not Found",
             "content": {
               "*/*": {
                 "schema": {
@@ -1864,8 +1864,8 @@
               }
             }
           },
-          "404": {
-            "description": "Not Found",
+          "400": {
+            "description": "Bad Request",
             "content": {
               "*/*": {
                 "schema": {
@@ -2003,8 +2003,8 @@
           }
         ],
         "responses": {
-          "400": {
-            "description": "Bad Request",
+          "404": {
+            "description": "Not Found",
             "content": {
               "*/*": {
                 "schema": {
@@ -2013,8 +2013,8 @@
               }
             }
           },
-          "404": {
-            "description": "Not Found",
+          "400": {
+            "description": "Bad Request",
             "content": {
               "*/*": {
                 "schema": {
@@ -2087,7 +2087,7 @@
         }
       }
     },
-    "/data/product_list_contents": {
+    "/api/data/product_list_contents": {
       "get": {
         "tags": [
           "Product Lists management"
@@ -2299,7 +2299,7 @@
         }
       }
     },
-    "/data/product_categories": {
+    "/api/data/product_categories": {
       "get": {
         "tags": [
           "Product Categories management"
@@ -2320,8 +2320,8 @@
           }
         ],
         "responses": {
-          "400": {
-            "description": "Bad Request",
+          "404": {
+            "description": "Not Found",
             "content": {
               "*/*": {
                 "schema": {
@@ -2330,8 +2330,8 @@
               }
             }
           },
-          "404": {
-            "description": "Not Found",
+          "400": {
+            "description": "Bad Request",
             "content": {
               "*/*": {
                 "schema": {
@@ -2469,8 +2469,8 @@
           }
         ],
         "responses": {
-          "400": {
-            "description": "Bad Request",
+          "404": {
+            "description": "Not Found",
             "content": {
               "*/*": {
                 "schema": {
@@ -2479,8 +2479,8 @@
               }
             }
           },
-          "404": {
-            "description": "Not Found",
+          "400": {
+            "description": "Bad Request",
             "content": {
               "*/*": {
                 "schema": {
@@ -2553,7 +2553,7 @@
         }
       }
     },
-    "/data/product-variants": {
+    "/api/data/product-variants": {
       "get": {
         "tags": [
           "Product variants management"
@@ -2574,8 +2574,8 @@
           }
         ],
         "responses": {
-          "400": {
-            "description": "Bad Request",
+          "404": {
+            "description": "Not Found",
             "content": {
               "*/*": {
                 "schema": {
@@ -2584,8 +2584,8 @@
               }
             }
           },
-          "404": {
-            "description": "Not Found",
+          "400": {
+            "description": "Bad Request",
             "content": {
               "*/*": {
                 "schema": {
@@ -2723,8 +2723,8 @@
           }
         ],
         "responses": {
-          "400": {
-            "description": "Bad Request",
+          "404": {
+            "description": "Not Found",
             "content": {
               "*/*": {
                 "schema": {
@@ -2733,8 +2733,8 @@
               }
             }
           },
-          "404": {
-            "description": "Not Found",
+          "400": {
+            "description": "Bad Request",
             "content": {
               "*/*": {
                 "schema": {
@@ -2807,7 +2807,7 @@
         }
       }
     },
-    "/data/orders": {
+    "/api/data/orders": {
       "get": {
         "tags": [
           "Orders management"
@@ -2828,8 +2828,8 @@
           }
         ],
         "responses": {
-          "400": {
-            "description": "Bad Request",
+          "404": {
+            "description": "Not Found",
             "content": {
               "*/*": {
                 "schema": {
@@ -2838,8 +2838,8 @@
               }
             }
           },
-          "404": {
-            "description": "Not Found",
+          "400": {
+            "description": "Bad Request",
             "content": {
               "*/*": {
                 "schema": {
@@ -2977,8 +2977,8 @@
           }
         ],
         "responses": {
-          "400": {
-            "description": "Bad Request",
+          "404": {
+            "description": "Not Found",
             "content": {
               "*/*": {
                 "schema": {
@@ -2987,8 +2987,8 @@
               }
             }
           },
-          "404": {
-            "description": "Not Found",
+          "400": {
+            "description": "Bad Request",
             "content": {
               "*/*": {
                 "schema": {
@@ -3061,7 +3061,7 @@
         }
       }
     },
-    "/data/images": {
+    "/api/data/images": {
       "get": {
         "tags": [
           "Images management"
@@ -3082,8 +3082,8 @@
           }
         ],
         "responses": {
-          "400": {
-            "description": "Bad Request",
+          "404": {
+            "description": "Not Found",
             "content": {
               "*/*": {
                 "schema": {
@@ -3092,8 +3092,8 @@
               }
             }
           },
-          "404": {
-            "description": "Not Found",
+          "400": {
+            "description": "Bad Request",
             "content": {
               "*/*": {
                 "schema": {
@@ -3231,8 +3231,8 @@
           }
         ],
         "responses": {
-          "400": {
-            "description": "Bad Request",
+          "404": {
+            "description": "Not Found",
             "content": {
               "*/*": {
                 "schema": {
@@ -3241,8 +3241,8 @@
               }
             }
           },
-          "404": {
-            "description": "Not Found",
+          "400": {
+            "description": "Bad Request",
             "content": {
               "*/*": {
                 "schema": {
@@ -3315,7 +3315,7 @@
         }
       }
     },
-    "/data/discount-codes": {
+    "/api/data/discount-codes": {
       "get": {
         "tags": [
           "Discount codes management"
@@ -3336,8 +3336,8 @@
           }
         ],
         "responses": {
-          "400": {
-            "description": "Bad Request",
+          "404": {
+            "description": "Not Found",
             "content": {
               "*/*": {
                 "schema": {
@@ -3346,8 +3346,8 @@
               }
             }
           },
-          "404": {
-            "description": "Not Found",
+          "400": {
+            "description": "Bad Request",
             "content": {
               "*/*": {
                 "schema": {
@@ -3485,8 +3485,8 @@
           }
         ],
         "responses": {
-          "400": {
-            "description": "Bad Request",
+          "404": {
+            "description": "Not Found",
             "content": {
               "*/*": {
                 "schema": {
@@ -3495,8 +3495,8 @@
               }
             }
           },
-          "404": {
-            "description": "Not Found",
+          "400": {
+            "description": "Bad Request",
             "content": {
               "*/*": {
                 "schema": {
@@ -3569,7 +3569,7 @@
         }
       }
     },
-    "/data/customers": {
+    "/api/data/customers": {
       "get": {
         "tags": [
           "People management"
@@ -3590,8 +3590,8 @@
           }
         ],
         "responses": {
-          "400": {
-            "description": "Bad Request",
+          "404": {
+            "description": "Not Found",
             "content": {
               "*/*": {
                 "schema": {
@@ -3600,8 +3600,8 @@
               }
             }
           },
-          "404": {
-            "description": "Not Found",
+          "400": {
+            "description": "Bad Request",
             "content": {
               "*/*": {
                 "schema": {
@@ -3726,8 +3726,8 @@
         "summary": "Deregister customers.",
         "operationId": "delete_14",
         "responses": {
-          "400": {
-            "description": "Bad Request",
+          "404": {
+            "description": "Not Found",
             "content": {
               "*/*": {
                 "schema": {
@@ -3736,8 +3736,8 @@
               }
             }
           },
-          "404": {
-            "description": "Not Found",
+          "400": {
+            "description": "Bad Request",
             "content": {
               "*/*": {
                 "schema": {
@@ -3752,7 +3752,7 @@
         }
       }
     },
-    "/account/profile": {
+    "/api/account/profile": {
       "get": {
         "tags": [
           "User Accounts"
@@ -3760,8 +3760,8 @@
         "summary": "View stored profile information",
         "operationId": "getProfile",
         "responses": {
-          "400": {
-            "description": "Bad Request",
+          "404": {
+            "description": "Not Found",
             "content": {
               "*/*": {
                 "schema": {
@@ -3770,8 +3770,8 @@
               }
             }
           },
-          "404": {
-            "description": "Not Found",
+          "400": {
+            "description": "Bad Request",
             "content": {
               "*/*": {
                 "schema": {
@@ -3835,7 +3835,7 @@
         }
       }
     },
-    "/public/register": {
+    "/api/public/register": {
       "post": {
         "tags": [
           "User Accounts"
@@ -3879,7 +3879,7 @@
         }
       }
     },
-    "/public/checkout": {
+    "/api/public/checkout": {
       "post": {
         "tags": [
           "Checkout"
@@ -3940,7 +3940,7 @@
         }
       }
     },
-    "/public/checkout/validate": {
+    "/api/public/checkout/validate": {
       "get": {
         "tags": [
           "Checkout"
@@ -4052,7 +4052,7 @@
         }
       }
     },
-    "/public/cart/reservations": {
+    "/api/public/cart/reservations": {
       "get": {
         "tags": [
           "Cart — Stock Reservations"
@@ -4070,8 +4070,8 @@
           }
         ],
         "responses": {
-          "400": {
-            "description": "Bad Request",
+          "404": {
+            "description": "Not Found",
             "content": {
               "*/*": {
                 "schema": {
@@ -4080,8 +4080,8 @@
               }
             }
           },
-          "404": {
-            "description": "Not Found",
+          "400": {
+            "description": "Bad Request",
             "content": {
               "*/*": {
                 "schema": {
@@ -4184,8 +4184,8 @@
           }
         ],
         "responses": {
-          "400": {
-            "description": "Bad Request",
+          "404": {
+            "description": "Not Found",
             "content": {
               "*/*": {
                 "schema": {
@@ -4194,8 +4194,8 @@
               }
             }
           },
-          "404": {
-            "description": "Not Found",
+          "400": {
+            "description": "Bad Request",
             "content": {
               "*/*": {
                 "schema": {
@@ -4282,7 +4282,7 @@
         }
       }
     },
-    "/public/cart/reservations/confirm": {
+    "/api/public/cart/reservations/confirm": {
       "post": {
         "tags": [
           "Cart — Stock Reservations"
@@ -4300,8 +4300,8 @@
           }
         ],
         "responses": {
-          "400": {
-            "description": "Bad Request",
+          "404": {
+            "description": "Not Found",
             "content": {
               "*/*": {
                 "schema": {
@@ -4310,8 +4310,8 @@
               }
             }
           },
-          "404": {
-            "description": "Not Found",
+          "400": {
+            "description": "Bad Request",
             "content": {
               "*/*": {
                 "schema": {
@@ -4336,7 +4336,7 @@
         }
       }
     },
-    "/public/cart/items": {
+    "/api/public/cart/items": {
       "post": {
         "tags": [
           "Cart"
@@ -4400,7 +4400,7 @@
         }
       }
     },
-    "/public/address-book": {
+    "/api/public/address-book": {
       "get": {
         "tags": [
           "Address Book"
@@ -4408,8 +4408,8 @@
         "summary": "List all saved addresses for the authenticated user",
         "operationId": "list",
         "responses": {
-          "400": {
-            "description": "Bad Request",
+          "404": {
+            "description": "Not Found",
             "content": {
               "*/*": {
                 "schema": {
@@ -4418,8 +4418,8 @@
               }
             }
           },
-          "404": {
-            "description": "Not Found",
+          "400": {
+            "description": "Bad Request",
             "content": {
               "*/*": {
                 "schema": {
@@ -4493,7 +4493,7 @@
         }
       }
     },
-    "/data/return-requests/tracking/{id}": {
+    "/api/data/return-requests/tracking/{id}": {
       "post": {
         "tags": [
           "Return Requests management"
@@ -4558,7 +4558,7 @@
         }
       }
     },
-    "/data/return-requests/reject/{id}": {
+    "/api/data/return-requests/reject/{id}": {
       "post": {
         "tags": [
           "Return Requests management"
@@ -4610,7 +4610,7 @@
         }
       }
     },
-    "/data/return-requests/receive/{id}": {
+    "/api/data/return-requests/receive/{id}": {
       "post": {
         "tags": [
           "Return Requests management"
@@ -4662,7 +4662,7 @@
         }
       }
     },
-    "/data/return-requests/complete-refund/{id}": {
+    "/api/data/return-requests/complete-refund/{id}": {
       "post": {
         "tags": [
           "Return Requests management"
@@ -4714,7 +4714,7 @@
         }
       }
     },
-    "/data/return-requests/cancel/{id}": {
+    "/api/data/return-requests/cancel/{id}": {
       "post": {
         "tags": [
           "Return Requests management"
@@ -4766,7 +4766,7 @@
         }
       }
     },
-    "/data/return-requests/approve/{id}": {
+    "/api/data/return-requests/approve/{id}": {
       "post": {
         "tags": [
           "Return Requests management"
@@ -4818,7 +4818,7 @@
         }
       }
     },
-    "/data/product-reviews": {
+    "/api/data/product-reviews": {
       "get": {
         "tags": [
           "Product Reviews — Admin"
@@ -4839,8 +4839,8 @@
           }
         ],
         "responses": {
-          "400": {
-            "description": "Bad Request",
+          "404": {
+            "description": "Not Found",
             "content": {
               "*/*": {
                 "schema": {
@@ -4849,8 +4849,8 @@
               }
             }
           },
-          "404": {
-            "description": "Not Found",
+          "400": {
+            "description": "Bad Request",
             "content": {
               "*/*": {
                 "schema": {
@@ -4925,7 +4925,7 @@
         }
       }
     },
-    "/data/orders/rejection": {
+    "/api/data/orders/rejection": {
       "post": {
         "tags": [
           "Orders management"
@@ -4969,7 +4969,7 @@
         }
       }
     },
-    "/data/orders/confirmation": {
+    "/api/data/orders/confirmation": {
       "post": {
         "tags": [
           "Orders management"
@@ -5013,7 +5013,7 @@
         }
       }
     },
-    "/data/orders/completion": {
+    "/api/data/orders/completion": {
       "post": {
         "tags": [
           "Orders management"
@@ -5057,7 +5057,7 @@
         }
       }
     },
-    "/data/orders/cancellation": {
+    "/api/data/orders/cancellation": {
       "post": {
         "tags": [
           "Orders management"
@@ -5110,7 +5110,7 @@
         }
       }
     },
-    "/account/reviews": {
+    "/api/account/reviews": {
       "get": {
         "tags": [
           "My Reviews"
@@ -5118,8 +5118,8 @@
         "summary": "List all reviews written by the authenticated customer",
         "operationId": "listMyReviews",
         "responses": {
-          "400": {
-            "description": "Bad Request",
+          "404": {
+            "description": "Not Found",
             "content": {
               "*/*": {
                 "schema": {
@@ -5128,8 +5128,8 @@
               }
             }
           },
-          "404": {
-            "description": "Not Found",
+          "400": {
+            "description": "Bad Request",
             "content": {
               "*/*": {
                 "schema": {
@@ -5203,7 +5203,7 @@
         }
       }
     },
-    "/public/cart/items/{variantSku}": {
+    "/api/public/cart/items/{variantSku}": {
       "delete": {
         "tags": [
           "Cart"
@@ -5333,7 +5333,7 @@
         }
       }
     },
-    "/data/product-reviews/{id}/reject": {
+    "/api/data/product-reviews/{id}/reject": {
       "patch": {
         "tags": [
           "Product Reviews — Admin"
@@ -5352,8 +5352,8 @@
           }
         ],
         "responses": {
-          "400": {
-            "description": "Bad Request",
+          "404": {
+            "description": "Not Found",
             "content": {
               "*/*": {
                 "schema": {
@@ -5362,8 +5362,8 @@
               }
             }
           },
-          "404": {
-            "description": "Not Found",
+          "400": {
+            "description": "Bad Request",
             "content": {
               "*/*": {
                 "schema": {
@@ -5378,7 +5378,7 @@
         }
       }
     },
-    "/data/product-reviews/{id}/approve": {
+    "/api/data/product-reviews/{id}/approve": {
       "patch": {
         "tags": [
           "Product Reviews — Admin"
@@ -5397,8 +5397,8 @@
           }
         ],
         "responses": {
-          "400": {
-            "description": "Bad Request",
+          "404": {
+            "description": "Not Found",
             "content": {
               "*/*": {
                 "schema": {
@@ -5407,8 +5407,8 @@
               }
             }
           },
-          "404": {
-            "description": "Not Found",
+          "400": {
+            "description": "Bad Request",
             "content": {
               "*/*": {
                 "schema": {
@@ -5423,7 +5423,7 @@
         }
       }
     },
-    "/data/cart-sessions": {
+    "/api/data/cart-sessions": {
       "get": {
         "tags": [
           "Cart sessions — Admin read-only"
@@ -5444,8 +5444,8 @@
           }
         ],
         "responses": {
-          "400": {
-            "description": "Bad Request",
+          "404": {
+            "description": "Not Found",
             "content": {
               "*/*": {
                 "schema": {
@@ -5454,8 +5454,8 @@
               }
             }
           },
-          "404": {
-            "description": "Not Found",
+          "400": {
+            "description": "Bad Request",
             "content": {
               "*/*": {
                 "schema": {
@@ -5496,8 +5496,8 @@
           }
         ],
         "responses": {
-          "400": {
-            "description": "Bad Request",
+          "404": {
+            "description": "Not Found",
             "content": {
               "*/*": {
                 "schema": {
@@ -5506,8 +5506,8 @@
               }
             }
           },
-          "404": {
-            "description": "Not Found",
+          "400": {
+            "description": "Bad Request",
             "content": {
               "*/*": {
                 "schema": {
@@ -5580,7 +5580,7 @@
         }
       }
     },
-    "/public/shipping/methods": {
+    "/api/public/shipping/methods": {
       "get": {
         "tags": [
           "Public shipping"
@@ -5599,8 +5599,8 @@
           }
         ],
         "responses": {
-          "400": {
-            "description": "Bad Request",
+          "404": {
+            "description": "Not Found",
             "content": {
               "*/*": {
                 "schema": {
@@ -5609,8 +5609,8 @@
               }
             }
           },
-          "404": {
-            "description": "Not Found",
+          "400": {
+            "description": "Bad Request",
             "content": {
               "*/*": {
                 "schema": {
@@ -5635,7 +5635,7 @@
         }
       }
     },
-    "/public/receipt/{token}": {
+    "/api/public/receipt/{token}": {
       "get": {
         "tags": [
           "Checkout"
@@ -5686,7 +5686,7 @@
         }
       }
     },
-    "/public/products/{barcode}/reviews": {
+    "/api/public/products/{barcode}/reviews": {
       "get": {
         "tags": [
           "Product Reviews"
@@ -5704,8 +5704,8 @@
           }
         ],
         "responses": {
-          "400": {
-            "description": "Bad Request",
+          "404": {
+            "description": "Not Found",
             "content": {
               "*/*": {
                 "schema": {
@@ -5714,8 +5714,8 @@
               }
             }
           },
-          "404": {
-            "description": "Not Found",
+          "400": {
+            "description": "Bad Request",
             "content": {
               "*/*": {
                 "schema": {
@@ -5740,7 +5740,7 @@
         }
       }
     },
-    "/public/products/{barcode}/reviews/stats": {
+    "/api/public/products/{barcode}/reviews/stats": {
       "get": {
         "tags": [
           "Product Reviews"
@@ -5758,8 +5758,8 @@
           }
         ],
         "responses": {
-          "400": {
-            "description": "Bad Request",
+          "404": {
+            "description": "Not Found",
             "content": {
               "*/*": {
                 "schema": {
@@ -5768,8 +5768,8 @@
               }
             }
           },
-          "404": {
-            "description": "Not Found",
+          "400": {
+            "description": "Bad Request",
             "content": {
               "*/*": {
                 "schema": {
@@ -5791,7 +5791,7 @@
         }
       }
     },
-    "/public/discount/validate": {
+    "/api/public/discount/validate": {
       "get": {
         "tags": [
           "Discount codes (public)"
@@ -5818,8 +5818,8 @@
           }
         ],
         "responses": {
-          "400": {
-            "description": "Bad Request",
+          "404": {
+            "description": "Not Found",
             "content": {
               "*/*": {
                 "schema": {
@@ -5828,8 +5828,8 @@
               }
             }
           },
-          "404": {
-            "description": "Not Found",
+          "400": {
+            "description": "Bad Request",
             "content": {
               "*/*": {
                 "schema": {
@@ -5851,7 +5851,7 @@
         }
       }
     },
-    "/public/cart": {
+    "/api/public/cart": {
       "get": {
         "tags": [
           "Cart"
@@ -5869,8 +5869,8 @@
           }
         ],
         "responses": {
-          "400": {
-            "description": "Bad Request",
+          "404": {
+            "description": "Not Found",
             "content": {
               "*/*": {
                 "schema": {
@@ -5879,8 +5879,8 @@
               }
             }
           },
-          "404": {
-            "description": "Not Found",
+          "400": {
+            "description": "Bad Request",
             "content": {
               "*/*": {
                 "schema": {
@@ -5918,8 +5918,8 @@
           }
         ],
         "responses": {
-          "400": {
-            "description": "Bad Request",
+          "404": {
+            "description": "Not Found",
             "content": {
               "*/*": {
                 "schema": {
@@ -5928,8 +5928,8 @@
               }
             }
           },
-          "404": {
-            "description": "Not Found",
+          "400": {
+            "description": "Bad Request",
             "content": {
               "*/*": {
                 "schema": {
@@ -5944,7 +5944,7 @@
         }
       }
     },
-    "/public/cart/validate": {
+    "/api/public/cart/validate": {
       "get": {
         "tags": [
           "Cart"
@@ -5962,8 +5962,8 @@
           }
         ],
         "responses": {
-          "400": {
-            "description": "Bad Request",
+          "404": {
+            "description": "Not Found",
             "content": {
               "*/*": {
                 "schema": {
@@ -5972,8 +5972,8 @@
               }
             }
           },
-          "404": {
-            "description": "Not Found",
+          "400": {
+            "description": "Bad Request",
             "content": {
               "*/*": {
                 "schema": {
@@ -5998,7 +5998,7 @@
         }
       }
     },
-    "/public/cart/reservations/availability": {
+    "/api/public/cart/reservations/availability": {
       "get": {
         "tags": [
           "Cart — Stock Reservations"
@@ -6016,8 +6016,8 @@
           }
         ],
         "responses": {
-          "400": {
-            "description": "Bad Request",
+          "404": {
+            "description": "Not Found",
             "content": {
               "*/*": {
                 "schema": {
@@ -6026,8 +6026,8 @@
               }
             }
           },
-          "404": {
-            "description": "Not Found",
+          "400": {
+            "description": "Bad Request",
             "content": {
               "*/*": {
                 "schema": {
@@ -6052,7 +6052,7 @@
         }
       }
     },
-    "/public/about": {
+    "/api/public/about": {
       "get": {
         "tags": [
           "About"
@@ -6060,8 +6060,8 @@
         "summary": "View information useful to customers regarding the business.",
         "operationId": "readCompanyDetails",
         "responses": {
-          "400": {
-            "description": "Bad Request",
+          "404": {
+            "description": "Not Found",
             "content": {
               "*/*": {
                 "schema": {
@@ -6070,8 +6070,8 @@
               }
             }
           },
-          "404": {
-            "description": "Not Found",
+          "400": {
+            "description": "Bad Request",
             "content": {
               "*/*": {
                 "schema": {
@@ -6093,7 +6093,7 @@
         }
       }
     },
-    "/data/people": {
+    "/api/data/people": {
       "get": {
         "tags": [
           "People management"
@@ -6114,8 +6114,8 @@
           }
         ],
         "responses": {
-          "400": {
-            "description": "Bad Request",
+          "404": {
+            "description": "Not Found",
             "content": {
               "*/*": {
                 "schema": {
@@ -6124,8 +6124,8 @@
               }
             }
           },
-          "404": {
-            "description": "Not Found",
+          "400": {
+            "description": "Bad Request",
             "content": {
               "*/*": {
                 "schema": {
@@ -6147,7 +6147,7 @@
         }
       }
     },
-    "/data/order_statuses": {
+    "/api/data/order_statuses": {
       "get": {
         "tags": [
           "Params management"
@@ -6168,8 +6168,8 @@
           }
         ],
         "responses": {
-          "400": {
-            "description": "Bad Request",
+          "404": {
+            "description": "Not Found",
             "content": {
               "*/*": {
                 "schema": {
@@ -6178,8 +6178,8 @@
               }
             }
           },
-          "404": {
-            "description": "Not Found",
+          "400": {
+            "description": "Bad Request",
             "content": {
               "*/*": {
                 "schema": {
@@ -6201,7 +6201,7 @@
         }
       }
     },
-    "/data/billing_types": {
+    "/api/data/billing_types": {
       "get": {
         "tags": [
           "Params management"
@@ -6222,8 +6222,8 @@
           }
         ],
         "responses": {
-          "400": {
-            "description": "Bad Request",
+          "404": {
+            "description": "Not Found",
             "content": {
               "*/*": {
                 "schema": {
@@ -6232,8 +6232,8 @@
               }
             }
           },
-          "404": {
-            "description": "Not Found",
+          "400": {
+            "description": "Bad Request",
             "content": {
               "*/*": {
                 "schema": {
@@ -6255,7 +6255,7 @@
         }
       }
     },
-    "/admin/dashboard/stats": {
+    "/api/admin/dashboard/stats": {
       "get": {
         "tags": [
           "Admin Dashboard"
@@ -6283,8 +6283,8 @@
           }
         ],
         "responses": {
-          "400": {
-            "description": "Bad Request",
+          "404": {
+            "description": "Not Found",
             "content": {
               "*/*": {
                 "schema": {
@@ -6293,8 +6293,8 @@
               }
             }
           },
-          "404": {
-            "description": "Not Found",
+          "400": {
+            "description": "Bad Request",
             "content": {
               "*/*": {
                 "schema": {
@@ -6316,7 +6316,7 @@
         }
       }
     },
-    "/admin/dashboard/stats/top-products": {
+    "/api/admin/dashboard/stats/top-products": {
       "get": {
         "tags": [
           "Admin Dashboard"
@@ -6354,8 +6354,8 @@
           }
         ],
         "responses": {
-          "400": {
-            "description": "Bad Request",
+          "404": {
+            "description": "Not Found",
             "content": {
               "*/*": {
                 "schema": {
@@ -6364,8 +6364,8 @@
               }
             }
           },
-          "404": {
-            "description": "Not Found",
+          "400": {
+            "description": "Bad Request",
             "content": {
               "*/*": {
                 "schema": {
@@ -6390,7 +6390,7 @@
         }
       }
     },
-    "/admin/dashboard/stats/revenue": {
+    "/api/admin/dashboard/stats/revenue": {
       "get": {
         "tags": [
           "Admin Dashboard"
@@ -6426,8 +6426,8 @@
           }
         ],
         "responses": {
-          "400": {
-            "description": "Bad Request",
+          "404": {
+            "description": "Not Found",
             "content": {
               "*/*": {
                 "schema": {
@@ -6436,8 +6436,8 @@
               }
             }
           },
-          "404": {
-            "description": "Not Found",
+          "400": {
+            "description": "Bad Request",
             "content": {
               "*/*": {
                 "schema": {
@@ -6462,7 +6462,7 @@
         }
       }
     },
-    "/admin/dashboard/stats/order-statuses": {
+    "/api/admin/dashboard/stats/order-statuses": {
       "get": {
         "tags": [
           "Admin Dashboard"
@@ -6490,8 +6490,8 @@
           }
         ],
         "responses": {
-          "400": {
-            "description": "Bad Request",
+          "404": {
+            "description": "Not Found",
             "content": {
               "*/*": {
                 "schema": {
@@ -6500,8 +6500,8 @@
               }
             }
           },
-          "404": {
-            "description": "Not Found",
+          "400": {
+            "description": "Bad Request",
             "content": {
               "*/*": {
                 "schema": {
@@ -6526,7 +6526,7 @@
         }
       }
     },
-    "/admin/dashboard/stats/low-stock": {
+    "/api/admin/dashboard/stats/low-stock": {
       "get": {
         "tags": [
           "Admin Dashboard"
@@ -6534,8 +6534,8 @@
         "summary": "Get all variants at or below critical stock level.",
         "operationId": "getLowStockAlerts",
         "responses": {
-          "400": {
-            "description": "Bad Request",
+          "404": {
+            "description": "Not Found",
             "content": {
               "*/*": {
                 "schema": {
@@ -6544,8 +6544,8 @@
               }
             }
           },
-          "404": {
-            "description": "Not Found",
+          "400": {
+            "description": "Bad Request",
             "content": {
               "*/*": {
                 "schema": {
@@ -6570,7 +6570,7 @@
         }
       }
     },
-    "/access": {
+    "/api/access": {
       "get": {
         "tags": [
           "User Accounts"
@@ -6581,8 +6581,8 @@
           "401": {
             "description": "Unauthorized"
           },
-          "400": {
-            "description": "Bad Request",
+          "404": {
+            "description": "Not Found",
             "content": {
               "*/*": {
                 "schema": {
@@ -6591,8 +6591,8 @@
               }
             }
           },
-          "404": {
-            "description": "Not Found",
+          "400": {
+            "description": "Bad Request",
             "content": {
               "*/*": {
                 "schema": {
@@ -6614,7 +6614,7 @@
         }
       }
     },
-    "/access/{apiRoute}": {
+    "/api/access/{apiRoute}": {
       "get": {
         "tags": [
           "User Accounts"
@@ -6635,8 +6635,8 @@
           "401": {
             "description": "Unauthorized"
           },
-          "400": {
-            "description": "Bad Request",
+          "404": {
+            "description": "Not Found",
             "content": {
               "*/*": {
                 "schema": {
@@ -6645,8 +6645,8 @@
               }
             }
           },
-          "404": {
-            "description": "Not Found",
+          "400": {
+            "description": "Bad Request",
             "content": {
               "*/*": {
                 "schema": {
@@ -6676,8 +6676,8 @@
         "summary": "Non-operating endpoint.",
         "operationId": "defaultMapping_1",
         "responses": {
-          "400": {
-            "description": "Bad Request",
+          "404": {
+            "description": "Not Found",
             "content": {
               "*/*": {
                 "schema": {
@@ -6686,8 +6686,8 @@
               }
             }
           },
-          "404": {
-            "description": "Not Found",
+          "400": {
+            "description": "Bad Request",
             "content": {
               "*/*": {
                 "schema": {
@@ -6702,7 +6702,7 @@
         }
       }
     },
-    "/public/cart/reservations/{variantSku}": {
+    "/api/public/cart/reservations/{variantSku}": {
       "delete": {
         "tags": [
           "Cart — Stock Reservations"
@@ -6728,8 +6728,8 @@
           }
         ],
         "responses": {
-          "400": {
-            "description": "Bad Request",
+          "404": {
+            "description": "Not Found",
             "content": {
               "*/*": {
                 "schema": {
@@ -6738,8 +6738,8 @@
               }
             }
           },
-          "404": {
-            "description": "Not Found",
+          "400": {
+            "description": "Bad Request",
             "content": {
               "*/*": {
                 "schema": {

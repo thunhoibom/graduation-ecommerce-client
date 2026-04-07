@@ -1,93 +1,115 @@
 /**
- * Product domain types — matches Spring Boot backend entity shape
+ * Product domain types — aligned with Spring Boot backend ProductPojo / ProductVariantPojo
+ * Backend base URL: http://localhost:8080
  */
 
-export interface Money {
-  amount: string;
-  currencyCode: string;
+import type { ProductCategoryPojo } from "./person";
+
+// ─── Product ──────────────────────────────────────────────────────────────────
+
+export interface Product {
+  id?: number;
+  name: string;
+  barcode: string;
+  description?: string;
+  price: number;               // VND (integer, maps to backend price field)
+  currentStock?: number;
+  criticalStock?: number;
+  category?: ProductCategoryPojo;
+  images?: ProductImage[];
+  averageRating?: number;
+  totalReviews?: number;
 }
+
+// ─── Product Variant ──────────────────────────────────────────────────────────
+
+export interface ProductVariantPojo {
+  id?: number;
+  sku: string;
+  size: string;
+  color?: string;
+  attributes?: string;
+  priceModifier?: number;      // VND
+  currentStock?: number;
+  criticalStock?: number;
+  reservedStock?: number;
+  availableStock?: number;
+  active?: boolean;
+  barcode?: string;
+  productBarcode: string;
+  productName?: string;
+  productBasePrice?: number;   // VND
+  finalPrice?: number;         // VND
+  createdAt?: string;
+}
+
+// ─── Product Image ────────────────────────────────────────────────────────────
 
 export interface ProductImage {
   id?: number;
+  code?: string;
+  filename?: string;
   url: string;
-  altText?: string;
-  width?: number;
-  height?: number;
-  position?: number;
 }
 
+// ─── Product Option (backward compat) ────────────────────────────────────────
+
 export interface ProductOption {
-  id?: number;
   name: string;
   values: string[];
 }
 
-export interface ProductVariant {
-  id?: number;
-  barcode?: string;
-  sku?: string;
-  title: string;
-  availableForSale: boolean;
-  currentStock?: number;
-  price: Money;
-  compareAtPrice?: Money;
-  selectedOptions: {
-    name: string;
-    value: string;
-  }[];
-  image?: ProductImage;
-}
+/** @deprecated use ProductVariantPojo */
+export type ProductVariant = ProductVariantPojo;
 
-export interface Product {
-  id: number;
-  name: string;
-  slug: string; // maps to backend `barcode`
-  description: string;
-  descriptionHtml?: string;
-  shortDescription?: string;
-  availableForSale: boolean;
-  price: Money;
-  compareAtPrice?: Money;
-  categoryId?: number;
-  categoryName?: string;
-  categorySlug?: string;
-  tags?: string[];
-  brand?: string;
-  images: ProductImage[];
-  options: ProductOption[];
-  variants: ProductVariant[];
-  variantsOptions?: {
-    name: string;
-    values: string[];
-  }[];
-  seo?: SEO;
-  createdAt?: string;
-  updatedAt?: string;
-}
+/** @deprecated use Product */
+export type ProductPojo = Product;
 
-export interface ProductListItem {
-  id: number;
-  name: string;
-  slug: string;
-  price: Money;
-  compareAtPrice?: Money;
-  availableForSale: boolean;
-  featuredImage?: ProductImage;
-  categoryName?: string;
-  tags?: string[];
-}
-
-export interface ProductRecommendation {
-  id: number;
-  name: string;
-  slug: string;
-  price: Money;
-  availableForSale: boolean;
-  featuredImage?: ProductImage;
-}
+// ─── SEO ──────────────────────────────────────────────────────────────────────
 
 export interface SEO {
   title?: string;
   description?: string;
   keywords?: string[];
+}
+
+// ─── Product List Item (grid / search results) ───────────────────────────────
+
+export interface ProductListItem {
+  id?: number;
+  name: string;
+  barcode: string;
+  price: number;                // VND
+  currentStock?: number;
+  category?: ProductCategoryPojo;
+  images?: ProductImage[];
+  averageRating?: number;
+  totalReviews?: number;
+}
+
+/** Normalise product price to VND integer for display */
+export function getDisplayPrice(product: ProductListItem | Product): string {
+  return String(product.price ?? 0);
+}
+
+// ─── Product Review ──────────────────────────────────────────────────────────
+
+export interface ProductReviewPojo {
+  id?: number;
+  rating: number;       // 1–5
+  title?: string;
+  body?: string;
+  approved?: boolean;
+  verifiedPurchase?: boolean;
+  productBarcode: string;
+  productName?: string;
+  reviewerName?: string;
+  createdAt?: string;
+  updatedAt?: string;
+}
+
+export interface ReviewStats {
+  totalReviews: number;
+  averageRating: number;
+  ratingDistribution?: number[];
 }

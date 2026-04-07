@@ -1,8 +1,3 @@
-/**
- * Central API client — Axios instance
- * Connects to Spring Boot backend at http://localhost:8080/api
- */
-
 import axios, {
   type AxiosInstance,
   type AxiosError,
@@ -10,7 +5,7 @@ import axios, {
 } from "axios";
 
 const BASE_URL =
-  process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8080/api";
+  process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8080";
 
 const api: AxiosInstance = axios.create({
   baseURL: BASE_URL,
@@ -19,10 +14,42 @@ const api: AxiosInstance = axios.create({
     "Content-Type": "application/json",
     Accept: "application/json",
   },
-  withCredentials: false,
+  withCredentials: true,
 });
 
-// ─── Request interceptor ───────────────────────────────────────────────────────
+// ─── Token helpers (must be before interceptor so it can use them) ────────────
+
+export function getAuthToken(): string | null {
+  if (typeof window === "undefined") return null;
+  return (
+    document.cookie
+      .split("; ")
+      .find((row) => row.startsWith("auth_token="))
+      ?.split("=")[1] ?? null
+  );
+}
+
+export function setAuthToken(token: string): void {
+  if (typeof document === "undefined") return;
+  document.cookie = `auth_token=${token}; path=/; max-age=86400; SameSite=Lax`;
+}
+
+export function clearAuthToken(): void {
+  if (typeof document === "undefined") return;
+  document.cookie = "auth_token=; path=/; max-age=0";
+}
+
+function getSessionToken(): string | null {
+  if (typeof window === "undefined") return null;
+  return (
+    document.cookie
+      .split("; ")
+      .find((row) => row.startsWith("cart_session_token="))
+      ?.split("=")[1] ?? null
+  );
+}
+
+// ─── Request interceptor ──────────────────────────────────────────────────────
 
 api.interceptors.request.use(
   (config: InternalAxiosRequestConfig) => {
@@ -31,66 +58,45 @@ api.interceptors.request.use(
     if (token) {
       config.headers.Authorization = `Bearer ${token}`;
     }
+
+    // Attach cart session token for cart/checkout endpoints
+    const sessionToken = getSessionToken();
+    const path = config.url ?? "";
+    if (sessionToken && isCartEndpoint(path)) {
+      config.headers["X-Session-Token"] = sessionToken;
+    }
+
     return config;
   },
   (error) => Promise.reject(error)
 );
 
-// ─── Response interceptor ──────────────────────────────────────────────────────
+function isCartEndpoint(path: string): boolean {
+  return (
+    path.startsWith("/api/public/cart") ||
+    path.startsWith("/api/public/checkout") ||
+    path.startsWith("/api/public/discount") ||
+    path.startsWith("/api/public/shipping")
+  );
+}
+
+// ─── Response interceptor ─────────────────────────────────────────────────────
 
 api.interceptors.response.use(
   (response) => response,
   (error: AxiosError) => {
     if (error.response?.status === 401) {
-      // Handle unauthorized — clear token, redirect to login
       clearAuthToken();
-      if (typeof window !== "undefined" && !window.location.pathname.startsWith("/login")) {
+      if (
+        typeof window !== "undefined" &&
+        !window.location.pathname.startsWith("/login")
+      ) {
         window.location.href = "/login";
       }
     }
     return Promise.reject(error);
   }
 );
-
-// ─── Token helpers ─────────────────────────────────────────────────────────────
-
-export function getAuthToken(): string | null {
-  if (typeof window === "undefined") return null;
-  return document.cookie
-    .split("; ")
-    .find((row) => row.startsWith("auth_token="))
-    ?.split("=")[1] ?? null;
-}
-
-export function setAuthToken(token: string): void {
-  if (typeof window === "undefined") return;
-  document.cookie = `auth_token=${token}; path=/; max-age=86400; SameSite=Lax`;
-}
-
-export function clearAuthToken(): void {
-  if (typeof window === "undefined") return;
-  document.cookie = "auth_token=; path=/; max-age=0";
-}
-
-// ─── Cart session helpers ──────────────────────────────────────────────────────
-
-export function getCartId(): string | null {
-  if (typeof window === "undefined") return null;
-  return document.cookie
-    .split("; ")
-    .find((row) => row.startsWith("cart_id="))
-    ?.split("=")[1] ?? null;
-}
-
-export function setCartId(id: string): void {
-  if (typeof window === "undefined") return;
-  document.cookie = `cart_id=${id}; path=/; max-age=604800; SameSite=Lax`;
-}
-
-export function clearCartId(): void {
-  if (typeof window === "undefined") return;
-  document.cookie = "cart_id=; path=/; max-age=0";
-}
 
 export { api, BASE_URL };
 export type { AxiosInstance };

@@ -2,7 +2,8 @@
  * Shared common types — Menu, Page, SEO, etc.
  */
 
-import type { ProductImage, SEO } from "./product";
+import type { ProductImage } from "./product";
+import type { SEO } from "./product";
 
 // ─── Menu ─────────────────────────────────────────────────────────────────────
 
@@ -68,31 +69,48 @@ export interface AuthTokens {
   tokenType?: string;
 }
 
-// ─── Shipping & Discount ──────────────────────────────────────────────────────
+// ─── Shipping Method — mirrors backend ShippingMethodPojo ─────────────────────
 
 export interface ShippingMethod {
-  id: number;
+  id?: number;
   name: string;
-  description?: string;
-  price: {
-    amount: string;
-    currencyCode: string;
-  };
-  estimatedDays?: string;
+  baseFee: number;              // VND (integer)
+  freeShippingThreshold?: number; // VND
+  estimatedDaysMin: number;
+  estimatedDaysMax: number;
+  active: boolean;
 }
 
+// ─── Discount Code — mirrors backend DiscountCodePojo ────────────────────────
+
 export interface DiscountCode {
-  id: number;
+  id?: number;
   code: string;
   description?: string;
-  discountType: "PERCENTAGE" | "FIXED_AMOUNT" | "FREE_SHIPPING";
-  discountValue: number;
-  minOrderAmount?: number;
+  type: string;
+  value: number;
   maxUses?: number;
-  usedCount?: number;
-  startsAt?: string;
-  expiresAt?: string;
-  active: boolean;
+  useCount?: number;
+  maxUsesPerCustomer?: number;
+  minCartValue?: number;
+  validFrom?: string;
+  validUntil?: string;
+  active?: boolean;
+  createdAt?: string;
+  updatedAt?: string;
+  currentlyValid?: boolean;
+  remainingUses?: number;
+}
+
+// ─── Discount Validation ──────────────────────────────────────────────────────
+
+export interface DiscountValidationResult {
+  valid: boolean;
+  discountAmount?: number;
+  message?: string;
+  code?: string;
+  type?: string;
+  value?: number;
 }
 
 // ─── Wishlist ─────────────────────────────────────────────────────────────────

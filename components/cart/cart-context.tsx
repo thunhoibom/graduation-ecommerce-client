@@ -1,236 +1,172 @@
 "use client";
 
-import type { Cart, CartItem } from "@/types/cart";
-import type { ProductVariant, Product } from "@/types/product";
-import React, {
+import {
   createContext,
   useContext,
   useOptimistic,
   useState,
   useEffect,
+  useCallback,
+  type ReactNode,
 } from "react";
-import { getCart } from "@/services/rest-api/cart/cart";
-
-type UpdateType = "plus" | "minus" | "delete";
-
-type CartAction =
-  | {
-      type: "UPDATE_ITEM";
-      payload: { variantId: number; updateType: UpdateType };
-    }
-  | {
-      type: "ADD_ITEM";
-      payload: { variant: ProductVariant; product: Product };
-    }
-  | {
-      type: "SET_CART";
-      payload: Cart;
-    };
+import { getCart, addToCart, updateCartItem, removeFromCart } from "@/services/rest-api/cart/cart";
+import type { Cart, CartItem } from "@/types/cart";
 
 type CartContextType = {
   cart: Cart | null;
   isLoading: boolean;
-  updateCartItem: (variantId: number, updateType: UpdateType) => void;
-  addCartItem: (variant: ProductVariant, product: Product) => void;
+  isOpen: boolean;
+  setIsOpen: (open: boolean) => void;
   refreshCart: () => Promise<void>;
+  addItem: (variantSku: string, quantity?: number) => Promise<void>;
+  updateItem: (variantSku: string, quantity: number) => Promise<void>;
+  removeItem: (variantSku: string) => Promise<void>;
 };
 
 const CartContext = createContext<CartContextType | undefined>(undefined);
 
-function calculateItemCost(quantity: number, price: string): string {
-  return (Number(price) * quantity).toString();
-}
+// ─── Optimistic reducer ──────────────────────────────────────────────────────
 
-function updateCartItem(
-  item: CartItem,
-  updateType: UpdateType,
-): CartItem | null {
-  if (updateType === "delete") return null;
+type CartAction =
+  | { type: "SET_CART"; payload: Cart }
+  | { type: "OPTIMISTIC_ADD"; payload: CartItem }
+  | { type: "OPTIMISTIC_UPDATE"; payload: { variantSku: string; quantity: number } }
+  | { type: "OPTIMISTIC_REMOVE"; payload: { variantSku: string } };
 
-  const newQuantity =
-    updateType === "plus" ? item.quantity + 1 : item.quantity - 1;
-  if (newQuantity === 0) return null;
-
-  const singleItemAmount =
-    Number(item.totalPrice.amount) / item.quantity;
-  const newTotalAmount = calculateItemCost(
-    newQuantity,
-    singleItemAmount.toString(),
-  );
-
-  return {
-    ...item,
-    quantity: newQuantity,
-    totalPrice: {
-      ...item.totalPrice,
-      amount: newTotalAmount,
-    },
-  };
-}
-
-function createOrUpdateCartItem(
-  existingItem: CartItem | undefined,
-  variant: ProductVariant,
-  product: Product,
-): CartItem {
-  const quantity = existingItem ? existingItem.quantity + 1 : 1;
-  const totalAmount = calculateItemCost(
-    quantity,
-    variant.price.amount,
-  );
-
-  return {
-    id: existingItem?.id ?? 0,
-    product: {
-      id: product.id,
-      name: product.name,
-      slug: product.slug,
-      price: product.price,
-      featuredImage: product.images[0],
-    },
-    variant: {
-      id: variant.id ?? 0,
-      barcode: variant.barcode,
-      title: variant.title,
-      sku: variant.sku,
-      price: variant.price,
-      image: variant.image,
-      selectedOptions: variant.selectedOptions,
-    },
-    quantity,
-    unitPrice: variant.price,
-    totalPrice: {
-      amount: totalAmount,
-      currencyCode: variant.price.currencyCode,
-    },
-  };
-}
-
-function recalculateTotals(lines: CartItem[]): Pick<Cart, "itemCount" | "subtotal" | "total"> {
-  const itemCount = lines.reduce((sum, item) => sum + item.quantity, 0);
-  const totalAmount = lines.reduce(
-    (sum, item) => sum + Number(item.totalPrice.amount),
-    0,
-  );
-  const currencyCode = lines[0]?.totalPrice.currencyCode ?? "VND";
-
-  return {
-    itemCount,
-    subtotal: { amount: totalAmount.toString(), currencyCode },
-    total: { amount: totalAmount.toString(), currencyCode },
-  };
-}
-
-function createEmptyCart(): Cart {
-  return {
-    id: 0,
-    items: [],
-    itemCount: 0,
-    subtotal: { amount: "0", currencyCode: "VND" },
-    total: { amount: "0", currencyCode: "VND" },
-  };
-}
-
-function cartReducer(state: Cart | null, action: CartAction): Cart {
-  const currentCart = state || createEmptyCart();
+function cartReducer(state: Cart | null, action: CartAction): Cart | null {
+  if (!state) return null;
 
   switch (action.type) {
     case "SET_CART":
       return action.payload;
 
-    case "UPDATE_ITEM": {
-      const { variantId, updateType } = action.payload;
-      const updatedItems = currentCart.items
-        .map((item) =>
-          item.variant.id === variantId
-            ? updateCartItem(item, updateType)
-            : item,
-        )
-        .filter(Boolean) as CartItem[];
-
-      if (updatedItems.length === 0) {
-        return { ...currentCart, items: [], itemCount: 0, total: { amount: "0", currencyCode: "VND" } };
-      }
-
-      return {
-        ...currentCart,
-        ...recalculateTotals(updatedItems),
-        items: updatedItems,
-      };
+    case "OPTIMISTIC_ADD": {
+      const newItem = action.payload;
+      const existing = state.items.find((i) => i.variantSku === newItem.variantSku);
+      const items = existing
+        ? state.items.map((i) =>
+            i.variantSku === newItem.variantSku
+              ? { ...i, quantity: i.quantity + newItem.quantity }
+              : i,
+          )
+        : [...state.items, newItem];
+      return recalc(state, items);
     }
 
-    case "ADD_ITEM": {
-      const { variant, product } = action.payload;
-      const existingItem = currentCart.items.find(
-        (item) => item.variant.id === variant.id,
+    case "OPTIMISTIC_UPDATE": {
+      const { variantSku, quantity } = action.payload;
+      if (quantity <= 0) {
+        return cartReducer(state, { type: "OPTIMISTIC_REMOVE", payload: { variantSku } });
+      }
+      const items = state.items.map((i) =>
+        i.variantSku === variantSku ? { ...i, quantity } : i,
       );
-      const updatedItem = createOrUpdateCartItem(existingItem, variant, product);
+      return recalc(state, items);
+    }
 
-      const updatedItems = existingItem
-        ? currentCart.items.map((item) =>
-            item.variant.id === variant.id ? updatedItem : item,
-          )
-        : [...currentCart.items, updatedItem];
-
-      return {
-        ...currentCart,
-        ...recalculateTotals(updatedItems),
-        items: updatedItems,
-      };
+    case "OPTIMISTIC_REMOVE": {
+      const items = state.items.filter((i) => i.variantSku !== action.payload.variantSku);
+      return recalc(state, items);
     }
 
     default:
-      return currentCart;
+      return state;
   }
 }
 
-export function CartProvider({ children }: { children: React.ReactNode }) {
+function recalc(cart: Cart, items: CartItem[]): Cart {
+  const itemCount = items.reduce((sum, i) => sum + i.quantity, 0);
+  const totalUnits = itemCount;
+  const subtotal = items.reduce((sum, i) => sum + i.lineTotal, 0);
+  const totalAfterDiscount = cart.discountAmount
+    ? subtotal - cart.discountAmount
+    : subtotal;
+  return { ...cart, items, itemCount, totalUnits, subtotal, totalAfterDiscount };
+}
+
+// ─── Provider ───────────────────────────────────────────────────────────────
+
+export function CartProvider({ children }: { children: ReactNode }) {
   const [cart, setCart] = useState<Cart | null>(null);
   const [isLoading, setIsLoading] = useState(true);
-  const [optimisticCart, updateOptimisticCart] = useOptimistic(
-    cart,
-    cartReducer,
-  );
+  const [isOpen, setIsOpen] = useState(false);
+  const [optimisticCart, dispatch] = useOptimistic(cart, cartReducer);
+
+  // Auto-open modal when cart gains items
+  const prevCount = (() => {
+    let prev = 0;
+    return (count: number) => {
+      const was = prev;
+      prev = count;
+      return was;
+    };
+  })();
 
   useEffect(() => {
     getCart()
-      .then((fetchedCart: Cart | null) => {
-        setCart(fetchedCart);
-      })
-      .catch(() => {
-        setCart(null);
-      })
-      .finally(() => {
-        setIsLoading(false);
-      });
+      .then(setCart)
+      .catch(() => setCart(null))
+      .finally(() => setIsLoading(false));
   }, []);
 
-  const refreshCart = async () => {
+  useEffect(() => {
+    if (!optimisticCart || isOpen) return;
+    const count = optimisticCart.itemCount ?? 0;
+    const prev = prevCount(count);
+    if (prev === 0 && count > 0) setIsOpen(true);
+  }, [optimisticCart?.itemCount, isOpen]);
+
+  const refreshCart = useCallback(async () => {
     setIsLoading(true);
     try {
-      const fetchedCart = await getCart();
-      setCart(fetchedCart);
+      const fresh = await getCart();
+      setCart(fresh);
     } finally {
       setIsLoading(false);
     }
-  };
+  }, []);
 
-  const updateCartItem = (variantId: number, updateType: UpdateType) => {
-    updateOptimisticCart({ type: "UPDATE_ITEM", payload: { variantId, updateType } });
-  };
+  const addItem = useCallback(async (variantSku: string, quantity = 1) => {
+    dispatch({ type: "OPTIMISTIC_ADD", payload: buildTempItem(variantSku, quantity) });
+    try {
+      const updated = await addToCart({ variantSku, quantity });
+      setCart(updated);
+    } catch {
+      await refreshCart();
+    }
+  }, [dispatch, refreshCart]);
 
-  const addCartItem = (variant: ProductVariant, product: Product) => {
-    updateOptimisticCart({ type: "ADD_ITEM", payload: { variant, product } });
-  };
+  const updateItem = useCallback(async (variantSku: string, quantity: number) => {
+    dispatch({ type: "OPTIMISTIC_UPDATE", payload: { variantSku, quantity } });
+    try {
+      const updated = await updateCartItem(variantSku, quantity);
+      setCart(updated);
+    } catch {
+      await refreshCart();
+    }
+  }, [dispatch, refreshCart]);
+
+  const removeItem = useCallback(async (variantSku: string) => {
+    dispatch({ type: "OPTIMISTIC_REMOVE", payload: { variantSku } });
+    try {
+      const updated = await removeFromCart(variantSku);
+      setCart(updated);
+    } catch {
+      await refreshCart();
+    }
+  }, [dispatch, refreshCart]);
 
   return (
     <CartContext.Provider
       value={{
-        cart: optimisticCart ?? createEmptyCart(),
+        cart: optimisticCart,
         isLoading,
-        updateCartItem,
-        addCartItem,
+        isOpen,
+        setIsOpen,
         refreshCart,
+        addItem,
+        updateItem,
+        removeItem,
       }}
     >
       {children}
@@ -238,10 +174,25 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
   );
 }
 
-export function useCart() {
-  const context = useContext(CartContext);
-  if (context === undefined) {
-    throw new Error("useCart must be used within a CartProvider");
-  }
-  return context;
+// ─── Hook ───────────────────────────────────────────────────────────────────
+
+export function useCart(): CartContextType {
+  const ctx = useContext(CartContext);
+  if (!ctx) throw new Error("useCart must be used within CartProvider");
+  return ctx;
+}
+
+// ─── Temp item for optimistic update ────────────────────────────────────────
+
+function buildTempItem(variantSku: string, quantity: number): CartItem {
+  return {
+    id: Date.now(),
+    variantSku,
+    quantity,
+    productName: "",
+    productBarcode: "",
+    productBasePrice: 0,
+    unitPrice: 0,
+    lineTotal: 0,
+  };
 }

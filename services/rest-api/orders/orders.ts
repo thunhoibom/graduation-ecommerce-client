@@ -1,43 +1,74 @@
 /**
  * Order REST API service
+ * Connects to Spring Boot backend at http://localhost:8080
+ *
+ * Admin endpoints (from apidocs.md):
+ *   GET  /data/orders                    — list orders (paginated)
+ *   GET  /data/orders/{buyOrder}        — order detail
+ *   POST /data/orders                    — create order (admin)
+ *   POST /data/orders/cancellation        — cancel order
+ *   POST /data/orders/completion          — mark completed
+ *   POST /data/orders/confirmation        — confirm order
+ *
+ * NOTE: No public customer order endpoints in current spec.
+ * Customer order history may require a new backend endpoint.
  */
 
 import { api } from "../app-api";
-import type { Order, OrderSummary } from "@/types/order";
+import type { OrderPojo } from "@/types/order";
 import type { PaginatedResponse } from "@/types/api";
 
-/** POST /orders — create order from cart */
-export async function createOrder(payload: {
-  cartId: number;
-  shippingMethodId?: number;
-  shippingAddressId?: number;
-  billingAddressId?: number;
-  notes?: string;
-  paymentMethod?: string;
-}): Promise<Order> {
-  const { data } = await api.post<Order>("/orders", payload);
-  return data;
-}
-
-/** GET /orders — list orders for logged-in customer */
+/** GET /data/orders — list orders (admin, paginated) */
 export async function getOrders(
-  page = 1,
-  pageSize = 10
-): Promise<PaginatedResponse<OrderSummary>> {
-  const { data } = await api.get<PaginatedResponse<OrderSummary>>(
-    `/orders?page=${page}&pageSize=${pageSize}`
-  );
+  params: {
+    page?: number;
+    pageSize?: number;
+    status?: string;
+    allRequestParams?: Record<string, string>;
+  } = {}
+): Promise<PaginatedResponse<OrderPojo>> {
+  const { data } = await api.get<PaginatedResponse<OrderPojo>>("/api/data/orders", {
+    params: params.allRequestParams ?? {
+      page: params.page ?? 1,
+      pageSize: params.pageSize ?? 10,
+      ...(params.status ? { status: params.status } : {}),
+    },
+  });
   return data;
 }
 
-/** GET /orders/{id} — get order detail */
-export async function getOrder(orderId: number): Promise<Order> {
-  const { data } = await api.get<Order>(`/orders/${orderId}`);
+/** GET /data/orders/{buyOrder} — order detail */
+export async function getOrder(buyOrder: number): Promise<OrderPojo> {
+  const { data } = await api.get<OrderPojo>(`/api/data/orders/${buyOrder}`);
   return data;
 }
 
-/** POST /orders/{id}/cancel — cancel order */
-export async function cancelOrder(orderId: number): Promise<Order> {
-  const { data } = await api.post<Order>(`/orders/${orderId}/cancel`);
+/** POST /data/orders/cancellation — cancel order */
+export async function cancelOrder(
+  buyOrder: number
+): Promise<OrderPojo> {
+  const { data } = await api.post<OrderPojo>(`/api/data/orders/cancellation`, {
+    buyOrder,
+  });
+  return data;
+}
+
+/** POST /data/orders/completion — mark order completed */
+export async function completeOrder(
+  buyOrder: number
+): Promise<OrderPojo> {
+  const { data } = await api.post<OrderPojo>(`/api/data/orders/completion`, {
+    buyOrder,
+  });
+  return data;
+}
+
+/** POST /data/orders/confirmation — confirm order */
+export async function confirmOrder(
+  buyOrder: number
+): Promise<OrderPojo> {
+  const { data } = await api.post<OrderPojo>(`/api/data/orders/confirmation`, {
+    buyOrder,
+  });
   return data;
 }

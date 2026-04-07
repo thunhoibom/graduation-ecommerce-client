@@ -1,59 +1,36 @@
 "use client";
 
-import { MinusIcon, PlusIcon } from "@heroicons/react/24/outline";
 import clsx from "clsx";
-import { updateItemQuantity } from "components/cart/actions";
+import { Minus, Plus } from "@phosphor-icons/react";
 import type { CartItem } from "@/types/cart";
-import { useActionState } from "react";
-
-function SubmitButton({ type }: { type: "plus" | "minus" }) {
-  return (
-    <button
-      type="submit"
-      aria-label={type === "plus" ? "Tăng số lượng" : "Giảm số lượng"}
-      className={clsx(
-        "ease flex h-full min-w-[36px] max-w-[36px] flex-none items-center justify-center rounded-full p-2 transition-all duration-200 hover:border-neutral-800 hover:opacity-80",
-        {
-          "ml-auto": type === "minus",
-        },
-      )}
-    >
-      {type === "plus" ? (
-        <PlusIcon className="h-4 w-4 dark:text-neutral-500" />
-      ) : (
-        <MinusIcon className="h-4 w-4 dark:text-neutral-500" />
-      )}
-    </button>
-  );
-}
+import { useCart } from "./cart-context";
 
 export function EditItemQuantityButton({
   item,
   type,
-  optimisticUpdate,
 }: {
   item: CartItem;
   type: "plus" | "minus";
-  optimisticUpdate: (variantId: number, updateType: "plus" | "minus") => void;
 }) {
-  const [message, formAction] = useActionState(updateItemQuantity, null);
-  const payload = {
-    cartItemId: item.id,
-    quantity: type === "plus" ? item.quantity + 1 : item.quantity - 1,
-  };
-  const updateItemQuantityAction = formAction.bind(null, payload);
+  const { updateItem } = useCart();
 
   return (
-    <form
-      action={async () => {
-        optimisticUpdate(item.variant.id, type);
-        updateItemQuantityAction();
-      }}
+    <button
+      type="button"
+      onClick={() =>
+        updateItem(item.variantSku, type === "plus" ? item.quantity + 1 : item.quantity - 1)
+      }
+      aria-label={type === "plus" ? "Tăng số lượng" : "Giảm số lượng"}
+      className={clsx(
+        "flex h-7 w-7 items-center justify-center rounded border border-neutral-200 text-neutral-600 transition-colors hover:border-neutral-400 dark:border-neutral-700 dark:text-neutral-400 dark:hover:border-neutral-500",
+        type === "plus" ? "ml-auto" : "",
+      )}
     >
-      <SubmitButton type={type} />
-      <p aria-live="polite" className="sr-only" role="status">
-        {message}
-      </p>
-    </form>
+      {type === "plus" ? (
+        <Plus className="size-3" />
+      ) : (
+        <Minus className="size-3" />
+      )}
+    </button>
   );
 }

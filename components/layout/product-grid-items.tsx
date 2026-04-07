@@ -14,17 +14,17 @@ export default function ProductGridItems({
         <Grid.Item key={product.id} className="animate-fadeIn">
           <Link
             className="relative inline-block h-full w-full"
-            href={`/product/${product.slug}`}
+            href={`/product/${product.barcode}`}
             prefetch={true}
           >
             <GridTileImage
               alt={product.name}
               label={{
                 title: product.name,
-                amount: product.price.amount,
-                currencyCode: product.price.currencyCode,
+                amount: String(product.price),
+                currencyCode: "VND",
               }}
-              src={product.featuredImage?.url ?? "/placeholder.png"}
+              src={product.images?.[0]?.url ?? "/placeholder.png"}
               fill
               sizes="(min-width: 768px) 33vw, (min-width: 640px) 50vw, 100vw"
             />

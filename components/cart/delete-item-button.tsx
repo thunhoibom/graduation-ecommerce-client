@@ -1,37 +1,20 @@
 "use client";
 
-import { XMarkIcon } from "@heroicons/react/24/outline";
-import { removeItem } from "components/cart/actions";
+import { Trash } from "@phosphor-icons/react";
 import type { CartItem } from "@/types/cart";
-import { useActionState } from "react";
+import { useCart } from "./cart-context";
 
-export function DeleteItemButton({
-  item,
-  optimisticUpdate,
-}: {
-  item: CartItem;
-  optimisticUpdate: (variantId: number, updateType: "delete") => void;
-}) {
-  const [message, formAction] = useActionState(removeItem, null);
-  const removeItemAction = formAction.bind(null, item.id);
+export function DeleteItemButton({ item }: { item: CartItem }) {
+  const { removeItem } = useCart();
 
   return (
-    <form
-      action={async () => {
-        optimisticUpdate(item.variant.id, "delete");
-        removeItemAction();
-      }}
+    <button
+      type="button"
+      onClick={() => removeItem(item.variantSku)}
+      aria-label="Xóa sản phẩm"
+      className="flex h-7 w-7 items-center justify-center rounded-full bg-neutral-200 text-neutral-600 hover:bg-red-50 hover:text-red-500 dark:bg-neutral-800 dark:text-neutral-400 dark:hover:bg-red-900/20 dark:hover:text-red-400"
     >
-      <button
-        type="submit"
-        aria-label="Xóa sản phẩm khỏi giỏ hàng"
-        className="flex h-[24px] w-[24px] items-center justify-center rounded-full bg-neutral-500"
-      >
-        <XMarkIcon className="mx-[1px] h-4 w-4 text-white dark:text-black" />
-      </button>
-      <p aria-live="polite" className="sr-only" role="status">
-        {message}
-      </p>
-    </form>
+      <Trash className="size-3.5" />
+    </button>
   );
 }

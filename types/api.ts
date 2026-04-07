@@ -1,5 +1,6 @@
 /**
  * Common API types shared across all services
+ * Aligned with Spring Boot backend DataPagePojo schema
  */
 
 export interface ApiResponse<T> {
@@ -8,18 +9,22 @@ export interface ApiResponse<T> {
   success: boolean;
 }
 
+/**
+ * Backend DataPagePojo shape:
+ * { items: T[], pageIndex: number, totalCount: number, pageSize: number }
+ */
 export interface PaginatedResponse<T> {
-  data: T[];
-  total: number;
-  page: number;
+  items: T[];
+  pageIndex: number;
+  totalCount: number;
   pageSize: number;
-  totalPages: number;
 }
 
 export interface ApiError {
-  status: number;
+  code?: string;
   message: string;
-  errors?: Record<string, string[]>;
+  detailMessage?: string;
+  canRetry?: boolean;
 }
 
 export interface PaginationParams {

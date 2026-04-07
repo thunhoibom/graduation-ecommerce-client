@@ -2,7 +2,8 @@
  * Collection / Category domain types
  */
 
-import type { ProductImage, SEO } from "./product";
+import type { ProductImage } from "./product";
+import type { SEO } from "./product";
 
 export interface Collection {
   id: number;

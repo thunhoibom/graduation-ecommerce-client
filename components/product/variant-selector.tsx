@@ -1,42 +1,30 @@
 "use client";
 
 import clsx from "clsx";
-import type { ProductOption, ProductVariant } from "@/types/product";
+import type { ProductVariantPojo } from "@/types/product";
 import { useRouter, useSearchParams } from "next/navigation";
 
 type Combination = {
   id: number;
-  availableForSale: boolean;
-  [key: string]: string | number | boolean;
+  availableStock?: number;
+  [key: string]: string | number | boolean | undefined;
 };
 
-export function VariantSelector({
-  options,
-  variants,
-}: {
-  options: ProductOption[];
-  variants: ProductVariant[];
-}) {
+interface VariantSelectorProps {
+  variants: ProductVariantPojo[];
+  sizeKey?: string;
+  colorKey?: string;
+}
+
+export function VariantSelector({ variants, sizeKey = "size", colorKey = "color" }: VariantSelectorProps) {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const hasNoOptionsOrJustOneOption =
-    !options.length ||
-    (options.length === 1 && options[0]?.values.length === 1);
-
-  if (hasNoOptionsOrJustOneOption) {
-    return null;
-  }
 
   const combinations: Combination[] = variants.map((variant) => ({
     id: variant.id ?? 0,
-    availableForSale: variant.availableForSale,
-    ...variant.selectedOptions.reduce(
-      (accumulator, option) => ({
-        ...accumulator,
-        [option.name.toLowerCase()]: option.value,
-      }),
-      {},
-    ),
+    availableStock: variant.availableStock,
+    [sizeKey.toLowerCase()]: variant.size,
+    [colorKey.toLowerCase()]: variant.color ?? "",
   }));
 
   const updateOption = (name: string, value: string) => {
@@ -45,59 +33,84 @@ export function VariantSelector({
     router.replace(`?${params.toString()}`, { scroll: false });
   };
 
-  return options.map((option) => (
-    <form key={option.name} className="mb-8">
-      <dl>
-        <dt className="mb-4 text-sm uppercase tracking-wide">{option.name}</dt>
-        <dd className="flex flex-wrap gap-3">
-          {option.values.map((value) => {
-            const optionNameLowerCase = option.name.toLowerCase();
+  const sizes = Array.from(new Set(variants.map((v) => v.size).filter((s): s is string => Boolean(s))));
+  const colors = Array.from(new Set(variants.map((v) => v.color).filter((c): c is string => Boolean(c))));
 
-            const optionParams: Record<string, string> = {};
-            searchParams.forEach((v, k) => (optionParams[k] = v));
-            optionParams[optionNameLowerCase] = value;
+  if (!sizes.length && !colors.length) return null;
 
-            const filtered = Object.entries(optionParams).filter(
-              ([key, value]) =>
-                options.find(
-                  (opt) =>
-                    opt.name.toLowerCase() === key &&
-                    opt.values.includes(value),
-                ),
-            );
-            const isAvailableForSale = combinations.find((combination) =>
-              filtered.every(
-                ([key, value]) =>
-                  combination[key] === value && combination.availableForSale,
-              ),
-            );
+  return (
+    <div className="space-y-6">
+      {sizes.length > 0 && (
+        <div>
+          <p className="mb-3 text-sm font-medium uppercase tracking-wide">{sizeKey}</p>
+          <div className="flex flex-wrap gap-2">
+            {sizes.map((size) => {
+              const optionKey = sizeKey.toLowerCase();
+              const isActive = searchParams.get(optionKey) === size;
+              const isAvailable = combinations.some((c) => {
+                const sizeMatch = c[optionKey] === size;
+                const colorParam = searchParams.get(colorKey.toLowerCase());
+                const colorMatch = !colorParam || !colorKey || c[colorKey.toLowerCase()] === colorParam;
+                return sizeMatch && colorMatch && (c.availableStock ?? 0) > 0;
+              });
 
-            const isActive = searchParams.get(optionNameLowerCase) === value;
+              return (
+                <button
+                  key={size}
+                  onClick={() => updateOption(optionKey, size)}
+                  aria-disabled={!isAvailable}
+                  className={clsx(
+                    "min-w-[48px] rounded-full border px-3 py-2 text-sm font-medium transition",
+                    isActive
+                      ? "border-black bg-black text-white dark:border-white dark:bg-white dark:text-black"
+                      : !isAvailable
+                        ? "cursor-not-allowed border-neutral-200 bg-neutral-100 text-neutral-400 line-through dark:border-neutral-700 dark:bg-neutral-900 dark:text-neutral-600"
+                        : "border-neutral-300 hover:border-black dark:border-neutral-700 dark:hover:border-white"
+                  )}
+                >
+                  {size}
+                </button>
+              );
+            })}
+          </div>
+        </div>
+      )}
 
-            return (
-              <button
-                formAction={() => updateOption(optionNameLowerCase, value)}
-                key={value}
-                aria-disabled={!isAvailableForSale}
-                disabled={!isAvailableForSale}
-                title={`${option.name} ${value}${!isAvailableForSale ? " (Hết hàng)" : ""}`}
-                className={clsx(
-                  "flex min-w-[48px] items-center justify-center rounded-full border bg-neutral-100 px-2 py-1 text-sm dark:border-neutral-800 dark:bg-neutral-900",
-                  {
-                    "cursor-default ring-2 ring-black dark:ring-white": isActive,
-                    "ring-1 ring-transparent transition duration-300 ease-in-out hover:ring-black dark:hover:ring-white":
-                      !isActive && isAvailableForSale,
-                    "relative z-10 cursor-not-allowed overflow-hidden bg-neutral-100 text-neutral-500 ring-1 ring-neutral-300 before:absolute before:inset-x-0 before:-z-10 before:h-px before:-rotate-45 before:bg-neutral-300 before:transition-transform dark:bg-neutral-900 dark:text-neutral-400 dark:ring-neutral-700 dark:before:bg-neutral-700":
-                      !isAvailableForSale,
-                  },
-                )}
-              >
-                {value}
-              </button>
-            );
-          })}
-        </dd>
-      </dl>
-    </form>
-  ));
+      {colors.length > 0 && (
+        <div>
+          <p className="mb-3 text-sm font-medium uppercase tracking-wide">{colorKey}</p>
+          <div className="flex flex-wrap gap-2">
+            {colors.map((color) => {
+              const optionKey = colorKey.toLowerCase();
+              const isActive = searchParams.get(optionKey) === color;
+              const isAvailable = combinations.some((c) => {
+                const colorMatch = c[optionKey] === color;
+                const sizeParam = searchParams.get(sizeKey.toLowerCase());
+                const sizeMatch = !sizeParam || !sizeKey || c[sizeKey.toLowerCase()] === sizeParam;
+                return colorMatch && sizeMatch && (c.availableStock ?? 0) > 0;
+              });
+
+              return (
+                <button
+                  key={color}
+                  onClick={() => updateOption(optionKey, color)}
+                  aria-disabled={!isAvailable}
+                  className={clsx(
+                    "rounded-full border px-3 py-2 text-sm font-medium transition",
+                    isActive
+                      ? "border-black bg-black text-white dark:border-white dark:bg-white dark:text-black"
+                      : !isAvailable
+                        ? "cursor-not-allowed border-neutral-200 bg-neutral-100 text-neutral-400 line-through dark:border-neutral-700 dark:bg-neutral-900 dark:text-neutral-600"
+                        : "border-neutral-300 hover:border-black dark:border-neutral-700 dark:hover:border-white"
+                  )}
+                >
+                  {color}
+                </button>
+              );
+            })}
+          </div>
+        </div>
+      )}
+    </div>
+  );
 }

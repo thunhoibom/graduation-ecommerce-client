@@ -1,5 +1,10 @@
 /**
  * Collection / Category REST API service
+ *
+ * OpenAPI endpoints:
+ *   GET  /api/data/product_categories           — list categories
+ *   GET  /api/data/product_categories/tree     — full category tree
+ *   GET  /api/data/product_categories/{code}   — single category
  */
 
 import { api } from "../app-api";
@@ -7,21 +12,29 @@ import type { Collection, CollectionListItem } from "@/types/collection";
 import type { PaginatedResponse } from "@/types/api";
 import type { ProductListItem } from "@/types/product";
 
-/** GET /product-categories — all top-level collections */
+/** GET /api/data/product_categories — all top-level collections */
 export async function getCollections(): Promise<CollectionListItem[]> {
-  const { data } = await api.get<CollectionListItem[]>("/product-categories");
+  const { data } = await api.get<CollectionListItem[]>(
+    "/api/data/product_categories"
+  );
   return data;
 }
 
-/** GET /product-categories/{name} — single collection by slug/name */
-export async function getCollection(slug: string): Promise<Collection> {
-  const { data } = await api.get<Collection>(`/product-categories/${slug}`);
+/** GET /api/data/product_categories/tree — full category tree */
+export async function getCategoryTree(): Promise<Collection[]> {
+  const { data } = await api.get<Collection[]>("/api/data/product_categories/tree");
   return data;
 }
 
-/** GET /product-categories/{name}/products — products in a collection */
+/** GET /api/data/product_categories/{code} — single collection by code */
+export async function getCollection(code: string): Promise<Collection> {
+  const { data } = await api.get<Collection>(`/api/data/product_categories/${code}`);
+  return data;
+}
+
+/** GET /api/data/product_categories/{code}/products — products in a collection */
 export async function getCollectionProducts(
-  slug: string,
+  code: string,
   options: {
     page?: number;
     pageSize?: number;
@@ -30,16 +43,12 @@ export async function getCollectionProducts(
   } = {}
 ): Promise<PaginatedResponse<ProductListItem>> {
   const params = new URLSearchParams(
-    Object.fromEntries(Object.entries(options).filter(([, v]) => v !== undefined)) as Record<string, string>
+    Object.fromEntries(
+      Object.entries(options).filter(([, v]) => v !== undefined)
+    ) as Record<string, string>
   );
   const { data } = await api.get<PaginatedResponse<ProductListItem>>(
-    `/product-categories/${slug}/products?${params.toString()}`
+    `/api/data/product_categories/${code}/products?${params.toString()}`
   );
-  return data;
-}
-
-/** GET /product-categories/tree — full category tree */
-export async function getCategoryTree(): Promise<Collection[]> {
-  const { data } = await api.get<Collection[]>("/product-categories/tree");
   return data;
 }

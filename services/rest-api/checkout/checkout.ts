@@ -1,57 +1,88 @@
 /**
  * Checkout REST API service
+ * Connects to Spring Boot backend at http://localhost:8080
+ *
+ * OpenAPI endpoints (from apidocs.md):
+ *   GET  /public/shipping/methods         — active shipping methods
+ *   GET  /public/discount/validate        — validate a discount code
+ *   POST /public/checkout                 — submit cart → create order → get payment redirect
+ *   GET  /public/checkout/validate        — validate successful payment (TBK_TOKEN)
+ *   POST /public/checkout/validate        — submit failed/aborted checkout
+ *   GET  /public/receipt/{token}          — order receipt after completion
  */
 
 import { api } from "../app-api";
-import type { ShippingMethod, DiscountCode } from "@/types/common";
-import type { Order } from "@/types/order";
-import type { Cart } from "@/types/cart";
+import type { ShippingMethod, DiscountValidationResult } from "@/types/common";
+import type { Receipt } from "@/types/checkout";
 
-/** GET /checkout/shipping-methods — available shipping options */
+// ─── Shipping Methods ─────────────────────────────────────────────────────────
+
+/** GET /public/shipping/methods — active shipping methods */
 export async function getShippingMethods(): Promise<ShippingMethod[]> {
-  const { data } = await api.get<ShippingMethod[]>("/checkout/shipping-methods");
-  return data;
+  const { data } = await api.get<ShippingMethod[]>("/api/public/shipping/methods");
+  return data ?? [];
 }
 
-/** POST /checkout/apply-discount — apply discount code to cart */
-export async function applyDiscountCode(
-  cartId: number,
-  code: string
-): Promise<Cart> {
-  const { data } = await api.post<Cart>("/checkout/apply-discount", {
-    cartId,
-    code,
-  });
-  return data;
-}
+// ─── Discount Validation ──────────────────────────────────────────────────────
 
-/** DELETE /checkout/remove-discount — remove discount from cart */
-export async function removeDiscountCode(cartId: number): Promise<Cart> {
-  const { data } = await api.delete<Cart>(`/checkout/remove-discount/${cartId}`);
-  return data;
-}
-
-/** POST /checkout/validate-discount — check if discount code is valid */
+/** GET /public/discount/validate?code=xxx */
 export async function validateDiscountCode(
   code: string
-): Promise<DiscountCode | null> {
-  try {
-    const { data } = await api.get<DiscountCode>(
-      `/checkout/validate-discount?code=${code}`
-    );
-    return data;
-  } catch {
-    return null;
-  }
+): Promise<DiscountValidationResult> {
+  const { data } = await api.get<DiscountValidationResult>(
+    "/api/public/discount/validate",
+    { params: { code } }
+  );
+  return data;
 }
 
-/** POST /checkout/initiate — start checkout session / payment */
-export async function initiateCheckout(cartId: number): Promise<{
-  checkoutUrl?: string;
-  paymentUrl?: string;
-  orderId?: number;
-  sessionToken?: string;
-}> {
-  const { data } = await api.post("/checkout/initiate", { cartId });
+// ─── Checkout / Payment ───────────────────────────────────────────────────────
+
+/**
+ * POST /public/checkout
+ * Submit cart to create order and get payment redirect URL.
+ * Cart token is sent automatically via X-Session-Token cookie or header.
+ */
+export async function initiateCheckout(payload?: {
+  cartSessionToken?: string;
+  shippingMethodId?: number;
+  discountCode?: string;
+}): Promise<PaymentRedirectionDetails> {
+  const { data } = await api.post<PaymentRedirectionDetails>(
+    "/api/public/checkout",
+    payload ?? {}
+  );
   return data;
+}
+
+/** GET /public/checkout/validate?transactionData — verify successful payment */
+export async function validateSuccessfulPayment(
+  transactionData: Record<string, string>
+): Promise<void> {
+  await api.get("/api/public/checkout/validate", { params: { transactionData } });
+}
+
+/** POST /public/checkout/validate — submit failed/aborted payment state */
+export async function validateAbortedPayment(
+  transactionData: Record<string, string>
+): Promise<void> {
+  await api.post("/api/public/checkout/validate", null, {
+    params: { transactionData },
+  });
+}
+
+// ─── Receipt ──────────────────────────────────────────────────────────────────
+
+/** GET /public/receipt/{token} */
+export async function getReceipt(token: string): Promise<Receipt> {
+  const { data } = await api.get<Receipt>(`/api/public/receipt/${token}`);
+  return data;
+}
+
+// ─── Types ────────────────────────────────────────────────────────────────────
+
+export interface PaymentRedirectionDetails {
+  url?: string;
+  token?: string;
+  buyOrder?: number;
 }

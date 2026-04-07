@@ -1,71 +1,76 @@
 /**
- * Cart domain types
+ * Cart domain types — mirrors Spring Boot backend CartSessionPojo / CartItemPojo
+ * Backend base URL: http://localhost:8080
  */
 
-import type { Money, ProductImage } from "./product";
+import type { ProductImage } from "./product";
 
-export interface CartProduct {
-  id: number;
-  name: string;
-  slug: string;
-  price: Money;
-  featuredImage?: ProductImage;
-}
-
-export interface CartItemVariant {
-  id: number;
-  barcode?: string;
-  title: string;
-  sku?: string;
-  price: Money;
-  image?: ProductImage;
-  selectedOptions: {
-    name: string;
-    value: string;
-  }[];
-}
-
-export interface CartItem {
-  id: number;
-  product: CartProduct;
-  variant: CartItemVariant;
-  quantity: number;
-  unitPrice: Money;
-  totalPrice: Money;
-}
+// ─── Cart Session ─────────────────────────────────────────────────────────────
 
 export interface Cart {
-  id: number;
-  sessionToken?: string;
+  id?: number;
+  token: string;
   items: CartItem[];
+  subtotal: number;           // VND (integer)
   itemCount: number;
-  subtotal: Money;
-  total: Money;
-  discountAmount?: Money;
-  discountCode?: string;
-  shippingMethodId?: number;
-  shippingMethodName?: string;
-  shippingCost?: Money;
-  taxAmount?: Money;
-  checkoutUrl?: string;
+  totalUnits: number;
+  appliedDiscountCode?: string;
+  discountAmount?: number;    // VND (integer)
+  totalAfterDiscount?: number;
+  createdAt?: string;
+  updatedAt?: string;
+  expiresAt?: string;
+  expired?: boolean;
 }
 
-export interface AddToCartPayload {
-  variantId: number;
+// ─── Cart Item ────────────────────────────────────────────────────────────────
+
+export interface CartItem {
+  id?: number;
+  sessionToken?: string;
+  variantSku: string;
   quantity: number;
-  cartId?: number;
+  variantSkuResolved?: string;
+  variantSize?: string;
+  variantColor?: string;
+  productName: string;
+  productBarcode: string;
+  productBasePrice: number;   // VND
+  priceModifier?: number;     // VND
+  unitPrice: number;          // VND
+  lineTotal: number;          // VND
+  availableStock?: number;
+  inStock?: boolean;
+  active?: boolean;
+  addedAt?: string;
+  updatedAt?: string;
+}
+
+// ─── Stock Reservation ────────────────────────────────────────────────────────
+
+export interface StockReservation {
+  id?: number;
+  sessionId: string;
+  variantSku: string;
+  variantSkuResolved?: string;
+  variantSize?: string;
+  variantColor?: string;
+  productName?: string;
+  productBarcode?: string;
+  quantity: number;
+  status?: string;
+  expiresAt?: string;
+  createdAt?: string;
+  updatedAt?: string;
+}
+
+// ─── Request payloads ─────────────────────────────────────────────────────────
+
+export interface AddToCartPayload {
+  variantSku: string;
+  quantity: number;
 }
 
 export interface UpdateCartItemPayload {
-  cartItemId: number;
   quantity: number;
-}
-
-export interface RemoveCartItemPayload {
-  cartItemId: number;
-}
-
-export interface ApplyDiscountPayload {
-  cartId: number;
-  discountCode: string;
 }

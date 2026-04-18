@@ -30,7 +30,7 @@ export interface AddressPojo {
  */
 export interface AddressBookPojo {
   id?: number;
-  label: string;
+  label?: string;
   defaultShipping?: boolean;
   defaultBilling?: boolean;
   address: AddressPojo;

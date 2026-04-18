@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 
 const BACKEND_URL = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8080";
-const BACKEND_LOGIN_PATH = "/public/login";
+const BACKEND_LOGIN_PATH = "/api/public/auth/login";
 
 export async function POST(req: NextRequest) {
   const body = await req.json();
@@ -32,6 +32,14 @@ export async function POST(req: NextRequest) {
 
     // Backend returns "Bearer <token>" as plain text body
     const token = await response.text();
+    
+    // Validate token format
+    if (!token || !token.startsWith("Bearer ")) {
+      return NextResponse.json(
+        { message: "Phản hồi từ máy chủ không hợp lệ" },
+        { status: 500 }
+      );
+    }
 
     // Forward the JWT token to the browser as a cookie
     const backendResponse = NextResponse.json(
@@ -40,10 +48,16 @@ export async function POST(req: NextRequest) {
     );
 
     // Set auth_token cookie (client stores JWT here, not JSESSIONID)
-    backendResponse.headers.set(
-      "Set-Cookie",
-      `auth_token=${token.replace("Bearer ", "")}; Path=/; Max-Age=86400; SameSite=Lax`
-    );
+    const cleanToken = token.replace("Bearer ", "");
+    
+    // Try multiple cookie setting approaches
+    backendResponse.cookies.set("auth_token", cleanToken, {
+      path: "/",
+      maxAge: 86400, // 24 hours
+      sameSite: "lax",
+      httpOnly: false, // Allow client-side access
+      secure: process.env.NODE_ENV === "production",
+    });
 
     return backendResponse;
   } catch {

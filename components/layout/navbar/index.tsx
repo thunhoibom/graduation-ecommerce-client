@@ -1,16 +1,22 @@
+"use client";
+
 import CartModal from "components/cart/modal";
 import LogoSquare from "components/logo-square";
-import { HEADER_MENU } from "config/navigation";
+import { HEADER_MENU, SITE_NAV } from "config/navigation";
 import type { MenuItem } from "@/types/common";
 import Link from "next/link";
 import { Suspense } from "react";
+import { useAuth } from "@/hooks/use-auth";
+import { Button } from "@/components/ui/button";
+import { User, SignOut, ShoppingBag } from "@phosphor-icons/react";
 import MobileMenu from "./mobile-menu";
 import Search, { SearchSkeleton } from "./search";
 
 const SITE_NAME = process.env.SITE_NAME ?? "Mono Studio";
 
-export default async function Navbar() {
+export default function Navbar() {
   const menu: MenuItem[] = HEADER_MENU;
+  const { user, isAuthenticated, logout, isLoading } = useAuth();
 
   return (
     <nav className="relative flex items-center justify-between p-4 lg:px-6">
@@ -52,8 +58,48 @@ export default async function Navbar() {
             <Search />
           </Suspense>
         </div>
-        <div className="flex justify-end md:w-1/3">
+        <div className="flex justify-end md:w-1/3 items-center gap-2">
           <CartModal />
+          
+          {/* Auth buttons */}
+          <Suspense fallback={<div className="w-8 h-8" />}>
+            {isLoading ? (
+              <div className="w-8 h-8 animate-spin rounded-full border-2 border-neutral-300 border-t-neutral-900" />
+            ) : isAuthenticated ? (
+              <div className="flex items-center gap-2">
+                <Link href={SITE_NAV.account}>
+                  <Button variant="ghost" size="sm" className="gap-2">
+                    <User size={16} />
+                    <span className="hidden sm:inline">
+                      {user?.firstName || user?.lastName ? `${user?.firstName} ${user?.lastName}` : "Tài khoản"}
+                    </span>
+                  </Button>
+                </Link>
+                <Button 
+                  variant="ghost" 
+                  size="sm" 
+                  onClick={logout}
+                  className="gap-2"
+                >
+                  <SignOut size={16} />
+                  <span className="hidden sm:inline">Đăng xuất</span>
+                </Button>
+              </div>
+            ) : (
+              <div className="flex items-center gap-2">
+                <Link href={SITE_NAV.login}>
+                  <Button variant="ghost" size="sm">
+                    Đăng nhập
+                  </Button>
+                </Link>
+                <Link href={SITE_NAV.register}>
+                  <Button size="sm">
+                    Đăng ký
+                  </Button>
+                </Link>
+              </div>
+            )}
+          </Suspense>
         </div>
       </div>
     </nav>

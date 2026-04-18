@@ -1,50 +1,99 @@
 import Link from "next/link";
-
-import FooterMenu from "components/layout/footer-menu";
 import LogoSquare from "components/logo-square";
-import { FOOTER_MENU } from "config/navigation";
-import type { MenuItem } from "@/types/common";
-import { Suspense } from "react";
+import { SocialIcons, FooterSection, FooterLink } from "components/layout/footer-menu";
 
 const SITE_NAME = process.env.SITE_NAME ?? "Mono Studio";
 const currentYear = new Date().getFullYear();
 
-export default async function Footer() {
-  // Menu now comes from static config — no backend call needed
-  const menu: MenuItem[] = FOOTER_MENU;
+const SECTIONS = [
+  {
+    title: "Hỗ trợ",
+    children: [
+      { id: 101, title: "Hướng dẫn mua hàng", path: "/help/shopping-guide" },
+      { id: 102, title: "Chính sách đổi trả", path: "/help/return-policy" },
+      { id: 103, title: "Chính sách vận chuyển", path: "/help/shipping" },
+      { id: 104, title: "Câu hỏi thường gặp", path: "/help/faq" },
+    ],
+  },
+  {
+    title: "Công ty",
+    children: [
+      { id: 111, title: "Giới thiệu", path: "/about" },
+      { id: 112, title: "Tuyển dụng", path: "/careers" },
+      { id: 113, title: "Blog", path: "/blog" },
+    ],
+  },
+  {
+    title: "Kết nối",
+    children: [
+      { id: 121, title: "Facebook", path: "https://facebook.com", external: true },
+      { id: 122, title: "Instagram", path: "https://instagram.com", external: true },
+      { id: 123, title: "TikTok", path: "https://tiktok.com", external: true },
+    ],
+  },
+];
 
+export default async function Footer() {
   return (
-    <footer className="text-sm text-neutral-500 dark:text-neutral-400">
-      <div className="mx-auto flex w-full max-w-7xl flex-col gap-6 border-t border-neutral-200 px-6 py-12 text-sm md:flex-row md:gap-12 md:px-4 min-[1320px]:px-0 dark:border-neutral-700">
-        <div>
-          <Link
-            className="flex items-center gap-2 text-black md:pt-1 dark:text-white"
-            href="/"
-          >
-            <LogoSquare size="sm" />
-            <span className="uppercase">{SITE_NAME}</span>
-          </Link>
-        </div>
-        <Suspense
-          fallback={
-            <div className="flex h-[188px] w-[200px] flex-col gap-2">
-              <div className="w-full h-6 animate-pulse rounded-sm bg-neutral-200 dark:bg-neutral-700" />
-              <div className="w-full h-6 animate-pulse rounded-sm bg-neutral-200 dark:bg-neutral-700" />
-              <div className="w-full h-6 animate-pulse rounded-sm bg-neutral-200 dark:bg-neutral-700" />
-              <div className="w-full h-6 animate-pulse rounded-sm bg-neutral-200 dark:bg-neutral-700" />
-              <div className="w-full h-6 animate-pulse rounded-sm bg-neutral-200 dark:bg-neutral-700" />
-              <div className="w-full h-6 animate-pulse rounded-sm bg-neutral-200 dark:bg-neutral-700" />
+    <footer className="border-t border-neutral-200 dark:border-neutral-800">
+      {/* Main footer content */}
+      <div className="mx-auto max-w-7xl px-4 py-12 md:px-6 lg:px-8">
+        {/* Logo + Sections grid */}
+        <div className="grid grid-cols-1 gap-8 sm:grid-cols-2 lg:grid-cols-4">
+          {/* Brand column */}
+          <div className="lg:col-span-1">
+            <Link
+              href="/"
+              className="mb-4 inline-flex items-center gap-2 text-black dark:text-white"
+            >
+              <LogoSquare size="sm" />
+              <span className="text-sm font-medium uppercase tracking-wide">
+                {SITE_NAME}
+              </span>
+            </Link>
+            <p className="mt-3 text-sm text-neutral-500 dark:text-neutral-400 max-w-xs leading-relaxed">
+              Thời trang tối giản dành cho những ai yêu thích sự tinh tế và chất lượng.
+            </p>
+            <div className="mt-4">
+              <SocialIcons />
             </div>
-          }
-        >
-          <FooterMenu menu={menu} />
-        </Suspense>
+          </div>
+
+          {/* Link sections */}
+          {SECTIONS.map((section) => (
+            <div key={section.title}>
+              <FooterSection title={section.title}>
+                {section.children.map((item) => (
+                  <FooterLink key={item.id} item={item} />
+                ))}
+              </FooterSection>
+            </div>
+          ))}
+        </div>
       </div>
-      <div className="border-t border-neutral-200 py-6 text-sm dark:border-neutral-700">
-        <div className="mx-auto flex w-full max-w-7xl flex-col items-center gap-1 px-4 md:flex-row md:gap-0 md:px-4 min-[1320px]:px-0">
-          <p>
-            &copy; {currentYear} {SITE_NAME}. All rights reserved.
-          </p>
+
+      {/* Copyright bar */}
+      <div className="border-t border-neutral-200 dark:border-neutral-800">
+        <div className="mx-auto max-w-7xl px-4 py-5 md:px-6 lg:px-8">
+          <div className="flex flex-col items-center gap-2 sm:flex-row sm:justify-between">
+            <p className="text-xs text-neutral-400 dark:text-neutral-500">
+              &copy; {currentYear} {SITE_NAME}. Mọi quyền được bảo lưu.
+            </p>
+            <div className="flex items-center gap-4">
+              <Link
+                href="/privacy"
+                className="text-xs text-neutral-400 hover:text-neutral-600 dark:hover:text-neutral-300 transition-colors"
+              >
+                Chính sách bảo mật
+              </Link>
+              <Link
+                href="/terms"
+                className="text-xs text-neutral-400 hover:text-neutral-600 dark:hover:text-neutral-300 transition-colors"
+              >
+                Điều khoản sử dụng
+              </Link>
+            </div>
+          </div>
         </div>
       </div>
     </footer>

@@ -110,11 +110,14 @@ export function CartProvider({ children }: { children: ReactNode }) {
   }, []);
 
   useEffect(() => {
-    if (!optimisticCart || isOpen) return;
+    if (!optimisticCart) return;
     const count = optimisticCart.itemCount ?? 0;
     const prev = prevCount(count);
-    if (prev === 0 && count > 0) setIsOpen(true);
-  }, [optimisticCart?.itemCount, isOpen]);
+    // Only auto-open if user hasn't manually closed it and cart was empty before
+    if (prev === 0 && count > 0 && !isOpen) {
+      setIsOpen(true);
+    }
+  }, [optimisticCart?.itemCount]);
 
   const refreshCart = useCallback(async () => {
     setIsLoading(true);

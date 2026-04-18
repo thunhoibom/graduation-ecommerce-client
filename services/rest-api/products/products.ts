@@ -12,7 +12,7 @@
  */
 
 import { api } from "../app-api";
-import type { Product, ProductListItem, ProductVariantPojo, ProductReviewPojo } from "@/types/product";
+import type { Product, ProductListItem, ProductVariantPojo, ProductReviewPojo, ReviewStats } from "@/types/product";
 import type { PaginatedResponse } from "@/types/api";
 
 // ─── List products ─────────────────────────────────────────────────────────────
@@ -107,6 +107,29 @@ export async function getProductReviews(
       ...(params.productBarcode ? { productBarcode: params.productBarcode } : {}),
       page: String(params.page ?? 1),
       pageSize: String(params.pageSize ?? 10),
+    }}
+  );
+  return data;
+}
+
+/** GET /api/public/products/{barcode}/reviews/stats — rating stats for a product */
+export async function getReviewStats(barcode: string): Promise<ReviewStats> {
+  const { data } = await api.get<ReviewStats>(
+    `/api/public/products/${barcode}/reviews/stats`
+  );
+  return data;
+}
+
+/** GET /api/public/products/{barcode}/reviews — approved reviews for a product */
+export async function getProductReviewsPublic(
+  barcode: string,
+  options: { page?: number; pageSize?: number } = {}
+): Promise<PaginatedResponse<ProductReviewPojo>> {
+  const { data } = await api.get<PaginatedResponse<ProductReviewPojo>>(
+    `/api/public/products/${barcode}/reviews`,
+    { params: {
+      page: String(options.page ?? 1),
+      pageSize: String(options.pageSize ?? 6),
     }}
   );
   return data;

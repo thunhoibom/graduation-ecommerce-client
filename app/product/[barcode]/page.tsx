@@ -3,6 +3,9 @@ import type { Metadata } from "next";
 import { getProduct, getProductVariants } from "@/services/rest-api/products/products";
 import { Gallery } from "@/components/product/gallery";
 import { ProductDescription } from "@/components/product/product-description";
+import { Breadcrumb } from "./_components/breadcrumb";
+import { ProductReviews } from "./_components/product-reviews";
+import { RelatedProducts } from "./_components/related-products";
 
 interface Props {
   params: Promise<{ barcode: string }>;
@@ -13,8 +16,8 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   try {
     const product = await getProduct(barcode);
     return {
-      title: product.name,
-      description: product.description,
+      title: `${product.name} — Mono Studio`,
+      description: product.description ?? `Mua ${product.name} tại Mono Studio.`,
       openGraph: {
         title: product.name,
         description: product.description,
@@ -38,9 +41,7 @@ export default async function ProductPage({ params }: Props) {
 
   if (!product) notFound();
 
-  // Attach variants directly onto the product object so existing
-  // ProductDescription / VariantSelector components can read them via
-  // (product as unknown as { variants }).variants
+  // Attach variants onto product so ProductDescription can read them
   try {
     const variantResult = await getProductVariants({
       productBarcode: barcode,
@@ -49,24 +50,43 @@ export default async function ProductPage({ params }: Props) {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     (product as any).variants = variantResult.items;
   } catch {
-    // variants are optional — continue without them
+    // variants are optional
   }
 
   const images = product.images ?? [];
 
   return (
-    <div className="mx-auto max-w-7xl px-4 py-8 lg:px-6">
-      <div className="grid grid-cols-1 gap-8 lg:grid-cols-2 lg:gap-16">
-        {/* Left: Gallery */}
-        <div className="lg:sticky lg:top-4 lg:h-fit">
-          <Gallery images={images} productName={product.name} />
+    <>
+      {/* Breadcrumb */}
+      <div className="mx-auto max-w-7xl px-4 pt-6 pb-2 lg:px-6">
+        <Breadcrumb
+          productName={product.name}
+          category={product.category?.name}
+          categorySlug={product.category?.code}
+        />
+      </div>
+
+      {/* Main content — extra bottom padding on mobile for sticky bar */}
+      <div className="mx-auto max-w-7xl px-4 pb-32 lg:pb-16 lg:px-6">
+        <div className="grid grid-cols-1 gap-8 lg:grid-cols-2 lg:gap-16">
+          {/* Left: sticky gallery */}
+          <div className="lg:sticky lg:top-4 lg:h-fit">
+            <Gallery images={images} productName={product.name} />
+          </div>
+
+          {/* Right: info + add to cart */}
+          <div>
+            <ProductDescription product={product} />
+          </div>
         </div>
 
-        {/* Right: Description + Add to cart */}
-        <div>
-          <ProductDescription product={product} />
-        </div>
+        {/* Below fold */}
+        <ProductReviews barcode={barcode} />
+        <RelatedProducts
+          categorySlug={product.category?.code}
+          currentBarcode={product.barcode}
+        />
       </div>
-    </div>
+    </>
   );
 }

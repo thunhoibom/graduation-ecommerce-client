@@ -1,69 +1,460 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
-import { Check, Tag, Truck, Lock } from "@phosphor-icons/react";
+import {
+  Truck,
+  Lock,
+  Check,
+  Tag,
+  ShoppingBag,
+  ArrowLeft,
+  EnvelopeSimple,
+  CreditCard,
+  HandCoins,
+} from "@phosphor-icons/react";
 import { useCart } from "@/components/cart/cart-context";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { getShippingMethods, validateDiscountCode } from "@/services/rest-api/checkout/checkout";
-import type { ShippingMethod, DiscountValidationResult } from "@/types/common";
-import type { AddressPojo } from "@/types/person";
+import { Separator } from "@/components/ui/separator";
 import { formatMoney } from "@/lib/utils";
+import type { AddressBookPojo } from "@/types/person";
+import type { ShippingMethod } from "@/types/common";
+import type { CheckoutStartPayload } from "@/types/checkout";
+import { getAddressBook } from "@/services/rest-api/address-book";
+import {
+  getShippingMethods,
+  validateDiscountCode,
+  initiateCheckout,
+} from "@/services/rest-api/checkout/checkout";
+import type { DiscountValidationResult } from "@/types/common";
 
-type Step = "shipping" | "payment";
+// ─── Step type ─────────────────────────────────────────────────────────────────
+
+type Step = "shipping" | "shipping_method" | "payment" | "review";
+
+// ─── Form data shapes ──────────────────────────────────────────────────────────
+
+interface CustomerFormData {
+  firstName: string;
+  lastName: string;
+  email: string;
+  phone: string;
+}
+
+interface AddressFormData {
+  firstLine: string;
+  municipality: string;
+  city: string;
+  postalCode: string;
+  notes: string;
+}
+
+function emptyCustomer(): CustomerFormData {
+  return { firstName: "", lastName: "", email: "", phone: "" };
+}
+
+function emptyAddress(): AddressFormData {
+  return { firstLine: "", municipality: "", city: "", postalCode: "", notes: "" };
+}
+
+// ─── Step indicator ─────────────────────────────────────────────────────────────
+
+function StepIndicator({
+  current,
+  onStepClick,
+}: {
+  current: Step;
+  onStepClick: (step: Step) => void;
+}) {
+  const steps: { key: Step; label: string }[] = [
+    { key: "shipping", label: "Thông tin" },
+    { key: "shipping_method", label: "Vận chuyển" },
+    { key: "payment", label: "Thanh toán" },
+    { key: "review", label: "Xác nhận" },
+  ];
+
+  const currentIndex = steps.findIndex((s) => s.key === current);
+
+  return (
+    <div className="flex items-center gap-2 text-sm">
+      {steps.map((step, i) => {
+        const done = i < currentIndex;
+        const active = step.key === current;
+        const clickable = done;
+
+        return (
+          <div key={step.key} className="flex items-center gap-2">
+            {i > 0 && (
+              <div
+                className={`h-px w-6 sm:w-10 transition-colors ${
+                  done
+                    ? "bg-neutral-900 dark:bg-white"
+                    : "bg-neutral-200 dark:bg-neutral-700"
+                }`}
+              />
+            )}
+            <button
+              type="button"
+              onClick={() => clickable && onStepClick(step.key)}
+              disabled={!clickable}
+              className={`flex items-center gap-1.5 transition-colors ${
+                clickable
+                  ? "cursor-pointer hover:text-neutral-700 dark:hover:text-neutral-300"
+                  : "cursor-default"
+              }`}
+            >
+              <span
+                className={`flex h-6 w-6 shrink-0 items-center justify-center rounded-full text-xs transition-colors ${
+                  done
+                    ? "bg-neutral-900 text-white dark:bg-white dark:text-black"
+                    : active
+                    ? "border border-neutral-900 bg-neutral-900 text-white dark:border-white dark:bg-white dark:text-black"
+                    : "border border-neutral-300 text-neutral-400 dark:border-neutral-600 dark:text-neutral-500"
+                }`}
+              >
+                {done ? <Check className="size-3" weight="bold" /> : i + 1}
+              </span>
+              <span
+                className={`hidden sm:block ${
+                  active
+                    ? "font-semibold text-neutral-900 dark:text-white"
+                    : done
+                    ? "text-neutral-500"
+                    : "text-neutral-400"
+                }`}
+              >
+                {step.label}
+              </span>
+            </button>
+          </div>
+        );
+      })}
+    </div>
+  );
+}
+
+// ─── Shipping method card ──────────────────────────────────────────────────────
+
+function ShippingCard({
+  method,
+  selected,
+  onSelect,
+}: {
+  method: ShippingMethod;
+  selected: boolean;
+  onSelect: () => void;
+}) {
+  const feeLabel =
+    method.baseFee === 0 ? (
+      <span className="text-green-600 dark:text-green-400">Miễn phí</span>
+    ) : (
+      formatMoney(method.baseFee)
+    );
+
+  const eta =
+    method.estimatedDaysMin === method.estimatedDaysMax
+      ? `${method.estimatedDaysMin} ngày`
+      : `${method.estimatedDaysMin}–${method.estimatedDaysMax} ngày`;
+
+  return (
+    <button
+      type="button"
+      onClick={onSelect}
+      className={[
+        "flex w-full items-center justify-between rounded-none border p-4 text-left transition-all",
+        selected
+          ? "border-neutral-900 bg-neutral-50 ring-1 ring-neutral-900 dark:border-white dark:bg-neutral-900 dark:ring-white"
+          : "border-neutral-200 hover:border-neutral-400 dark:border-neutral-700 dark:hover:border-neutral-500",
+      ].join(" ")}
+    >
+      <div className="flex items-center gap-3">
+        <div
+          className={[
+            "flex h-4 w-4 shrink-0 items-center justify-center rounded-full border",
+            selected
+              ? "border-neutral-900 bg-neutral-900 dark:border-white dark:bg-white"
+              : "border-neutral-300 dark:border-neutral-600",
+          ].join(" ")}
+        >
+          {selected && (
+            <div className="h-1.5 w-1.5 rounded-full bg-white dark:bg-black" />
+          )}
+        </div>
+        <div>
+          <p className="text-sm font-medium text-neutral-900 dark:text-white">
+            {method.name}
+          </p>
+          <p className="text-xs text-neutral-500 dark:text-neutral-400">
+            Nhận hàng trong {eta}
+          </p>
+        </div>
+      </div>
+      <span className="text-sm font-semibold text-neutral-900 dark:text-white">
+        {feeLabel}
+      </span>
+    </button>
+  );
+}
+
+// ─── Payment type selector ──────────────────────────────────────────────────────
+
+type PaymentType = "WEBPAY" | "COD";
+
+function PaymentOption({
+  type,
+  selected,
+  onSelect,
+}: {
+  type: PaymentType;
+  selected: boolean;
+  onSelect: () => void;
+}) {
+  const isWebpay = type === "WEBPAY";
+  return (
+    <button
+      type="button"
+      onClick={onSelect}
+      className={[
+        "flex w-full items-center gap-3 rounded-none border p-4 text-left transition-all",
+        selected
+          ? "border-neutral-900 bg-neutral-50 ring-1 ring-neutral-900 dark:border-white dark:bg-neutral-900 dark:ring-white"
+          : "border-neutral-200 hover:border-neutral-400 dark:border-neutral-700 dark:hover:border-neutral-500",
+      ].join(" ")}
+    >
+      <div
+        className={[
+          "flex h-4 w-4 shrink-0 items-center justify-center rounded-full border",
+          selected
+            ? "border-neutral-900 bg-neutral-900 dark:border-white dark:bg-white"
+            : "border-neutral-300 dark:border-neutral-600",
+        ].join(" ")}
+      >
+        {selected && (
+          <div className="h-1.5 w-1.5 rounded-full bg-white dark:bg-black" />
+        )}
+      </div>
+      {isWebpay ? (
+        <CreditCard className="size-5 text-neutral-500" />
+      ) : (
+        <HandCoins className="size-5 text-neutral-500" />
+      )}
+      <div>
+        <p className="text-sm font-medium text-neutral-900 dark:text-white">
+          {isWebpay ? "Thanh toán trực tuyến (Webpay)" : "Thanh toán khi nhận hàng (COD)"}
+        </p>
+        <p className="text-xs text-neutral-500 dark:text-neutral-400">
+          {isWebpay
+            ? "Thẻ ATM / Visa / Mastercard qua Webpay Plus"
+            : "Trả tiền mặt khi nhận được hàng"}
+        </p>
+      </div>
+    </button>
+  );
+}
+
+// ─── Order summary sidebar ──────────────────────────────────────────────────────
+
+function OrderSummarySidebar({
+  items,
+  subtotal,
+  totalDiscount,
+  shippingFee,
+  total,
+}: {
+  items: { variantSku: string; productName: string; variantSize?: string; variantColor?: string; quantity: number; lineTotal: number }[];
+  subtotal: number;
+  totalDiscount: number;
+  shippingFee: number;
+  total: number;
+}) {
+  return (
+    <div className="sticky top-4 space-y-4">
+      {/* Items */}
+      <div className="rounded-none border border-neutral-200 p-5 dark:border-neutral-800">
+        <h2 className="mb-4 text-sm font-semibold text-neutral-900 dark:text-white">
+          Đơn hàng ({items.length} sản phẩm)
+        </h2>
+        <div className="mb-4 max-h-52 space-y-3 overflow-y-auto">
+          {items.map((item) => (
+            <div key={item.variantSku} className="flex items-start justify-between gap-3 text-sm">
+              <div className="min-w-0 flex-1">
+                <p className="line-clamp-2 font-medium text-neutral-900 dark:text-white">
+                  {item.productName}
+                </p>
+                <p className="text-xs text-neutral-500">
+                  {[item.variantSize, item.variantColor].filter(Boolean).join(" · ")} ×{" "}
+                  {item.quantity}
+                </p>
+              </div>
+              <span className="shrink-0 font-medium text-neutral-900 dark:text-white">
+                {formatMoney(item.lineTotal)}
+              </span>
+            </div>
+          ))}
+        </div>
+        <Separator className="my-4" />
+        <div className="space-y-2 text-sm">
+          <div className="flex justify-between">
+            <span className="text-neutral-500">Tạm tính</span>
+            <span className="text-neutral-900 dark:text-white">{formatMoney(subtotal)}</span>
+          </div>
+          {totalDiscount > 0 && (
+            <div className="flex justify-between text-green-600 dark:text-green-400">
+              <span>Giảm giá</span>
+              <span>−{formatMoney(totalDiscount)}</span>
+            </div>
+          )}
+          <div className="flex justify-between">
+            <span className="text-neutral-500">Vận chuyển</span>
+            <span className="text-neutral-900 dark:text-white">
+              {shippingFee === 0 ? (
+                <span className="text-green-600 dark:text-green-400">Miễn phí</span>
+              ) : (
+                formatMoney(shippingFee)
+              )}
+            </span>
+          </div>
+          <Separator className="my-2" />
+          <div className="flex justify-between font-semibold text-neutral-900 dark:text-white">
+            <span>Tổng cộng</span>
+            <span>{formatMoney(total)}</span>
+          </div>
+          <p className="text-xs text-neutral-400">(Đã bao gồm VAT 10%)</p>
+        </div>
+      </div>
+
+      {/* Trust */}
+      <div className="flex items-center justify-center gap-1.5 text-xs text-neutral-400">
+        <Lock className="size-3.5" />
+        <span>Thanh toán an toàn &amp; bảo mật</span>
+      </div>
+    </div>
+  );
+}
+
+// ─── Main CheckoutForm ──────────────────────────────────────────────────────────
 
 export function CheckoutForm() {
   const router = useRouter();
-  const { cart, refreshCart } = useCart();
+  const { cart } = useCart();
+
   const [step, setStep] = useState<Step>("shipping");
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  // Shipping
-  const [address, setAddress] = useState<AddressPojo>({
-    firstLine: "",
-    municipality: "",
-    city: "",
-    postalCode: "",
-    secondLine: "",
-    notes: "",
-  });
+  // Customer info (Step 1)
+  const [customerForm, setCustomerForm] = useState<CustomerFormData>(emptyCustomer());
+
+  // Address state
+  const [savedAddresses, setSavedAddresses] = useState<AddressBookPojo[]>([]);
+  const [selectedAddressId, setSelectedAddressId] = useState<number | null>(null);
+  const [useNewAddress, setUseNewAddress] = useState(false);
+  const [addressForm, setAddressForm] = useState<AddressFormData>(emptyAddress());
+
+  // Shipping method (Step 2)
   const [shippingMethods, setShippingMethods] = useState<ShippingMethod[]>([]);
   const [selectedShipping, setSelectedShipping] = useState<number | null>(null);
   const [shippingLoading, setShippingLoading] = useState(false);
 
-  // Discount
+  // Payment (Step 3)
+  const [paymentType, setPaymentType] = useState<PaymentType>("WEBPAY");
   const [discountCode, setDiscountCode] = useState("");
   const [discount, setDiscount] = useState<DiscountValidationResult | null>(null);
   const [discountLoading, setDiscountLoading] = useState(false);
+  const [billingType, setBillingType] = useState<"individual" | "enterprise">("individual");
 
-  // Payment
-  const [paymentType, setPaymentType] = useState("WEBPAY");
+  // ── Load saved addresses on mount ──────────────────────────────────────────
+  useEffect(() => {
+    getAddressBook()
+      .then(setSavedAddresses)
+      .catch(() => {/* non-authenticated guest — silently skip */});
+  }, []);
 
+  // ── Load shipping methods when entering step 2 ─────────────────────────────
+  useEffect(() => {
+    if (step !== "shipping_method") return;
+    if (shippingMethods.length > 0) return; // already loaded
+    setShippingLoading(true);
+    getShippingMethods()
+      .then((methods) => {
+        setShippingMethods(methods);
+        // Auto-select if only one
+        if (methods.length === 1 && methods[0]?.id != null) {
+          setSelectedShipping(methods[0].id);
+        }
+      })
+      .catch(() => toast.error("Không thể tải phương thức vận chuyển"))
+      .finally(() => setShippingLoading(false));
+  }, [step, shippingMethods.length]);
+
+  // ── Fill address form from saved address ───────────────────────────────────
+  const selectedSavedAddress = savedAddresses.find((a) => a.id === selectedAddressId);
+
+  useEffect(() => {
+    if (selectedSavedAddress && !useNewAddress) {
+      const addr = selectedSavedAddress.address;
+      setAddressForm({
+        firstLine: addr?.firstLine ?? "",
+        municipality: addr?.municipality ?? "",
+        city: addr?.city ?? "",
+        postalCode: addr?.postalCode ?? "",
+        notes: addr?.notes ?? "",
+      });
+    }
+  }, [selectedAddressId, useNewAddress, selectedSavedAddress]);
+
+  // ── Computed totals ───────────────────────────────────────────────────────
   const items = cart?.items ?? [];
   const subtotal = cart?.subtotal ?? 0;
-  const discountAmount = discount?.valid ? (discount.discountAmount ?? 0) : (cart?.discountAmount ?? 0);
-  const shippingFee = selectedShipping
-    ? (shippingMethods.find((m) => m.id === selectedShipping)?.baseFee ?? 0)
-    : 0;
-  const total = subtotal + shippingFee - discountAmount;
+  const cartDiscount = cart?.discountAmount ?? 0;
+  const extraDiscount =
+    discount?.valid && discount.discountAmount
+      ? Math.max(0, discount.discountAmount - cartDiscount)
+      : 0;
+  const totalDiscount = cartDiscount + extraDiscount;
+  const selectedMethod = shippingMethods.find((m) => m.id === selectedShipping);
+  const shippingFee = selectedMethod?.baseFee ?? 0;
+  const total = Math.max(subtotal + shippingFee - totalDiscount, 0);
 
-  const loadShippingMethods = async (city: string) => {
-    setShippingLoading(true);
-    try {
-      const methods = await getShippingMethods();
-      setShippingMethods(methods);
-      if (methods.length === 1) setSelectedShipping(methods[0]!.id!);
-    } catch {
-      toast.error("Không thể tải phương thức vận chuyển");
-    } finally {
-      setShippingLoading(false);
+  // ── Validation helpers ───────────────────────────────────────────────────
+  const hasValidCustomer =
+    customerForm.firstName.trim().length > 0 &&
+    customerForm.lastName.trim().length > 0 &&
+    customerForm.email.includes("@") &&
+    customerForm.phone.trim().length >= 9;
+
+  const hasValidAddress =
+    addressForm.firstLine.trim().length > 0 &&
+    addressForm.municipality.trim().length > 0 &&
+    addressForm.city.trim().length > 0;
+
+  // ── Step navigation ───────────────────────────────────────────────────────
+  const goTo = (next: Step) => setStep(next);
+
+  const handleShippingSubmit = () => {
+    if (!hasValidCustomer) {
+      toast.error("Vui lòng điền đầy đủ họ tên, email và SĐT");
+      return;
     }
+    if (!hasValidAddress) {
+      toast.error("Vui lòng điền đầy đủ địa chỉ giao hàng");
+      return;
+    }
+    goTo("shipping_method");
   };
 
-  const applyDiscount = async () => {
+  const handleShippingMethodSubmit = () => {
+    if (!selectedShipping) {
+      toast.error("Vui lòng chọn phương thức vận chuyển");
+      return;
+    }
+    goTo("payment");
+  };
+
+  const handleApplyDiscount = async () => {
     if (!discountCode.trim()) return;
     setDiscountLoading(true);
     try {
@@ -72,7 +463,8 @@ export function CheckoutForm() {
       if (!result.valid) {
         toast.error(result.message ?? "Mã không hợp lệ");
       } else {
-        toast.success(`Áp dụng mã ${discountCode} thành công`);
+        toast.success(`Áp dụng mã "${discountCode}" thành công`);
+        setDiscountCode("");
       }
     } catch {
       toast.error("Không thể xác thực mã giảm giá");
@@ -81,281 +473,566 @@ export function CheckoutForm() {
     }
   };
 
-  const handleShippingSubmit = async () => {
-    if (!address.firstLine.trim() || !address.city.trim() || !address.municipality.trim()) {
-      toast.error("Vui lòng điền đầy đủ địa chỉ giao hàng");
-      return;
-    }
-    await loadShippingMethods(address.city);
-    setStep("payment");
-  };
+  const handlePaymentSubmit = () => goTo("review");
 
-  const handlePaymentSubmit = async () => {
-    if (!selectedShipping) {
-      toast.error("Vui lòng chọn phương thức vận chuyển");
-      return;
-    }
+  // ── Final order submission ─────────────────────────────────────────────────
+  const handlePlaceOrder = async () => {
+    if (!selectedShipping) return;
     setIsSubmitting(true);
+
+    const nameParts = `${customerForm.firstName} ${customerForm.lastName}`.trim();
+    const [firstNamePart, ...rest] = nameParts.split(" ");
+    const lastNamePart = rest.join(" ");
+
+    const payload: CheckoutStartPayload = {
+      shippingMethodId: selectedShipping,
+      discountCode: discount?.valid ? discount.code : undefined,
+      customer: {
+        firstName: customerForm.firstName.trim(),
+        lastName: customerForm.lastName.trim(),
+        email: customerForm.email.trim(),
+        phone: customerForm.phone.trim(),
+      },
+      shippingAddress: {
+        firstLine: addressForm.firstLine.trim(),
+        municipality: addressForm.municipality.trim(),
+        city: addressForm.city.trim(),
+        postalCode: addressForm.postalCode.trim() || undefined,
+        notes: addressForm.notes.trim() || undefined,
+      },
+      paymentType,
+      billingType,
+    };
+
     try {
-      const { initiateCheckout } = await import("@/services/rest-api/checkout/checkout");
-      const result = await initiateCheckout({
-        cartSessionToken: cart?.token,
-        shippingMethodId: selectedShipping,
-        discountCode: discount?.valid ? discount.code : undefined,
-      });
-      if (result.url) {
-        window.location.href = result.url;
-      } else {
-        router.push(`/checkout/success?buyOrder=${result.buyOrder}&token=${result.token}`);
+      const result = await initiateCheckout(payload);
+
+      // COD → no redirect, go straight to success page
+      if (paymentType === "COD" || !result.url) {
+        router.push(
+          `/checkout/success?buyOrder=${result.buyOrder ?? ""}&token=${result.token ?? ""}`
+        );
+        return;
       }
+
+      // Webpay → redirect to payment gateway
+      window.location.href = result.url;
     } catch (err: unknown) {
-      const msg = (err as Error)?.message ?? "Thanh toán thất bại";
+      const msg = err instanceof Error ? err.message : "Thanh toán thất bại";
       toast.error(msg);
     } finally {
       setIsSubmitting(false);
     }
   };
 
+  // ── Empty cart guard ───────────────────────────────────────────────────────
   if (!items.length) {
     return (
-      <div className="py-16 text-center">
+      <div className="flex flex-col items-center gap-4 py-20 text-center">
+        <ShoppingBag className="size-12 text-neutral-300 dark:text-neutral-700" />
         <p className="text-neutral-500">Giỏ hàng trống.</p>
+        <Link href="/collections/all">
+          <Button variant="outline">Khám phá bộ sưu tập</Button>
+        </Link>
       </div>
     );
   }
 
+  // ── Render ────────────────────────────────────────────────────────────────
   return (
     <div className="grid grid-cols-1 gap-8 lg:grid-cols-3">
-      {/* Left: Form */}
-      <div className="lg:col-span-2 space-y-8">
+      {/* ── LEFT: Form steps ─────────────────────────────────────────────── */}
+      <div className="lg:col-span-2 space-y-6">
 
         {/* Step indicator */}
-        <div className="flex items-center gap-4 text-sm">
-          <button
-            onClick={() => setStep("shipping")}
-            className={`flex items-center gap-2 ${step === "shipping" ? "font-semibold" : "text-neutral-500"}`}
-          >
-            <span className={`flex h-6 w-6 items-center justify-center rounded-full text-xs ${step === "shipping" ? "bg-black text-white dark:bg-white dark:text-black" : "border border-neutral-300 dark:border-neutral-700"}`}>
-              {step === "payment" ? <Check className="size-3" /> : "1"}
-            </span>
-            Giao hàng
-          </button>
-          <div className="h-px flex-1 bg-neutral-200 dark:bg-neutral-700" />
-          <span className={`flex items-center gap-2 ${step === "payment" ? "font-semibold" : "text-neutral-500"}`}>
-            <span className={`flex h-6 w-6 items-center justify-center rounded-full text-xs ${step === "payment" ? "bg-black text-white dark:bg-white dark:text-black" : "border border-neutral-300 dark:border-neutral-700"}`}>2</span>
-            Thanh toán
-          </span>
-        </div>
+        <StepIndicator current={step} onStepClick={goTo} />
 
-        {/* Shipping step */}
+        {/* ── Step 1: Shipping information ─────────────────────────────── */}
         {step === "shipping" && (
-          <div className="space-y-6 rounded-lg border border-neutral-200 p-6 dark:border-neutral-800">
-            <div className="flex items-center gap-2 font-semibold">
-              <Truck className="size-5" />
-              <h2>Địa chỉ giao hàng</h2>
+          <div className="space-y-6">
+            {/* Customer info */}
+            <div className="rounded-none border border-neutral-200 p-6 dark:border-neutral-800 space-y-4">
+              <div className="flex items-center gap-2 font-semibold">
+                <EnvelopeSimple className="size-5 text-neutral-500" />
+                <h2>Thông tin liên hệ</h2>
+              </div>
+              <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                <div className="space-y-1.5">
+                  <Label htmlFor="firstName">Họ *</Label>
+                  <Input
+                    id="firstName"
+                    placeholder="Nguyễn"
+                    value={customerForm.firstName}
+                    onChange={(e) =>
+                      setCustomerForm((c) => ({ ...c, firstName: e.target.value }))
+                    }
+                  />
+                </div>
+                <div className="space-y-1.5">
+                  <Label htmlFor="lastName">Tên *</Label>
+                  <Input
+                    id="lastName"
+                    placeholder="Văn A"
+                    value={customerForm.lastName}
+                    onChange={(e) =>
+                      setCustomerForm((c) => ({ ...c, lastName: e.target.value }))
+                    }
+                  />
+                </div>
+                <div className="sm:col-span-2 space-y-1.5">
+                  <Label htmlFor="email">Email *</Label>
+                  <Input
+                    id="email"
+                    type="email"
+                    placeholder="email@example.com"
+                    value={customerForm.email}
+                    onChange={(e) =>
+                      setCustomerForm((c) => ({ ...c, email: e.target.value }))
+                    }
+                  />
+                </div>
+                <div className="sm:col-span-2 space-y-1.5">
+                  <Label htmlFor="phone">Số điện thoại *</Label>
+                  <Input
+                    id="phone"
+                    type="tel"
+                    placeholder="0901234567"
+                    value={customerForm.phone}
+                    onChange={(e) =>
+                      setCustomerForm((c) => ({ ...c, phone: e.target.value }))
+                    }
+                  />
+                </div>
+              </div>
             </div>
 
-            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-              <div className="sm:col-span-2 space-y-1.5">
-                <Label htmlFor="firstLine">Địa chỉ *</Label>
-                <Input
-                  id="firstLine"
-                  placeholder="Số nhà, đường"
-                  value={address.firstLine}
-                  onChange={(e) => setAddress((a) => ({ ...a, firstLine: e.target.value }))}
-                />
+            {/* Saved addresses */}
+            {savedAddresses.length > 0 && (
+              <div className="space-y-3">
+                <p className="text-xs font-semibold uppercase tracking-wide text-neutral-400">
+                  Địa chỉ đã lưu
+                </p>
+                {savedAddresses.map((addr) => (
+                  <button
+                    key={addr.id}
+                    type="button"
+                    onClick={() => {
+                      setSelectedAddressId(addr.id!);
+                      setUseNewAddress(false);
+                    }}
+                    className={[
+                      "w-full rounded-none border p-4 text-left transition-all",
+                      selectedAddressId === addr.id && !useNewAddress
+                        ? "border-neutral-900 ring-1 ring-neutral-900 dark:border-white dark:ring-white"
+                        : "border-neutral-200 hover:border-neutral-400 dark:border-neutral-700 dark:hover:border-neutral-500",
+                    ].join(" ")}
+                  >
+                    <div className="flex items-start justify-between gap-2">
+                      <div>
+                        <p className="text-sm font-medium text-neutral-900 dark:text-white">
+                          {addr.label ?? "Địa chỉ"}
+                          {addr.defaultShipping && (
+                            <span className="ml-2 text-[10px] font-normal text-neutral-500">
+                              Mặc định
+                            </span>
+                          )}
+                        </p>
+                        <p className="mt-0.5 text-sm text-neutral-500">
+                          {[addr.address?.firstLine, addr.address?.municipality, addr.address?.city]
+                            .filter(Boolean)
+                            .join(", ")}
+                        </p>
+                      </div>
+                      {selectedAddressId === addr.id && !useNewAddress && (
+                        <Check className="size-4 shrink-0 text-neutral-900 dark:text-white" />
+                      )}
+                    </div>
+                  </button>
+                ))}
+                <button
+                  type="button"
+                  onClick={() => {
+                    setUseNewAddress(true);
+                    setSelectedAddressId(null);
+                    setAddressForm(emptyAddress());
+                  }}
+                  className={[
+                    "w-full rounded-none border p-3 text-center text-sm transition-all",
+                    useNewAddress
+                      ? "border-neutral-900 text-neutral-900 dark:border-white dark:text-white"
+                      : "border-dashed border-neutral-300 text-neutral-500 hover:border-neutral-400 dark:border-neutral-700 dark:hover:border-neutral-500",
+                  ].join(" ")}
+                >
+                  + Thêm địa chỉ mới
+                </button>
               </div>
-              <div className="space-y-1.5">
-                <Label htmlFor="municipality">Quận / Huyện *</Label>
-                <Input
-                  id="municipality"
-                  placeholder="Quận 1"
-                  value={address.municipality}
-                  onChange={(e) => setAddress((a) => ({ ...a, municipality: e.target.value }))}
-                />
-              </div>
-              <div className="space-y-1.5">
-                <Label htmlFor="city">Tỉnh / Thành phố *</Label>
-                <Input
-                  id="city"
-                  placeholder="TP. Hồ Chí Minh"
-                  value={address.city}
-                  onChange={(e) => setAddress((a) => ({ ...a, city: e.target.value }))}
-                />
-              </div>
-              <div className="space-y-1.5">
-                <Label htmlFor="postalCode">Mã bưu điện</Label>
-                <Input
-                  id="postalCode"
-                  placeholder="700000"
-                  value={address.postalCode}
-                  onChange={(e) => setAddress((a) => ({ ...a, postalCode: e.target.value }))}
-                />
-              </div>
-              <div className="sm:col-span-2 space-y-1.5">
-                <Label htmlFor="notes">Ghi chú</Label>
-                <Input
-                  id="notes"
-                  placeholder="Ghi chú giao hàng (tuỳ chọn)"
-                  value={address.notes}
-                  onChange={(e) => setAddress((a) => ({ ...a, notes: e.target.value }))}
-                />
-              </div>
-            </div>
+            )}
 
-            <Button onClick={handleShippingSubmit} className="w-full">
-              Tiếp tục thanh toán
+            {/* New address form */}
+            {(useNewAddress || savedAddresses.length === 0) && (
+              <div className="rounded-none border border-neutral-200 p-6 dark:border-neutral-800 space-y-4">
+                <div className="flex items-center gap-2 font-semibold">
+                  <Truck className="size-5 text-neutral-500" />
+                  <h2>Địa chỉ giao hàng</h2>
+                </div>
+                <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                  <div className="sm:col-span-2 space-y-1.5">
+                    <Label htmlFor="firstLine">Địa chỉ *</Label>
+                    <Input
+                      id="firstLine"
+                      placeholder="Số nhà, tên đường"
+                      value={addressForm.firstLine}
+                      onChange={(e) =>
+                        setAddressForm((a) => ({ ...a, firstLine: e.target.value }))
+                      }
+                    />
+                  </div>
+                  <div className="space-y-1.5">
+                    <Label htmlFor="municipality">Quận / Huyện *</Label>
+                    <Input
+                      id="municipality"
+                      placeholder="Quận 1"
+                      value={addressForm.municipality}
+                      onChange={(e) =>
+                        setAddressForm((a) => ({ ...a, municipality: e.target.value }))
+                      }
+                    />
+                  </div>
+                  <div className="space-y-1.5">
+                    <Label htmlFor="city">Tỉnh / Thành phố *</Label>
+                    <Input
+                      id="city"
+                      placeholder="TP. Hồ Chí Minh"
+                      value={addressForm.city}
+                      onChange={(e) =>
+                        setAddressForm((a) => ({ ...a, city: e.target.value }))
+                      }
+                    />
+                  </div>
+                  <div className="space-y-1.5">
+                    <Label htmlFor="postalCode">Mã bưu điện</Label>
+                    <Input
+                      id="postalCode"
+                      placeholder="700000"
+                      value={addressForm.postalCode}
+                      onChange={(e) =>
+                        setAddressForm((a) => ({ ...a, postalCode: e.target.value }))
+                      }
+                    />
+                  </div>
+                  <div className="space-y-1.5">
+                    <Label htmlFor="notes">Ghi chú</Label>
+                    <Input
+                      id="notes"
+                      placeholder="Ghi chú giao hàng (tuỳ chọn)"
+                      value={addressForm.notes}
+                      onChange={(e) =>
+                        setAddressForm((a) => ({ ...a, notes: e.target.value }))
+                      }
+                    />
+                  </div>
+                </div>
+              </div>
+            )}
+
+            <Button
+              onClick={handleShippingSubmit}
+              className="w-full"
+              size="lg"
+            >
+              Tiếp tục
             </Button>
           </div>
         )}
 
-        {/* Payment step */}
-        {step === "payment" && (
+        {/* ── Step 2: Shipping method ──────────────────────────────────── */}
+        {step === "shipping_method" && (
           <div className="space-y-6">
-            {/* Shipping method */}
-            <div className="space-y-4 rounded-lg border border-neutral-200 p-6 dark:border-neutral-800">
-              <div className="flex items-center gap-2 font-semibold">
-                <Truck className="size-5" />
-                <h2>Phương thức vận chuyển</h2>
-              </div>
+            <button
+              type="button"
+              onClick={() => goTo("shipping")}
+              className="text-sm text-neutral-500 hover:text-neutral-900 dark:hover:text-white transition-colors"
+            >
+              ← Quay lại thông tin giao hàng
+            </button>
+
+            {/* Address summary */}
+            <div className="rounded-none border border-neutral-200 p-4 dark:border-neutral-800">
+              <p className="text-xs font-semibold uppercase tracking-wide text-neutral-400 mb-1">
+                Giao đến
+              </p>
+              <p className="text-sm font-medium text-neutral-900 dark:text-white">
+                {customerForm.firstName} {customerForm.lastName}
+              </p>
+              <p className="text-sm text-neutral-500">{customerForm.phone}</p>
+              <p className="text-sm text-neutral-500">
+                {[addressForm.firstLine, addressForm.municipality, addressForm.city]
+                  .filter(Boolean)
+                  .join(", ")}
+              </p>
+            </div>
+
+            {/* Shipping methods */}
+            <div className="space-y-3">
+              <p className="text-xs font-semibold uppercase tracking-wide text-neutral-400">
+                Phương thức vận chuyển
+              </p>
               {shippingLoading ? (
-                <div className="h-8 w-8 animate-spin rounded-full border-2 border-neutral-300 border-t-neutral-900" />
-              ) : (
-                <div className="space-y-2">
-                  {shippingMethods.map((method) => (
-                    <label
-                      key={method.id}
-                      className={`flex cursor-pointer items-center justify-between rounded border p-4 transition-colors ${
-                        selectedShipping === method.id
-                          ? "border-black bg-black/5 dark:border-white dark:bg-white/5"
-                          : "border-neutral-200 hover:border-neutral-400 dark:border-neutral-700"
-                      }`}
-                    >
-                      <div className="flex items-center gap-3">
-                        <input
-                          type="radio"
-                          name="shipping"
-                          value={method.id}
-                          checked={selectedShipping === method.id}
-                          onChange={() => setSelectedShipping(method.id!)}
-                          className="accent-black dark:accent-white"
-                        />
-                        <div>
-                          <p className="font-medium">{method.name}</p>
-                          <p className="text-sm text-neutral-500">
-                            {method.estimatedDaysMin}–{method.estimatedDaysMax} ngày
-                          </p>
-                        </div>
-                      </div>
-                      <span className="font-semibold">
-                        {method.baseFee === 0
-                          ? "Miễn phí"
-                          : formatMoney(method.baseFee)}
-                      </span>
-                    </label>
-                  ))}
+                <div className="flex justify-center py-8">
+                  <div className="h-6 w-6 animate-spin rounded-full border-2 border-neutral-300 border-t-neutral-900 dark:border-neutral-700 dark:border-t-neutral-100" />
                 </div>
+              ) : shippingMethods.length === 0 ? (
+                <p className="text-sm text-neutral-500 py-4">
+                  Không có phương thức vận chuyển nào.
+                </p>
+              ) : (
+                shippingMethods.map((method) => (
+                  <ShippingCard
+                    key={method.id}
+                    method={method}
+                    selected={selectedShipping === method.id}
+                    onSelect={() => setSelectedShipping(method.id!)}
+                  />
+                ))
               )}
             </div>
 
-            {/* Payment method */}
-            <div className="space-y-4 rounded-lg border border-neutral-200 p-6 dark:border-neutral-800">
-              <div className="flex items-center gap-2 font-semibold">
-                <Lock className="size-5" />
-                <h2>Phương thức thanh toán</h2>
-              </div>
-              <label className="flex cursor-pointer items-center gap-3 rounded border border-black bg-black/5 p-4 dark:border-white">
-                <input
-                  type="radio"
-                  name="payment"
-                  value="WEBPAY"
-                  checked={paymentType === "WEBPAY"}
-                  onChange={() => setPaymentType("WEBPAY")}
-                  className="accent-black dark:accent-white"
+            <Button
+              onClick={handleShippingMethodSubmit}
+              disabled={!selectedShipping}
+              className="w-full"
+              size="lg"
+            >
+              Tiếp tục
+            </Button>
+          </div>
+        )}
+
+        {/* ── Step 3: Payment method + discount ──────────────────────── */}
+        {step === "payment" && (
+          <div className="space-y-6">
+            <button
+              type="button"
+              onClick={() => goTo("shipping_method")}
+              className="text-sm text-neutral-500 hover:text-neutral-900 dark:hover:text-white transition-colors"
+            >
+              ← Quay lại phương thức vận chuyển
+            </button>
+
+            {/* Payment type */}
+            <div className="space-y-3">
+              <p className="text-xs font-semibold uppercase tracking-wide text-neutral-400">
+                Phương thức thanh toán
+              </p>
+              <div className="space-y-2">
+                <PaymentOption
+                  type="WEBPAY"
+                  selected={paymentType === "WEBPAY"}
+                  onSelect={() => setPaymentType("WEBPAY")}
                 />
-                <span className="font-medium">Thanh toán qua cổng Webpay</span>
-              </label>
+                <PaymentOption
+                  type="COD"
+                  selected={paymentType === "COD"}
+                  onSelect={() => setPaymentType("COD")}
+                />
+              </div>
             </div>
 
-            <Button onClick={handlePaymentSubmit} className="w-full" size="lg" disabled={isSubmitting}>
-              {isSubmitting ? "Đang xử lý..." : `Thanh toán ${formatMoney(total)}`}
+            {/* Discount code */}
+            <div className="rounded-none border border-neutral-200 p-5 dark:border-neutral-800 space-y-3">
+              <div className="flex items-center gap-2">
+                <Tag className="size-4 text-neutral-500" />
+                <p className="text-sm font-semibold text-neutral-900 dark:text-white">
+                  Mã giảm giá
+                </p>
+              </div>
+              {discount?.valid && (
+                <div className="flex items-center justify-between rounded-none border border-green-200 bg-green-50 px-3 py-2 dark:border-green-900 dark:bg-green-950/20">
+                  <span className="text-sm font-medium text-green-700 dark:text-green-300">
+                    {discount.code}
+                  </span>
+                  <span className="text-sm text-green-600 dark:text-green-400">
+                    −{formatMoney(discount.discountAmount ?? 0)}
+                  </span>
+                </div>
+              )}
+              <div className="flex gap-2">
+                <Input
+                  placeholder="Nhập mã…"
+                  value={discountCode}
+                  onChange={(e) => {
+                    setDiscountCode(e.target.value);
+                    if (discount) setDiscount(null);
+                  }}
+                  className="flex-1 rounded-none"
+                />
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={handleApplyDiscount}
+                  disabled={!discountCode.trim() || discountLoading}
+                  className="rounded-none"
+                >
+                  {discountLoading ? "…" : "Áp dụng"}
+                </Button>
+              </div>
+            </div>
+
+            <Button
+              onClick={handlePaymentSubmit}
+              className="w-full"
+              size="lg"
+            >
+              Tiếp tục
             </Button>
+          </div>
+        )}
+
+        {/* ── Step 4: Review & confirm ────────────────────────────────── */}
+        {step === "review" && (
+          <div className="space-y-6">
+            <button
+              type="button"
+              onClick={() => goTo("payment")}
+              className="text-sm text-neutral-500 hover:text-neutral-900 dark:hover:text-white transition-colors"
+            >
+              ← Quay lại thanh toán
+            </button>
+
+            {/* Review: Contact */}
+            <div className="rounded-none border border-neutral-200 p-5 dark:border-neutral-800 space-y-1">
+              <div className="flex items-center justify-between">
+                <p className="text-xs font-semibold uppercase tracking-wide text-neutral-400">
+                  Thông tin liên hệ
+                </p>
+                <button
+                  type="button"
+                  onClick={() => goTo("shipping")}
+                  className="text-xs underline text-neutral-500 hover:text-neutral-900 dark:hover:text-white"
+                >
+                  Sửa
+                </button>
+              </div>
+              <p className="text-sm font-medium text-neutral-900 dark:text-white">
+                {customerForm.firstName} {customerForm.lastName}
+              </p>
+              <p className="text-sm text-neutral-500">{customerForm.email}</p>
+              <p className="text-sm text-neutral-500">{customerForm.phone}</p>
+            </div>
+
+            {/* Review: Address */}
+            <div className="rounded-none border border-neutral-200 p-5 dark:border-neutral-800 space-y-1">
+              <div className="flex items-center justify-between">
+                <p className="text-xs font-semibold uppercase tracking-wide text-neutral-400">
+                  Địa chỉ giao hàng
+                </p>
+                <button
+                  type="button"
+                  onClick={() => goTo("shipping")}
+                  className="text-xs underline text-neutral-500 hover:text-neutral-900 dark:hover:text-white"
+                >
+                  Sửa
+                </button>
+              </div>
+              <p className="text-sm text-neutral-900 dark:text-white">
+                {[addressForm.firstLine, addressForm.municipality, addressForm.city]
+                  .filter(Boolean)
+                  .join(", ")}
+              </p>
+              {addressForm.postalCode && (
+                <p className="text-sm text-neutral-500">Mã bưu điện: {addressForm.postalCode}</p>
+              )}
+            </div>
+
+            {/* Review: Shipping */}
+            <div className="rounded-none border border-neutral-200 p-5 dark:border-neutral-800 space-y-1">
+              <div className="flex items-center justify-between">
+                <p className="text-xs font-semibold uppercase tracking-wide text-neutral-400">
+                  Vận chuyển
+                </p>
+                <button
+                  type="button"
+                  onClick={() => goTo("shipping_method")}
+                  className="text-xs underline text-neutral-500 hover:text-neutral-900 dark:hover:text-white"
+                >
+                  Sửa
+                </button>
+              </div>
+              <p className="text-sm font-medium text-neutral-900 dark:text-white">
+                {selectedMethod?.name ?? "—"}
+              </p>
+              <p className="text-sm text-neutral-500">
+                {shippingFee === 0 ? (
+                  <span className="text-green-600 dark:text-green-400">Miễn phí</span>
+                ) : (
+                  formatMoney(shippingFee)
+                )}
+              </p>
+            </div>
+
+            {/* Review: Payment */}
+            <div className="rounded-none border border-neutral-200 p-5 dark:border-neutral-800 space-y-1">
+              <div className="flex items-center justify-between">
+                <p className="text-xs font-semibold uppercase tracking-wide text-neutral-400">
+                  Thanh toán
+                </p>
+                <button
+                  type="button"
+                  onClick={() => goTo("payment")}
+                  className="text-xs underline text-neutral-500 hover:text-neutral-900 dark:hover:text-white"
+                >
+                  Sửa
+                </button>
+              </div>
+              <p className="text-sm font-medium text-neutral-900 dark:text-white">
+                {paymentType === "WEBPAY" ? "Thanh toán trực tuyến (Webpay)" : "Thanh toán khi nhận hàng (COD)"}
+              </p>
+              {discount?.valid && (
+                <p className="text-sm text-green-600 dark:text-green-400">
+                  Mã {discount.code}: −{formatMoney(discount.discountAmount ?? 0)}
+                </p>
+              )}
+            </div>
+
+            {/* Place order CTA */}
+            <Button
+              onClick={handlePlaceOrder}
+              disabled={isSubmitting}
+              className="w-full"
+              size="lg"
+            >
+              {isSubmitting ? (
+                <span className="flex items-center justify-center gap-2">
+                  <span className="h-4 w-4 animate-spin rounded-full border-2 border-white/30 border-t-white" />
+                  Đang xử lý…
+                </span>
+              ) : (
+                <span className="flex items-center gap-2">
+                  <Lock className="size-4" />
+                  Đặt hàng · {formatMoney(total)}
+                </span>
+              )}
+            </Button>
+
+            <p className="text-center text-xs text-neutral-400">
+              Nhấn "Đặt hàng" đồng nghĩa với việc bạn đồng ý với{" "}
+              <Link href="/about" className="underline hover:text-neutral-600">
+                điều khoản sử dụng
+              </Link>{" "}
+              của Mono Studio.
+            </p>
           </div>
         )}
       </div>
 
-      {/* Right: Summary */}
-      <div>
-        <div className="sticky top-4 rounded-lg border border-neutral-200 p-6 dark:border-neutral-800">
-          <h2 className="mb-4 font-semibold">Đơn hàng của bạn</h2>
-
-          {/* Items */}
-          <div className="mb-4 space-y-3 max-h-64 overflow-y-auto">
-            {items.map((item) => (
-              <div key={item.variantSku} className="flex justify-between text-sm">
-                <span className="line-clamp-1 flex-1 pr-2">
-                  {item.productName}
-                  {item.variantSize ? ` (${item.variantSize})` : ""}
-                  <span className="text-neutral-500"> ×{item.quantity}</span>
-                </span>
-                <span className="shrink-0 font-medium">{formatMoney(item.lineTotal)}</span>
-              </div>
-            ))}
-          </div>
-
-          <div className="space-y-2 border-t border-neutral-100 pt-4 text-sm dark:border-neutral-800">
-            <div className="flex justify-between">
-              <span className="text-neutral-500">Tạm tính</span>
-              <span>{formatMoney(subtotal)}</span>
-            </div>
-            {discountAmount > 0 && (
-              <div className="flex justify-between text-green-600 dark:text-green-400">
-                <span>Giảm giá</span>
-                <span>−{formatMoney(discountAmount)}</span>
-              </div>
-            )}
-            <div className="flex justify-between">
-              <span className="text-neutral-500">Vận chuyển</span>
-              <span>
-                {selectedShipping
-                  ? (shippingFee === 0 ? "Miễn phí" : formatMoney(shippingFee))
-                  : "—"}
-              </span>
-            </div>
-            <div className="flex justify-between border-t border-neutral-100 pt-2 font-semibold dark:border-neutral-800">
-              <span>Tổng cộng</span>
-              <span>{formatMoney(total)}</span>
-            </div>
-          </div>
-
-          {/* Discount code */}
-          <div className="mt-4 space-y-2 border-t border-neutral-100 pt-4 dark:border-neutral-800">
-            <Label htmlFor="discount" className="text-sm font-medium">Mã giảm giá</Label>
-            <div className="flex gap-2">
-              <Input
-                id="discount"
-                placeholder="Nhập mã..."
-                value={discountCode}
-                onChange={(e) => setDiscountCode(e.target.value)}
-                className="flex-1"
-              />
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={applyDiscount}
-                disabled={discountLoading || !discountCode.trim()}
-              >
-                {discountLoading ? "..." : "Áp dụng"}
-              </Button>
-            </div>
-            {discount?.valid && (
-              <p className="text-xs text-green-600 dark:text-green-400">
-                ✓ {discount.message ?? "Áp dụng thành công"}
-              </p>
-            )}
-          </div>
-        </div>
-      </div>
+      {/* ── RIGHT: Order summary ─────────────────────────────────────────── */}
+      <OrderSummarySidebar
+        items={items}
+        subtotal={subtotal}
+        totalDiscount={totalDiscount}
+        shippingFee={shippingFee}
+        total={total}
+      />
     </div>
   );
 }

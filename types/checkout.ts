@@ -4,23 +4,74 @@
 
 import type { ShippingMethod } from "./common";
 
-/** GET /api/public/receipt/{token} — order receipt after payment completion */
+// ─── Person / Address (matches backend PersonPojo / AddressPojo) ────────────────
+
+export interface PersonPojo {
+  firstName: string;
+  lastName: string;
+  email: string;
+  phone: string;
+}
+
+export interface AddressPojo {
+  firstLine: string;
+  secondLine?: string;
+  municipality: string;
+  city: string;
+  postalCode?: string;
+  notes?: string;
+}
+
+// ─── Checkout Start Request ────────────────────────────────────────────────────
+
+export interface CheckoutStartPayload {
+  /** Cart session token (sent via X-Session-Token header, optional here) */
+  cartSessionToken?: string;
+  shippingMethodId: number;
+  discountCode?: string;
+  /** Customer info — firstName + lastName + email + phone */
+  customer: PersonPojo;
+  shippingAddress: AddressPojo;
+  /** Payment type: WEBPAY | COD */
+  paymentType: "WEBPAY" | "COD";
+  billingType: "individual" | "enterprise";
+  billingCompany?: {
+    companyName: string;
+    taxCode: string;
+    email: string;
+    address: AddressPojo;
+  };
+}
+
+// ─── Checkout Start Response ────────────────────────────────────────────────────
+
+export interface PaymentRedirectionDetails {
+  url?: string;
+  token?: string;
+  buyOrder?: number;
+}
+
+// ─── Receipt (mirrors backend ReceiptPojo) ─────────────────────────────────────
+
 export interface Receipt {
-  token: string;
+  token?: string;
   buyOrder: number;
-  /** Payment method used */
+  date?: string;
+  status?: string;
+  totalValue?: number;
+  taxValue?: number;
+  transportValue?: number;
+  totalItems?: number;
+  details?: ReceiptItem[];
+  // Extended fields from frontend's own processing
   paymentType?: string;
-  /** Transaction reference from payment gateway */
   transactionToken?: string;
-  /** Cart summary */
-  subtotal: number;
-  shippingFee: number;
+  subtotal?: number;
+  shippingFee?: number;
   discountAmount?: number;
-  total: number;
-  /** Customer info */
+  total?: number;
   customerName?: string;
   customerEmail?: string;
-  /** Shipping address */
   shippingAddress?: {
     recipientName?: string;
     phone?: string;
@@ -30,11 +81,7 @@ export interface Receipt {
     district?: string;
     ward?: string;
   };
-  /** Items in the order */
   items: ReceiptItem[];
-  /** Order status */
-  status?: string;
-  /** Timestamp */
   createdAt?: string;
 }
 
@@ -46,15 +93,8 @@ export interface ReceiptItem {
   lineTotal: number;
 }
 
-/** POST /api/public/checkout response */
-export interface CheckoutResponse {
-  buyOrder: number;
-  token: string;
-  redirectUrl?: string;
-  paymentType?: string;
-}
+// ─── Discount Validation ────────────────────────────────────────────────────────
 
-/** Discount code validation response */
 export interface DiscountValidation {
   valid: boolean;
   discountAmount?: number;

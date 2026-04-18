@@ -3,6 +3,7 @@
 import { MagnifyingGlassIcon } from "@heroicons/react/24/outline";
 import Form from "next/form";
 import { useSearchParams } from "next/navigation";
+import Link from "next/link";
 
 export default function Search() {
   const searchParams = useSearchParams();
@@ -10,34 +11,32 @@ export default function Search() {
   return (
     <Form
       action="/search"
-      className="w-max-[550px] relative w-full lg:w-80 xl:w-full"
+      className="relative w-full lg:w-80 xl:w-full"
     >
       <input
         key={searchParams?.get("q")}
         type="text"
-        name="q"
-        placeholder="Search for products..."
+        name="query"
+        placeholder="Tìm sản phẩm…"
         autoComplete="off"
-        defaultValue={searchParams?.get("q") || ""}
-        className="text-md w-full rounded-lg border bg-white px-4 py-2 text-black placeholder:text-neutral-500 md:text-sm dark:border-neutral-800 dark:bg-transparent dark:text-white dark:placeholder:text-neutral-400"
+        defaultValue={searchParams?.get("query") || ""}
+        className="w-full rounded-none border border-neutral-200 bg-white py-2.5 pl-4 pr-10 text-sm placeholder:text-neutral-400 focus:border-neutral-900 focus:outline-none dark:border-neutral-700 dark:bg-neutral-950 dark:text-white dark:placeholder:text-neutral-500 dark:focus:border-white"
       />
-      <div className="absolute right-0 top-0 mr-3 flex h-full items-center">
+      <button
+        type="submit"
+        aria-label="Tìm kiếm"
+        className="absolute right-0 top-0 mr-3 flex h-full items-center text-neutral-500 hover:text-neutral-900 dark:hover:text-white"
+      >
         <MagnifyingGlassIcon className="h-4" />
-      </div>
+      </button>
     </Form>
   );
 }
 
 export function SearchSkeleton() {
   return (
-    <form className="w-max-[550px] relative w-full lg:w-80 xl:w-full">
-      <input
-        placeholder="Search for products..."
-        className="w-full rounded-lg border bg-white px-4 py-2 text-sm text-black placeholder:text-neutral-500 dark:border-neutral-800 dark:bg-transparent dark:text-white dark:placeholder:text-neutral-400"
-      />
-      <div className="absolute right-0 top-0 mr-3 flex h-full items-center">
-        <MagnifyingGlassIcon className="h-4" />
-      </div>
-    </form>
+    <div className="relative w-full lg:w-80 xl:w-full animate-pulse">
+      <div className="h-[38px] rounded-none border border-neutral-200 bg-neutral-100 dark:bg-neutral-800" />
+    </div>
   );
 }

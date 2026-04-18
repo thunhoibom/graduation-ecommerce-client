@@ -2,8 +2,6 @@
 
 import { redirect } from "next/navigation";
 import { removeFromCart } from "@/services/rest-api/cart/cart";
-import { initiateCheckout } from "@/services/rest-api/checkout/checkout";
-import { getCart } from "@/services/rest-api/cart/cart";
 
 /** POST action — remove item by variantSku */
 export async function removeItem(
@@ -18,21 +16,7 @@ export async function removeItem(
   }
 }
 
-/** Server Action — redirect to payment gateway after checkout init */
+/** Server Action — redirect to checkout page (full 4-step checkout happens client-side) */
 export async function redirectToCheckout() {
-  const cart = await getCart();
-  if (!cart || cart.items.length === 0) {
-    redirect("/cart");
-  }
-
-  try {
-    const result = await initiateCheckout({ cartSessionToken: cart.token });
-    if (result.url) {
-      redirect(result.url);
-    }
-    // Fallback: go to a checkout status page
-    redirect(`/checkout/status?buyOrder=${result.buyOrder}&token=${result.token}`);
-  } catch {
-    redirect("/cart");
-  }
+  redirect("/checkout");
 }

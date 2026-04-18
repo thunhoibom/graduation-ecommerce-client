@@ -30,9 +30,10 @@ export async function login(
     withCredentials: true,
   });
 
-  // Backend may return token in body or Set-Cookie
-  if (data?.token) {
-    setAuthToken(data.token);
+  // Backend returns token as plain text "Bearer <token>" or in data.token
+  const token = data?.token || data;
+  if (token && typeof token === 'string') {
+    setAuthToken(token);
   }
   return data;
 }

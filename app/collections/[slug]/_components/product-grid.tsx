@@ -52,7 +52,7 @@ export function ProductGrid({
             className="group block"
           >
             {/* Image */}
-            <div className="relative aspect-[3/4] overflow-hidden rounded bg-neutral-100 dark:bg-neutral-900">
+            <div className="relative aspect-[3/4] overflow-hidden bg-neutral-100 dark:bg-neutral-900">
               {product.images?.[0]?.url ? (
                 <Image
                   src={product.images[0].url}
@@ -70,7 +70,7 @@ export function ProductGrid({
               {/* Out of stock overlay */}
               {!product.currentStock && (
                 <div className="absolute inset-0 flex items-center justify-center bg-black/40">
-                  <span className="rounded-full bg-white/90 px-3 py-1 text-xs font-medium text-black">
+                  <span className="rounded-none bg-white/90 px-3 py-1 text-xs font-medium text-black">
                     Hết hàng
                   </span>
                 </div>
@@ -80,7 +80,7 @@ export function ProductGrid({
             {/* Info */}
             <div className="mt-3 space-y-1">
               {product.category && (
-                <p className="text-xs text-neutral-500">{product.category.name}</p>
+                <p className="text-xs text-neutral-500 dark:text-neutral-400">{product.category.name}</p>
               )}
               <h3 className="line-clamp-2 text-sm font-medium leading-tight">
                 {product.name}
@@ -99,7 +99,7 @@ export function ProductGrid({
           {page > 1 && (
             <Link
               href={buildPageUrl(page - 1)}
-              className="rounded border border-neutral-200 px-3 py-1.5 text-sm hover:bg-neutral-100 dark:border-neutral-700 dark:hover:bg-neutral-800"
+              className="border border-neutral-200 px-3 py-1.5 text-sm hover:bg-neutral-100 dark:border-neutral-700 dark:hover:bg-neutral-800"
             >
               ← Trước
             </Link>
@@ -112,7 +112,7 @@ export function ProductGrid({
                 key={p}
                 href={buildPageUrl(p)}
                 className={cn(
-                  "min-w-[36px] rounded border px-3 py-1.5 text-center text-sm",
+                  "min-w-[36px] border border-neutral-200 px-3 py-1.5 text-center text-sm",
                   p === page
                     ? "border-black bg-black text-white dark:border-white dark:bg-white dark:text-black"
                     : "border-neutral-200 hover:bg-neutral-100 dark:border-neutral-700 dark:hover:bg-neutral-800"
@@ -125,7 +125,7 @@ export function ProductGrid({
           {page < totalPages && (
             <Link
               href={buildPageUrl(page + 1)}
-              className="rounded border border-neutral-200 px-3 py-1.5 text-sm hover:bg-neutral-100 dark:border-neutral-700 dark:hover:bg-neutral-800"
+              className="border border-neutral-200 px-3 py-1.5 text-sm hover:bg-neutral-100 dark:border-neutral-700 dark:hover:bg-neutral-800"
             >
               Sau →
             </Link>

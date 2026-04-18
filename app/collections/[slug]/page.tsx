@@ -6,11 +6,21 @@ import {
 } from "@/services/rest-api/collections/collections";
 import { ProductGrid } from "./_components/product-grid";
 import { CollectionHeader } from "./_components/collection-header";
+import { FilterSidebar } from "./_components/filter-sidebar";
+import { ActiveFilters } from "./_components/active-filters";
 import type { ProductFilters } from "@/services/rest-api/products/products";
 
 interface Props {
   params: Promise<{ slug: string }>;
-  searchParams: Promise<{ page?: string; sortBy?: string; sortDir?: string }>;
+  searchParams: Promise<{
+    page?: string;
+    sortBy?: string;
+    sortDir?: string;
+    minPrice?: string;
+    maxPrice?: string;
+    inStock?: string;
+    query?: string;
+  }>;
 }
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
@@ -18,8 +28,10 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   try {
     const collection = await getCollection(slug);
     return {
-      title: collection.name,
-      description: collection.description,
+      title: `${collection.name} — Mono Studio`,
+      description:
+        collection.description ??
+        `Khám phá bộ sưu tập ${collection.name} tại Mono Studio. Thời trang tối giản, chất lượng cao.`,
     };
   } catch {
     return { title: "Bộ sưu tập" };
@@ -28,7 +40,16 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 
 export default async function CollectionPage({ params, searchParams }: Props) {
   const { slug } = await params;
-  const { page: pageStr, sortBy, sortDir } = await searchParams;
+  const {
+    page: pageStr,
+    sortBy,
+    sortDir,
+    minPrice,
+    maxPrice,
+    inStock,
+    query,
+  } = await searchParams;
+
   const page = pageStr ? parseInt(pageStr) : 1;
 
   let collection;
@@ -44,28 +65,50 @@ export default async function CollectionPage({ params, searchParams }: Props) {
     pageSize: 24,
     sortBy: sortBy ?? "name",
     sortDir: (sortDir as "asc" | "desc") ?? "asc",
+    ...(minPrice !== undefined && { minPrice: parseInt(minPrice) }),
+    ...(maxPrice !== undefined && { maxPrice: parseInt(maxPrice) }),
+    ...(inStock === "true" && { inStock: true }),
+    ...(query !== undefined && { query }),
   };
 
-  const { items: products, totalCount, pageIndex } = await getCollectionProducts(slug, filters);
-
+  const { items: products, totalCount, pageIndex } =
+    await getCollectionProducts(slug, filters);
   const totalPages = Math.ceil((totalCount ?? 0) / 24);
 
   return (
-    <div className="mx-auto max-w-7xl px-4 py-8 lg:px-6">
+    <div className="mx-auto max-w-7xl px-4 py-6 lg:px-6">
+      {/* Header with sort */}
       <CollectionHeader
         collection={collection}
         totalCount={totalCount ?? 0}
         sortBy={sortBy ?? "name"}
         sortDir={sortDir ?? "asc"}
       />
-      <ProductGrid
-        products={products}
-        page={pageIndex ?? page}
-        totalPages={totalPages}
-        sortBy={sortBy ?? "name"}
-        sortDir={sortDir ?? "asc"}
-        collectionSlug={slug}
-      />
+
+      {/* Active filter chips */}
+      <div className="mt-4">
+        <ActiveFilters />
+      </div>
+
+      {/* Layout: sidebar + grid */}
+      <div className="mt-6 flex gap-8">
+        {/* Desktop filter sidebar */}
+        <div className="hidden lg:block">
+          <FilterSidebar />
+        </div>
+
+        {/* Product grid */}
+        <div className="flex-1">
+          <ProductGrid
+            products={products}
+            page={pageIndex ?? page}
+            totalPages={totalPages}
+            sortBy={sortBy ?? "name"}
+            sortDir={sortDir ?? "asc"}
+            collectionSlug={slug}
+          />
+        </div>
+      </div>
     </div>
   );
 }

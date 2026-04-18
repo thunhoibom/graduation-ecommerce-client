@@ -31,7 +31,8 @@ export function getAuthToken(): string | null {
 
 export function setAuthToken(token: string): void {
   if (typeof document === "undefined") return;
-  document.cookie = `auth_token=${token}; path=/; max-age=86400; SameSite=Lax`;
+  const cleanToken = token.replace("Bearer ", "");
+  document.cookie = `auth_token=${cleanToken}; path=/; max-age=86400; SameSite=Lax`;
 }
 
 export function clearAuthToken(): void {

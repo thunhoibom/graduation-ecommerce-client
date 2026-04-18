@@ -10,8 +10,10 @@ import { formatMoney } from "@/lib/utils";
 
 function CartItemRow({
   item,
+  key,
 }: {
   item: NonNullable<NonNullable<ReturnType<typeof useCart>["cart"]>["items"]>[number];
+  key?: string;
 }) {
   const { updateItem, removeItem } = useCart();
 

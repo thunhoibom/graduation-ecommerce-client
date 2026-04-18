@@ -1,72 +1,106 @@
 "use client";
 
-import clsx from "clsx";
-import type { ProductVariantPojo } from "@/types/product";
 import { useRouter, useSearchParams } from "next/navigation";
-
-type Combination = {
-  id: number;
-  availableStock?: number;
-  [key: string]: string | number | boolean | undefined;
-};
+import type { ProductVariantPojo } from "@/types/product";
 
 interface VariantSelectorProps {
   variants: ProductVariantPojo[];
   sizeKey?: string;
   colorKey?: string;
+  onVariantChange?: (sku: string | null) => void;
 }
 
-export function VariantSelector({ variants, sizeKey = "size", colorKey = "color" }: VariantSelectorProps) {
+export function VariantSelector({
+  variants,
+  sizeKey = "size",
+  colorKey = "color",
+  onVariantChange,
+}: VariantSelectorProps) {
   const router = useRouter();
   const searchParams = useSearchParams();
 
-  const combinations: Combination[] = variants.map((variant) => ({
-    id: variant.id ?? 0,
-    availableStock: variant.availableStock,
-    [sizeKey.toLowerCase()]: variant.size,
-    [colorKey.toLowerCase()]: variant.color ?? "",
-  }));
-
-  const updateOption = (name: string, value: string) => {
-    const params = new URLSearchParams(searchParams.toString());
-    params.set(name, value);
-    router.replace(`?${params.toString()}`, { scroll: false });
-  };
-
-  const sizes = Array.from(new Set(variants.map((v) => v.size).filter((s): s is string => Boolean(s))));
-  const colors = Array.from(new Set(variants.map((v) => v.color).filter((c): c is string => Boolean(c))));
+  const sizes = Array.from(
+    new Set(
+      variants
+        .map((v) => v.size)
+        .filter((s): s is string => Boolean(s))
+    )
+  );
+  const colors = Array.from(
+    new Set(
+      variants
+        .map((v) => v.color)
+        .filter((c): c is string => Boolean(c))
+    )
+  );
 
   if (!sizes.length && !colors.length) return null;
+
+  const sizeParam = searchParams.get(sizeKey.toLowerCase());
+  const colorParam = searchParams.get(colorKey.toLowerCase());
+
+  const isSizeAvailable = (size: string) =>
+    variants.some(
+      (v) =>
+        v.size === size &&
+        ((colorParam && v.color === colorParam) || !colorParam) &&
+        (v.availableStock ?? 0) > 0
+    );
+
+  const isColorAvailable = (color: string) =>
+    variants.some(
+      (v) =>
+        v.color === color &&
+        ((sizeParam && v.size === sizeParam) || !sizeParam) &&
+        (v.availableStock ?? 0) > 0
+    );
+
+  const handleSelect = (name: string, value: string) => {
+    const params = new URLSearchParams(searchParams.toString());
+    const current = params.get(name);
+    if (current === value) {
+      params.delete(name);
+    } else {
+      params.set(name, value);
+    }
+    router.replace(`?${params.toString()}`, { scroll: false });
+
+    if (onVariantChange) {
+      const s = params.get(sizeKey.toLowerCase()) ?? undefined;
+      const c = params.get(colorKey.toLowerCase()) ?? undefined;
+      const matched = variants.find(
+        (v) =>
+          (s === undefined || v.size === s) &&
+          (c === undefined || v.color === c)
+      );
+      onVariantChange(matched?.sku ?? null);
+    }
+  };
 
   return (
     <div className="space-y-6">
       {sizes.length > 0 && (
         <div>
-          <p className="mb-3 text-sm font-medium uppercase tracking-wide">{sizeKey}</p>
+          <p className="mb-3 text-xs font-semibold uppercase tracking-wide text-neutral-400 dark:text-neutral-500">
+            Kích thước
+          </p>
           <div className="flex flex-wrap gap-2">
             {sizes.map((size) => {
-              const optionKey = sizeKey.toLowerCase();
-              const isActive = searchParams.get(optionKey) === size;
-              const isAvailable = combinations.some((c) => {
-                const sizeMatch = c[optionKey] === size;
-                const colorParam = searchParams.get(colorKey.toLowerCase());
-                const colorMatch = !colorParam || !colorKey || c[colorKey.toLowerCase()] === colorParam;
-                return sizeMatch && colorMatch && (c.availableStock ?? 0) > 0;
-              });
-
+              const isActive = sizeParam === size;
+              const available = isSizeAvailable(size);
               return (
                 <button
                   key={size}
-                  onClick={() => updateOption(optionKey, size)}
-                  aria-disabled={!isAvailable}
-                  className={clsx(
-                    "min-w-[48px] rounded-full border px-3 py-2 text-sm font-medium transition",
+                  onClick={() => handleSelect(sizeKey.toLowerCase(), size)}
+                  disabled={!available}
+                  className={[
+                    "min-w-[48px] rounded-none border px-4 py-2 text-sm font-medium transition",
                     isActive
-                      ? "border-black bg-black text-white dark:border-white dark:bg-white dark:text-black"
-                      : !isAvailable
-                        ? "cursor-not-allowed border-neutral-200 bg-neutral-100 text-neutral-400 line-through dark:border-neutral-700 dark:bg-neutral-900 dark:text-neutral-600"
-                        : "border-neutral-300 hover:border-black dark:border-neutral-700 dark:hover:border-white"
-                  )}
+                      ? "border-neutral-900 bg-neutral-900 text-white dark:border-white dark:bg-white dark:text-black"
+                      : available
+                        ? "border-neutral-200 text-neutral-700 hover:border-neutral-900 dark:border-neutral-700 dark:text-neutral-300 dark:hover:border-white"
+                        : "cursor-not-allowed border-neutral-100 bg-neutral-50 text-neutral-300 line-through dark:border-neutral-800 dark:bg-neutral-900 dark:text-neutral-700",
+                  ].join(" ")}
                 >
                   {size}
                 </button>
@@ -78,31 +112,26 @@ export function VariantSelector({ variants, sizeKey = "size", colorKey = "color"
 
       {colors.length > 0 && (
         <div>
-          <p className="mb-3 text-sm font-medium uppercase tracking-wide">{colorKey}</p>
+          <p className="mb-3 text-xs font-semibold uppercase tracking-wide text-neutral-400 dark:text-neutral-500">
+            Màu sắc
+          </p>
           <div className="flex flex-wrap gap-2">
             {colors.map((color) => {
-              const optionKey = colorKey.toLowerCase();
-              const isActive = searchParams.get(optionKey) === color;
-              const isAvailable = combinations.some((c) => {
-                const colorMatch = c[optionKey] === color;
-                const sizeParam = searchParams.get(sizeKey.toLowerCase());
-                const sizeMatch = !sizeParam || !sizeKey || c[sizeKey.toLowerCase()] === sizeParam;
-                return colorMatch && sizeMatch && (c.availableStock ?? 0) > 0;
-              });
-
+              const isActive = colorParam === color;
+              const available = isColorAvailable(color);
               return (
                 <button
                   key={color}
-                  onClick={() => updateOption(optionKey, color)}
-                  aria-disabled={!isAvailable}
-                  className={clsx(
-                    "rounded-full border px-3 py-2 text-sm font-medium transition",
+                  onClick={() => handleSelect(colorKey.toLowerCase(), color)}
+                  disabled={!available}
+                  className={[
+                    "rounded-none border px-4 py-2 text-sm font-medium transition",
                     isActive
-                      ? "border-black bg-black text-white dark:border-white dark:bg-white dark:text-black"
-                      : !isAvailable
-                        ? "cursor-not-allowed border-neutral-200 bg-neutral-100 text-neutral-400 line-through dark:border-neutral-700 dark:bg-neutral-900 dark:text-neutral-600"
-                        : "border-neutral-300 hover:border-black dark:border-neutral-700 dark:hover:border-white"
-                  )}
+                      ? "border-neutral-900 bg-neutral-900 text-white dark:border-white dark:bg-white dark:text-black"
+                      : available
+                        ? "border-neutral-200 text-neutral-700 hover:border-neutral-900 dark:border-neutral-700 dark:text-neutral-300 dark:hover:border-white"
+                        : "cursor-not-allowed border-neutral-100 bg-neutral-50 text-neutral-300 line-through dark:border-neutral-800 dark:bg-neutral-900 dark:text-neutral-700",
+                  ].join(" ")}
                 >
                   {color}
                 </button>

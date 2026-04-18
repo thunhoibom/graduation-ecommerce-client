@@ -4,6 +4,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { CaretDownIcon } from "@phosphor-icons/react";
 import type { Collection } from "@/types/collection";
 import { cn } from "@/lib/utils";
+import { FilterSidebar } from "./filter-sidebar";
 
 interface CollectionHeaderProps {
   collection: Collection;
@@ -44,7 +45,9 @@ export function CollectionHeader({
   return (
     <div className="mb-8 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
       <div>
-        <h1 className="text-3xl font-semibold tracking-tight">{collection.name}</h1>
+        <h1 className="text-2xl font-semibold tracking-tight text-neutral-900 dark:text-white">
+          {collection.name}
+        </h1>
         {collection.description && (
           <p className="mt-1 text-sm text-neutral-500">{collection.description}</p>
         )}
@@ -53,17 +56,41 @@ export function CollectionHeader({
         </p>
       </div>
 
-      {/* Sort dropdown */}
-      <div className="relative inline-block text-left">
-        <label className="sr-only" htmlFor="sort-select">
-          Sắp xếp
-        </label>
+      {/* Desktop: sort only */}
+      <div className="hidden sm:flex items-center gap-3">
+        <span className="text-sm text-neutral-500">Sắp xếp:</span>
         <div className="relative">
+          <label className="sr-only" htmlFor="sort-select">
+            Sắp xếp
+          </label>
           <select
             id="sort-select"
             value={currentSort}
             onChange={(e) => updateSort(e.target.value)}
-            className="appearance-none rounded border border-neutral-200 bg-white px-4 py-2 pr-10 text-sm dark:border-neutral-700 dark:bg-neutral-950"
+            className="appearance-none rounded-none border border-neutral-200 bg-white pl-4 pr-10 py-2 text-sm dark:border-neutral-700 dark:bg-neutral-950 text-neutral-900 dark:text-white cursor-pointer focus:border-neutral-900 focus:outline-none"
+          >
+            {SORT_OPTIONS.map((opt) => (
+              <option key={opt.value} value={opt.value}>
+                {opt.label}
+              </option>
+            ))}
+          </select>
+          <CaretDownIcon className="pointer-events-none absolute right-3 top-1/2 size-4 -translate-y-1/2 text-neutral-500" />
+        </div>
+      </div>
+
+      {/* Mobile: filter + sort row */}
+      <div className="flex items-center gap-2 sm:hidden">
+        <FilterSidebar isMobile />
+        <div className="relative flex-1">
+          <label className="sr-only" htmlFor="sort-select-mobile">
+            Sắp xếp
+          </label>
+          <select
+            id="sort-select-mobile"
+            value={currentSort}
+            onChange={(e) => updateSort(e.target.value)}
+            className="w-full appearance-none rounded-none border border-neutral-200 bg-white pl-4 pr-10 py-2.5 text-sm dark:border-neutral-700 dark:bg-neutral-950 text-neutral-900 dark:text-white cursor-pointer focus:border-neutral-900 focus:outline-none"
           >
             {SORT_OPTIONS.map((opt) => (
               <option key={opt.value} value={opt.value}>

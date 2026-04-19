@@ -22,8 +22,14 @@ import type {
 // ─── Shipping Methods ─────────────────────────────────────────────────────────
 
 /** GET /api/public/shipping/methods — active shipping methods */
-export async function getShippingMethods(): Promise<ShippingMethod[]> {
-  const { data } = await api.get<ShippingMethod[]>("/api/public/shipping/methods");
+export async function getShippingMethods(
+  subtotal?: number,
+  latitude?: number,
+  longitude?: number
+): Promise<ShippingMethod[]> {
+  const { data } = await api.get<ShippingMethod[]>("/api/public/shipping/methods", {
+    params: { subtotal, latitude, longitude }
+  });
   return data ?? [];
 }
 

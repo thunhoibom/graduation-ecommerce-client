@@ -2,6 +2,7 @@
 
 import { Fragment } from "react";
 import Link from "next/link";
+import Image from "next/image";
 import { Dialog, Transition } from "@headlessui/react";
 import { X, Trash, Minus, Plus, ShoppingBag } from "@phosphor-icons/react";
 import { useCart } from "./cart-context";
@@ -10,12 +11,11 @@ import { formatMoney } from "@/lib/utils";
 
 function CartItemRow({
   item,
-  key,
 }: {
   item: NonNullable<NonNullable<ReturnType<typeof useCart>["cart"]>["items"]>[number];
-  key?: string;
 }) {
   const { updateItem, removeItem } = useCart();
+  const sku = item.variantSku || (item as any).sku || (item as any).variantSkuResolved;
 
   const sizeColor =
     [item.variantSize, item.variantColor].filter(Boolean).join(" / ") || undefined;
@@ -23,9 +23,20 @@ function CartItemRow({
   return (
     <li className="flex w-full flex-col border-b border-neutral-100 py-4 last:border-0 dark:border-neutral-800 first:pt-0">
       <div className="flex gap-3">
-        {/* Image — no public image endpoint in spec; show placeholder */}
-        <div className="flex h-16 w-16 shrink-0 items-center justify-center rounded border border-neutral-200 bg-neutral-100 dark:border-neutral-800 dark:bg-neutral-900">
-          <ShoppingBag className="size-6 text-neutral-300 dark:text-neutral-700" />
+        {/* Image */}
+        <div className="relative h-16 w-16 shrink-0 overflow-hidden rounded border border-neutral-200 bg-neutral-100 dark:border-neutral-800 dark:bg-neutral-900">
+          {item.primaryImageUrl ? (
+            <Image
+              src={item.primaryImageUrl}
+              alt={item.productName}
+              fill
+              className="object-cover"
+            />
+          ) : (
+            <div className="flex h-full w-full items-center justify-center">
+              <ShoppingBag className="size-6 text-neutral-300 dark:text-neutral-700" />
+            </div>
+          )}
         </div>
 
         {/* Info */}
@@ -49,7 +60,7 @@ function CartItemRow({
             </span>
             <div className="flex items-center gap-1">
               <button
-                onClick={() => updateItem(item.variantSku, item.quantity - 1)}
+                onClick={() => updateItem(sku, item.quantity - 1)}
                 className="flex h-7 w-7 items-center justify-center rounded border border-neutral-200 text-neutral-600 hover:border-neutral-400 dark:border-neutral-700 dark:text-neutral-400 dark:hover:border-neutral-500"
                 aria-label="Giảm số lượng"
               >
@@ -57,7 +68,7 @@ function CartItemRow({
               </button>
               <span className="w-8 text-center text-sm">{item.quantity}</span>
               <button
-                onClick={() => updateItem(item.variantSku, item.quantity + 1)}
+                onClick={() => updateItem(sku, item.quantity + 1)}
                 className="flex h-7 w-7 items-center justify-center rounded border border-neutral-200 text-neutral-600 hover:border-neutral-400 dark:border-neutral-700 dark:text-neutral-400 dark:hover:border-neutral-500"
                 aria-label="Tăng số lượng"
               >
@@ -69,7 +80,7 @@ function CartItemRow({
 
         {/* Remove */}
         <button
-          onClick={() => removeItem(item.variantSku)}
+          onClick={() => removeItem(sku)}
           className="ml-1 self-start p-1 text-neutral-400 hover:text-red-500 dark:text-neutral-600 dark:hover:text-red-400"
           aria-label="Xóa sản phẩm"
         >
@@ -170,9 +181,10 @@ export default function CartModal() {
               ) : (
                 <>
                   <ul className="flex-1 overflow-y-auto px-5 py-4">
-                    {items.map((item) => (
-                      <CartItemRow key={item.variantSku} item={item} />
-                    ))}
+                    {items.map((item, index) => {
+                      const itemSku = item.variantSku || (item as any).sku || (item as any).variantSkuResolved || index;
+                      return <CartItemRow key={item.id || itemSku} item={item} />;
+                    })}
                   </ul>
 
                   {/* Summary */}

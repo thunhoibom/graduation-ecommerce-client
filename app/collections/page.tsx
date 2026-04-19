@@ -9,7 +9,12 @@ export const metadata: Metadata = {
 };
 
 export default async function CollectionsPage() {
-  const collections = await getCollections();
+  let collections: Awaited<ReturnType<typeof getCollections>> = [];
+  try {
+    collections = await getCollections();
+  } catch (error) {
+    console.error("Failed to fetch collections:", error);
+  }
 
   return (
     <div className="mx-auto max-w-7xl px-4 py-8 lg:px-6">

@@ -1,8 +1,10 @@
 "use client";
 
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { formatMoney } from "@/lib/utils";
+import { Minus, Plus } from "@phosphor-icons/react";
 import { useCart } from "@/components/cart/cart-context";
 import { VariantSelector } from "@/components/product/variant-selector";
 import type { Product, ProductVariantPojo } from "@/types/product";
@@ -12,17 +14,18 @@ interface ProductDescriptionProps {
 }
 
 export function ProductDescription({ product }: ProductDescriptionProps) {
+  const router = useRouter();
   const { addItem } = useCart();
-  const [selectedVariant, setSelectedVariant] = useState<ProductVariantPojo | null>(null);
+  const [selectedSku, setSelectedSku] = useState<string | null>(null);
   const [isPending, setIsPending] = useState(false);
+  const [quantity, setQuantity] = useState(1);
 
   const variants = (product as unknown as { variants?: ProductVariantPojo[] }).variants ?? [];
+  const selectedVariant = variants.find((v) => v.sku === selectedSku) || null;
   const hasOptions = variants.some((v) => v.size || v.color);
 
   const handleVariantChange = (sku: string | null) => {
-    if (!sku) { setSelectedVariant(null); return; }
-    const v = variants.find((x) => x.sku === sku);
-    setSelectedVariant(v ?? null);
+    setSelectedSku(sku);
   };
 
   const handleAddToCart = async () => {
@@ -33,8 +36,10 @@ export function ProductDescription({ product }: ProductDescriptionProps) {
     const sku = selectedVariant?.sku ?? product.barcode;
     setIsPending(true);
     try {
-      await addItem(sku, 1);
+      await addItem(sku, quantity);
       toast.success("Đã thêm vào giỏ hàng");
+      setQuantity(1);
+      router.refresh();
     } catch {
       toast.error("Không thể thêm sản phẩm. Vui lòng thử lại.");
     } finally {
@@ -138,6 +143,43 @@ export function ProductDescription({ product }: ProductDescriptionProps) {
           </p>
         </div>
       )}
+
+      {/* ── Quantity Selector ───────────────────────────────── */}
+      <div className="space-y-3">
+        <p className="text-xs font-semibold uppercase tracking-wide text-neutral-400 dark:text-neutral-500">
+          Số lượng
+        </p>
+        <div className="flex items-center gap-4">
+          <div className="flex h-12 w-32 items-center justify-between border border-neutral-200 px-3 transition-colors hover:border-neutral-300 dark:border-neutral-800 dark:hover:border-neutral-700">
+            <button
+              type="button"
+              onClick={() => setQuantity(Math.max(1, quantity - 1))}
+              disabled={quantity <= 1}
+              className="p-1 text-neutral-500 hover:text-black disabled:opacity-30 dark:hover:text-white"
+              aria-label="Giảm số lượng"
+            >
+              <Minus size={16} />
+            </button>
+            <span className="w-8 text-center text-base font-medium tabular-nums">
+              {quantity}
+            </span>
+            <button
+              type="button"
+              onClick={() => setQuantity(Math.min(rawStock || 99, quantity + 1))}
+              disabled={quantity >= (rawStock || 99)}
+              className="p-1 text-neutral-500 hover:text-black disabled:opacity-30 dark:hover:text-white"
+              aria-label="Tăng số lượng"
+            >
+              <Plus size={16} />
+            </button>
+          </div>
+          {rawStock > 0 && (
+            <span className="text-sm text-neutral-500">
+              {rawStock} sản phẩm có sẵn
+            </span>
+          )}
+        </div>
+      </div>
 
       {/* ── Add to cart — desktop ────────────────────────────── */}
       <div className="hidden md:block">

@@ -13,12 +13,13 @@ export function EditItemQuantityButton({
   type: "plus" | "minus";
 }) {
   const { updateItem } = useCart();
+  const sku = item.variantSku || (item as any).sku || (item as any).variantSkuResolved;
 
   return (
     <button
       type="button"
       onClick={() =>
-        updateItem(item.variantSku, type === "plus" ? item.quantity + 1 : item.quantity - 1)
+        updateItem(sku, type === "plus" ? item.quantity + 1 : item.quantity - 1)
       }
       aria-label={type === "plus" ? "Tăng số lượng" : "Giảm số lượng"}
       className={clsx(

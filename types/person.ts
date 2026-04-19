@@ -22,6 +22,8 @@ export interface AddressPojo {
   city: string;
   postalCode?: string;
   notes?: string;
+  latitude?: number;
+  longitude?: number;
 }
 
 /**

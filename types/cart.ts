@@ -41,7 +41,7 @@ export interface CartItem {
   lineTotal: number;          // VND
   availableStock?: number;
   inStock?: boolean;
-  productImageUrl?: string;
+  primaryImageUrl?: string;
   active?: boolean;
   addedAt?: string;
   updatedAt?: string;

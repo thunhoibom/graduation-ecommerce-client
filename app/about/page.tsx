@@ -2,7 +2,7 @@ import { notFound } from "next/navigation";
 import type { Metadata } from "next";
 import Image from "next/image";
 import Link from "next/link";
-import { MapPin, Phone, EnvelopeSimple, InstagramLogo, FacebookLogo, TiktokLogo } from "@phosphor-icons/react";
+import { MapPin, Phone, EnvelopeSimple, InstagramLogo, FacebookLogo, TiktokLogo } from "@phosphor-icons/react/dist/ssr";
 import { Button } from "@/components/ui/button";
 import { getAbout } from "@/services/rest-api/about/about";
 import Footer from "@/components/layout/footer";

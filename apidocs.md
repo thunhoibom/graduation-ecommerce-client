@@ -1,10867 +1,1864 @@
+# Mono Studio E-Commerce — Backend API Documentation
+
+> **Base URL:** `http://localhost:8080/api`
+> **Content-Type:** `application/json`
+> **Authentication:** JWT Bearer token in `Authorization` header
+> **Cart Session:** `X-Session-Token` header (UUID, optional — auto-created if absent)
+
+---
+
+## Table of Contents
+
+1. [Authentication](#1-authentication)
+2. [Account & Profile](#2-account--profile)
+3. [My Orders (Customer)](#3-my-orders-customer)
+4. [Public Product Data](#4-public-product-data)
+5. [Reviews (Public)](#5-reviews-public)
+6. [Cart](#6-cart)
+7. [Stock Reservations](#7-stock-reservations)
+8. [Checkout & Payment](#8-checkout--payment)
+9. [Receipt](#9-receipt)
+10. [Discount Codes (Public)](#10-discount-codes-public)
+11. [Shipping Methods (Public)](#11-shipping-methods-public)
+12. [Address Book](#12-address-book)
+13. [Admin — Dashboard](#13-admin--dashboard)
+14. [Admin — Products](#14-admin--products)
+15. [Admin — Product Categories](#15-admin--product-categories)
+16. [Admin — Product Variants](#16-admin--product-variants)
+17. [Admin — Product Lists](#17-admin--product-lists)
+18. [Admin — Product Reviews](#18-admin--product-reviews)
+19. [Admin — Images](#19-admin--images)
+20. [Admin — Billing Types](#20-admin--billing-types)
+21. [Admin — Order Statuses](#21-admin--order-statuses)
+22. [Admin — Shipping Methods](#22-admin--shipping-methods)
+23. [Admin — Shippers](#23-admin--shippers)
+24. [Admin — Orders](#24-admin--orders)
+25. [Admin — Return Requests](#25-admin--return-requests)
+26. [Admin — Discount Codes](#26-admin--discount-codes)
+27. [Admin — Cart Sessions](#27-admin--cart-sessions)
+28. [Admin — Users & Roles](#28-admin--users--roles)
+29. [Admin — People & Customers](#29-admin--people--customers)
+30. [Admin — Salespeople](#30-admin--salespeople)
+31. [Error Reference](#31-error-reference)
+32. [Pagination & Filtering](#32-pagination--filtering)
+
+---
+
+## 1. Authentication
+
+All authenticated endpoints require: `Authorization: Bearer <jwt_token>`
+
+### `POST /public/auth/login` — Login
+
+**Security:** permitAll (no auth required)
+
+| Field | Type | Required | Description |
+|---|---|---|---|
+| `name` | string | ✅ | Username |
+| `password` | string | ✅ | Password |
+
+```json
+// Request
+{ "name": "johndoe", "password": "Secret123!" }
+
+// Response 200 — JWT token set as Bearer in response header
+// Body: (empty)
+```
+
+**Errors:**
+- `AUTH_01` (401) — invalid credentials
+
+---
+
+### `POST /public/auth/register` — Register Account
+
+**Security:** permitAll
+
+| Field | Type | Required | Description |
+|---|---|---|---|
+| `name` | string | ✅ | Username (3–50 chars, unique) |
+| `password` | string | ✅ | Password (min 8, upper+lower+digit+special) |
+| `profile.firstName` | string | ✅ | First name |
+| `profile.lastName` | string | ✅ | Last name |
+| `profile.email` | string | ✅ | Valid email address |
+| `profile.phone1` | string | ❌ | Primary phone |
+| `profile.phone2` | string | ❌ | Secondary phone |
+| `profile.idNumber` | string | ❌ | ID number |
+
+```json
+// Request
 {
-  "openapi": "3.0.1",
-  "info": {
-    "title": "OpenAPI definition",
-    "version": "v0"
-  },
-  "servers": [
-    {
-      "url": "http://localhost:8080",
-      "description": "Generated server url"
-    }
-  ],
-  "paths": {
-    "/api/public/address-book/{id}": {
-      "get": {
-        "tags": [
-          "Address Book"
-        ],
-        "summary": "Get a specific saved address entry",
-        "operationId": "get",
-        "parameters": [
-          {
-            "name": "id",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "integer",
-              "format": "int64"
-            }
-          }
-        ],
-        "responses": {
-          "400": {
-            "description": "Bad Request",
-            "content": {
-              "*/*": {
-                "schema": {
-                  "$ref": "#/components/schemas/AppError"
-                }
-              }
-            }
-          },
-          "404": {
-            "description": "Not Found",
-            "content": {
-              "*/*": {
-                "schema": {
-                  "$ref": "#/components/schemas/AppError"
-                }
-              }
-            }
-          },
-          "401": {
-            "description": "Unauthorized",
-            "content": {
-              "*/*": {
-                "schema": {
-                  "$ref": "#/components/schemas/AppError"
-                }
-              }
-            }
-          },
-          "200": {
-            "description": "OK",
-            "content": {
-              "*/*": {
-                "schema": {
-                  "$ref": "#/components/schemas/AddressBookPojo"
-                }
-              }
-            }
-          }
-        }
-      },
-      "put": {
-        "tags": [
-          "Address Book"
-        ],
-        "summary": "Replace an existing address entry",
-        "operationId": "replace",
-        "parameters": [
-          {
-            "name": "id",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "integer",
-              "format": "int64"
-            }
-          }
-        ],
-        "requestBody": {
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/AddressBookPojo"
-              }
-            }
-          },
-          "required": true
-        },
-        "responses": {
-          "400": {
-            "description": "Bad Request",
-            "content": {
-              "*/*": {
-                "schema": {
-                  "$ref": "#/components/schemas/AppError"
-                }
-              }
-            }
-          },
-          "404": {
-            "description": "Not Found",
-            "content": {
-              "*/*": {
-                "schema": {
-                  "$ref": "#/components/schemas/AppError"
-                }
-              }
-            }
-          },
-          "401": {
-            "description": "Unauthorized",
-            "content": {
-              "*/*": {
-                "schema": {
-                  "$ref": "#/components/schemas/AppError"
-                }
-              }
-            }
-          },
-          "200": {
-            "description": "OK",
-            "content": {
-              "*/*": {
-                "schema": {
-                  "$ref": "#/components/schemas/AddressBookPojo"
-                }
-              }
-            }
-          }
-        }
-      },
-      "delete": {
-        "tags": [
-          "Address Book"
-        ],
-        "summary": "Delete an address from the address book",
-        "operationId": "delete",
-        "parameters": [
-          {
-            "name": "id",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "integer",
-              "format": "int64"
-            }
-          }
-        ],
-        "responses": {
-          "400": {
-            "description": "Bad Request",
-            "content": {
-              "*/*": {
-                "schema": {
-                  "$ref": "#/components/schemas/AppError"
-                }
-              }
-            }
-          },
-          "404": {
-            "description": "Not Found",
-            "content": {
-              "*/*": {
-                "schema": {
-                  "$ref": "#/components/schemas/AppError"
-                }
-              }
-            }
-          },
-          "401": {
-            "description": "Unauthorized",
-            "content": {
-              "*/*": {
-                "schema": {
-                  "$ref": "#/components/schemas/AppError"
-                }
-              }
-            }
-          },
-          "204": {
-            "description": "No Content"
-          }
-        }
-      },
-      "patch": {
-        "tags": [
-          "Address Book"
-        ],
-        "summary": "Partially update an address entry",
-        "operationId": "partialUpdate",
-        "parameters": [
-          {
-            "name": "id",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "integer",
-              "format": "int64"
-            }
-          }
-        ],
-        "requestBody": {
-          "content": {
-            "application/json": {
-              "schema": {
-                "type": "object",
-                "additionalProperties": {
-                  "type": "object"
-                }
-              }
-            }
-          },
-          "required": true
-        },
-        "responses": {
-          "400": {
-            "description": "Bad Request",
-            "content": {
-              "*/*": {
-                "schema": {
-                  "$ref": "#/components/schemas/AppError"
-                }
-              }
-            }
-          },
-          "404": {
-            "description": "Not Found",
-            "content": {
-              "*/*": {
-                "schema": {
-                  "$ref": "#/components/schemas/AppError"
-                }
-              }
-            }
-          },
-          "401": {
-            "description": "Unauthorized",
-            "content": {
-              "*/*": {
-                "schema": {
-                  "$ref": "#/components/schemas/AppError"
-                }
-              }
-            }
-          },
-          "200": {
-            "description": "OK",
-            "content": {
-              "*/*": {
-                "schema": {
-                  "$ref": "#/components/schemas/AddressBookPojo"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/api/data/users/{id}": {
-      "get": {
-        "tags": [
-          "Users management"
-        ],
-        "operationId": "getById",
-        "parameters": [
-          {
-            "name": "id",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "integer",
-              "format": "int64"
-            }
-          }
-        ],
-        "responses": {
-          "400": {
-            "description": "Bad Request",
-            "content": {
-              "*/*": {
-                "schema": {
-                  "$ref": "#/components/schemas/AppError"
-                }
-              }
-            }
-          },
-          "404": {
-            "description": "Not Found",
-            "content": {
-              "*/*": {
-                "schema": {
-                  "$ref": "#/components/schemas/AppError"
-                }
-              }
-            }
-          },
-          "401": {
-            "description": "Unauthorized",
-            "content": {
-              "*/*": {
-                "schema": {
-                  "$ref": "#/components/schemas/AppError"
-                }
-              }
-            }
-          },
-          "200": {
-            "description": "OK",
-            "content": {
-              "*/*": {
-                "schema": {
-                  "$ref": "#/components/schemas/UserPojo"
-                }
-              }
-            }
-          }
-        }
-      },
-      "put": {
-        "tags": [
-          "Users management"
-        ],
-        "summary": "Replace users data.",
-        "operationId": "update",
-        "parameters": [
-          {
-            "name": "input",
-            "in": "query",
-            "required": true,
-            "schema": {
-              "$ref": "#/components/schemas/UserPojo"
-            }
-          },
-          {
-            "name": "id",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "integer",
-              "format": "int64"
-            }
-          }
-        ],
-        "responses": {
-          "400": {
-            "description": "Bad Request",
-            "content": {
-              "*/*": {
-                "schema": {
-                  "$ref": "#/components/schemas/AppError"
-                }
-              }
-            }
-          },
-          "404": {
-            "description": "Not Found",
-            "content": {
-              "*/*": {
-                "schema": {
-                  "$ref": "#/components/schemas/AppError"
-                }
-              }
-            }
-          },
-          "401": {
-            "description": "Unauthorized",
-            "content": {
-              "*/*": {
-                "schema": {
-                  "$ref": "#/components/schemas/AppError"
-                }
-              }
-            }
-          },
-          "204": {
-            "description": "No Content"
-          }
-        }
-      },
-      "delete": {
-        "tags": [
-          "Users management"
-        ],
-        "summary": "Remove users.",
-        "operationId": "delete_1",
-        "parameters": [
-          {
-            "name": "id",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "integer",
-              "format": "int64"
-            }
-          }
-        ],
-        "responses": {
-          "400": {
-            "description": "Bad Request",
-            "content": {
-              "*/*": {
-                "schema": {
-                  "$ref": "#/components/schemas/AppError"
-                }
-              }
-            }
-          },
-          "404": {
-            "description": "Not Found",
-            "content": {
-              "*/*": {
-                "schema": {
-                  "$ref": "#/components/schemas/AppError"
-                }
-              }
-            }
-          },
-          "401": {
-            "description": "Unauthorized",
-            "content": {
-              "*/*": {
-                "schema": {
-                  "$ref": "#/components/schemas/AppError"
-                }
-              }
-            }
-          },
-          "204": {
-            "description": "No Content"
-          }
-        }
-      }
-    },
-    "/api/data/user_roles/{id}": {
-      "get": {
-        "tags": [
-          "Params management"
-        ],
-        "operationId": "getById_1",
-        "parameters": [
-          {
-            "name": "id",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "integer",
-              "format": "int64"
-            }
-          }
-        ],
-        "responses": {
-          "400": {
-            "description": "Bad Request",
-            "content": {
-              "*/*": {
-                "schema": {
-                  "$ref": "#/components/schemas/AppError"
-                }
-              }
-            }
-          },
-          "404": {
-            "description": "Not Found",
-            "content": {
-              "*/*": {
-                "schema": {
-                  "$ref": "#/components/schemas/AppError"
-                }
-              }
-            }
-          },
-          "401": {
-            "description": "Unauthorized",
-            "content": {
-              "*/*": {
-                "schema": {
-                  "$ref": "#/components/schemas/AppError"
-                }
-              }
-            }
-          },
-          "200": {
-            "description": "OK",
-            "content": {
-              "*/*": {
-                "schema": {
-                  "$ref": "#/components/schemas/UserRolePojo"
-                }
-              }
-            }
-          }
-        }
-      },
-      "put": {
-        "tags": [
-          "Params management"
-        ],
-        "summary": "Replace user roles data.",
-        "operationId": "update_1",
-        "parameters": [
-          {
-            "name": "input",
-            "in": "query",
-            "required": true,
-            "schema": {
-              "$ref": "#/components/schemas/UserRolePojo"
-            }
-          },
-          {
-            "name": "id",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "integer",
-              "format": "int64"
-            }
-          }
-        ],
-        "responses": {
-          "400": {
-            "description": "Bad Request",
-            "content": {
-              "*/*": {
-                "schema": {
-                  "$ref": "#/components/schemas/AppError"
-                }
-              }
-            }
-          },
-          "404": {
-            "description": "Not Found",
-            "content": {
-              "*/*": {
-                "schema": {
-                  "$ref": "#/components/schemas/AppError"
-                }
-              }
-            }
-          },
-          "401": {
-            "description": "Unauthorized",
-            "content": {
-              "*/*": {
-                "schema": {
-                  "$ref": "#/components/schemas/AppError"
-                }
-              }
-            }
-          },
-          "204": {
-            "description": "No Content"
-          }
-        }
-      },
-      "delete": {
-        "tags": [
-          "Params management"
-        ],
-        "summary": "Remove user roles.",
-        "operationId": "delete_2",
-        "parameters": [
-          {
-            "name": "id",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "integer",
-              "format": "int64"
-            }
-          }
-        ],
-        "responses": {
-          "400": {
-            "description": "Bad Request",
-            "content": {
-              "*/*": {
-                "schema": {
-                  "$ref": "#/components/schemas/AppError"
-                }
-              }
-            }
-          },
-          "404": {
-            "description": "Not Found",
-            "content": {
-              "*/*": {
-                "schema": {
-                  "$ref": "#/components/schemas/AppError"
-                }
-              }
-            }
-          },
-          "401": {
-            "description": "Unauthorized",
-            "content": {
-              "*/*": {
-                "schema": {
-                  "$ref": "#/components/schemas/AppError"
-                }
-              }
-            }
-          },
-          "204": {
-            "description": "No Content"
-          }
-        }
-      }
-    },
-    "/api/data/shipping-methods/{id}": {
-      "get": {
-        "tags": [
-          "Shipping methods management"
-        ],
-        "operationId": "getById_2",
-        "parameters": [
-          {
-            "name": "id",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "integer",
-              "format": "int64"
-            }
-          }
-        ],
-        "responses": {
-          "400": {
-            "description": "Bad Request",
-            "content": {
-              "*/*": {
-                "schema": {
-                  "$ref": "#/components/schemas/AppError"
-                }
-              }
-            }
-          },
-          "404": {
-            "description": "Not Found",
-            "content": {
-              "*/*": {
-                "schema": {
-                  "$ref": "#/components/schemas/AppError"
-                }
-              }
-            }
-          },
-          "401": {
-            "description": "Unauthorized",
-            "content": {
-              "*/*": {
-                "schema": {
-                  "$ref": "#/components/schemas/AppError"
-                }
-              }
-            }
-          },
-          "200": {
-            "description": "OK",
-            "content": {
-              "*/*": {
-                "schema": {
-                  "$ref": "#/components/schemas/ShippingMethodPojo"
-                }
-              }
-            }
-          }
-        }
-      },
-      "put": {
-        "tags": [
-          "Shipping methods management"
-        ],
-        "summary": "Replace shipping methods data.",
-        "operationId": "update_2",
-        "parameters": [
-          {
-            "name": "input",
-            "in": "query",
-            "required": true,
-            "schema": {
-              "$ref": "#/components/schemas/ShippingMethodPojo"
-            }
-          },
-          {
-            "name": "id",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "integer",
-              "format": "int64"
-            }
-          }
-        ],
-        "responses": {
-          "400": {
-            "description": "Bad Request",
-            "content": {
-              "*/*": {
-                "schema": {
-                  "$ref": "#/components/schemas/AppError"
-                }
-              }
-            }
-          },
-          "404": {
-            "description": "Not Found",
-            "content": {
-              "*/*": {
-                "schema": {
-                  "$ref": "#/components/schemas/AppError"
-                }
-              }
-            }
-          },
-          "401": {
-            "description": "Unauthorized",
-            "content": {
-              "*/*": {
-                "schema": {
-                  "$ref": "#/components/schemas/AppError"
-                }
-              }
-            }
-          },
-          "204": {
-            "description": "No Content"
-          }
-        }
-      },
-      "delete": {
-        "tags": [
-          "Shipping methods management"
-        ],
-        "summary": "Remove shipping methods.",
-        "operationId": "delete_3",
-        "parameters": [
-          {
-            "name": "id",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "integer",
-              "format": "int64"
-            }
-          }
-        ],
-        "responses": {
-          "400": {
-            "description": "Bad Request",
-            "content": {
-              "*/*": {
-                "schema": {
-                  "$ref": "#/components/schemas/AppError"
-                }
-              }
-            }
-          },
-          "404": {
-            "description": "Not Found",
-            "content": {
-              "*/*": {
-                "schema": {
-                  "$ref": "#/components/schemas/AppError"
-                }
-              }
-            }
-          },
-          "401": {
-            "description": "Unauthorized",
-            "content": {
-              "*/*": {
-                "schema": {
-                  "$ref": "#/components/schemas/AppError"
-                }
-              }
-            }
-          },
-          "204": {
-            "description": "No Content"
-          }
-        }
-      },
-      "patch": {
-        "tags": [
-          "Shipping methods management"
-        ],
-        "summary": "Update parts of shipping methods data.",
-        "operationId": "partialUpdate_1",
-        "parameters": [
-          {
-            "name": "id",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "integer",
-              "format": "int64"
-            }
-          }
-        ],
-        "requestBody": {
-          "content": {
-            "application/json": {
-              "schema": {
-                "type": "object",
-                "additionalProperties": {
-                  "type": "object"
-                }
-              }
-            }
-          },
-          "required": true
-        },
-        "responses": {
-          "400": {
-            "description": "Bad Request",
-            "content": {
-              "*/*": {
-                "schema": {
-                  "$ref": "#/components/schemas/AppError"
-                }
-              }
-            }
-          },
-          "404": {
-            "description": "Not Found",
-            "content": {
-              "*/*": {
-                "schema": {
-                  "$ref": "#/components/schemas/AppError"
-                }
-              }
-            }
-          },
-          "401": {
-            "description": "Unauthorized",
-            "content": {
-              "*/*": {
-                "schema": {
-                  "$ref": "#/components/schemas/AppError"
-                }
-              }
-            }
-          },
-          "204": {
-            "description": "No Content"
-          }
-        }
-      }
-    },
-    "/api/data/shippers/{id}": {
-      "get": {
-        "tags": [
-          "Shippers management"
-        ],
-        "operationId": "getById_3",
-        "parameters": [
-          {
-            "name": "id",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "integer",
-              "format": "int64"
-            }
-          }
-        ],
-        "responses": {
-          "400": {
-            "description": "Bad Request",
-            "content": {
-              "*/*": {
-                "schema": {
-                  "$ref": "#/components/schemas/AppError"
-                }
-              }
-            }
-          },
-          "404": {
-            "description": "Not Found",
-            "content": {
-              "*/*": {
-                "schema": {
-                  "$ref": "#/components/schemas/AppError"
-                }
-              }
-            }
-          },
-          "401": {
-            "description": "Unauthorized",
-            "content": {
-              "*/*": {
-                "schema": {
-                  "$ref": "#/components/schemas/AppError"
-                }
-              }
-            }
-          },
-          "200": {
-            "description": "OK",
-            "content": {
-              "*/*": {
-                "schema": {
-                  "$ref": "#/components/schemas/ShipperPojo"
-                }
-              }
-            }
-          }
-        }
-      },
-      "put": {
-        "tags": [
-          "Shippers management"
-        ],
-        "summary": "Replace shippers data.",
-        "operationId": "update_3",
-        "parameters": [
-          {
-            "name": "input",
-            "in": "query",
-            "required": true,
-            "schema": {
-              "$ref": "#/components/schemas/ShipperPojo"
-            }
-          },
-          {
-            "name": "id",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "integer",
-              "format": "int64"
-            }
-          }
-        ],
-        "responses": {
-          "400": {
-            "description": "Bad Request",
-            "content": {
-              "*/*": {
-                "schema": {
-                  "$ref": "#/components/schemas/AppError"
-                }
-              }
-            }
-          },
-          "404": {
-            "description": "Not Found",
-            "content": {
-              "*/*": {
-                "schema": {
-                  "$ref": "#/components/schemas/AppError"
-                }
-              }
-            }
-          },
-          "401": {
-            "description": "Unauthorized",
-            "content": {
-              "*/*": {
-                "schema": {
-                  "$ref": "#/components/schemas/AppError"
-                }
-              }
-            }
-          },
-          "204": {
-            "description": "No Content"
-          }
-        }
-      },
-      "delete": {
-        "tags": [
-          "Shippers management"
-        ],
-        "summary": "Remove shippers.",
-        "operationId": "delete_4",
-        "parameters": [
-          {
-            "name": "id",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "integer",
-              "format": "int64"
-            }
-          }
-        ],
-        "responses": {
-          "400": {
-            "description": "Bad Request",
-            "content": {
-              "*/*": {
-                "schema": {
-                  "$ref": "#/components/schemas/AppError"
-                }
-              }
-            }
-          },
-          "404": {
-            "description": "Not Found",
-            "content": {
-              "*/*": {
-                "schema": {
-                  "$ref": "#/components/schemas/AppError"
-                }
-              }
-            }
-          },
-          "401": {
-            "description": "Unauthorized",
-            "content": {
-              "*/*": {
-                "schema": {
-                  "$ref": "#/components/schemas/AppError"
-                }
-              }
-            }
-          },
-          "204": {
-            "description": "No Content"
-          }
-        }
-      },
-      "patch": {
-        "tags": [
-          "Shippers management"
-        ],
-        "summary": "Update parts of shippers data.",
-        "operationId": "partialUpdate_2",
-        "parameters": [
-          {
-            "name": "id",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "integer",
-              "format": "int64"
-            }
-          }
-        ],
-        "requestBody": {
-          "content": {
-            "application/json": {
-              "schema": {
-                "type": "object",
-                "additionalProperties": {
-                  "type": "object"
-                }
-              }
-            }
-          },
-          "required": true
-        },
-        "responses": {
-          "400": {
-            "description": "Bad Request",
-            "content": {
-              "*/*": {
-                "schema": {
-                  "$ref": "#/components/schemas/AppError"
-                }
-              }
-            }
-          },
-          "404": {
-            "description": "Not Found",
-            "content": {
-              "*/*": {
-                "schema": {
-                  "$ref": "#/components/schemas/AppError"
-                }
-              }
-            }
-          },
-          "401": {
-            "description": "Unauthorized",
-            "content": {
-              "*/*": {
-                "schema": {
-                  "$ref": "#/components/schemas/AppError"
-                }
-              }
-            }
-          },
-          "204": {
-            "description": "No Content"
-          }
-        }
-      }
-    },
-    "/api/data/salespeople/{id}": {
-      "get": {
-        "tags": [
-          "People management"
-        ],
-        "operationId": "getById_4",
-        "parameters": [
-          {
-            "name": "id",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "integer",
-              "format": "int64"
-            }
-          }
-        ],
-        "responses": {
-          "400": {
-            "description": "Bad Request",
-            "content": {
-              "*/*": {
-                "schema": {
-                  "$ref": "#/components/schemas/AppError"
-                }
-              }
-            }
-          },
-          "404": {
-            "description": "Not Found",
-            "content": {
-              "*/*": {
-                "schema": {
-                  "$ref": "#/components/schemas/AppError"
-                }
-              }
-            }
-          },
-          "401": {
-            "description": "Unauthorized",
-            "content": {
-              "*/*": {
-                "schema": {
-                  "$ref": "#/components/schemas/AppError"
-                }
-              }
-            }
-          },
-          "200": {
-            "description": "OK",
-            "content": {
-              "*/*": {
-                "schema": {
-                  "$ref": "#/components/schemas/PersonPojo"
-                }
-              }
-            }
-          }
-        }
-      },
-      "put": {
-        "tags": [
-          "People management"
-        ],
-        "summary": "Replace salespeople data.",
-        "operationId": "update_4",
-        "parameters": [
-          {
-            "name": "input",
-            "in": "query",
-            "required": true,
-            "schema": {
-              "$ref": "#/components/schemas/PersonPojo"
-            }
-          },
-          {
-            "name": "id",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "integer",
-              "format": "int64"
-            }
-          }
-        ],
-        "responses": {
-          "400": {
-            "description": "Bad Request",
-            "content": {
-              "*/*": {
-                "schema": {
-                  "$ref": "#/components/schemas/AppError"
-                }
-              }
-            }
-          },
-          "404": {
-            "description": "Not Found",
-            "content": {
-              "*/*": {
-                "schema": {
-                  "$ref": "#/components/schemas/AppError"
-                }
-              }
-            }
-          },
-          "401": {
-            "description": "Unauthorized",
-            "content": {
-              "*/*": {
-                "schema": {
-                  "$ref": "#/components/schemas/AppError"
-                }
-              }
-            }
-          },
-          "204": {
-            "description": "No Content"
-          }
-        }
-      },
-      "delete": {
-        "tags": [
-          "People management"
-        ],
-        "summary": "Deregister salespeople.",
-        "operationId": "delete_5",
-        "parameters": [
-          {
-            "name": "id",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "integer",
-              "format": "int64"
-            }
-          }
-        ],
-        "responses": {
-          "400": {
-            "description": "Bad Request",
-            "content": {
-              "*/*": {
-                "schema": {
-                  "$ref": "#/components/schemas/AppError"
-                }
-              }
-            }
-          },
-          "404": {
-            "description": "Not Found",
-            "content": {
-              "*/*": {
-                "schema": {
-                  "$ref": "#/components/schemas/AppError"
-                }
-              }
-            }
-          },
-          "401": {
-            "description": "Unauthorized",
-            "content": {
-              "*/*": {
-                "schema": {
-                  "$ref": "#/components/schemas/AppError"
-                }
-              }
-            }
-          },
-          "204": {
-            "description": "No Content"
-          }
-        }
-      }
-    },
-    "/api/data/return-requests/{id}": {
-      "get": {
-        "tags": [
-          "Return Requests management"
-        ],
-        "operationId": "getById_5",
-        "parameters": [
-          {
-            "name": "id",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "integer",
-              "format": "int64"
-            }
-          }
-        ],
-        "responses": {
-          "400": {
-            "description": "Bad Request",
-            "content": {
-              "*/*": {
-                "schema": {
-                  "$ref": "#/components/schemas/AppError"
-                }
-              }
-            }
-          },
-          "404": {
-            "description": "Not Found",
-            "content": {
-              "*/*": {
-                "schema": {
-                  "$ref": "#/components/schemas/AppError"
-                }
-              }
-            }
-          },
-          "401": {
-            "description": "Unauthorized",
-            "content": {
-              "*/*": {
-                "schema": {
-                  "$ref": "#/components/schemas/AppError"
-                }
-              }
-            }
-          },
-          "200": {
-            "description": "OK",
-            "content": {
-              "*/*": {
-                "schema": {
-                  "$ref": "#/components/schemas/ReturnRequestPojo"
-                }
-              }
-            }
-          }
-        }
-      },
-      "put": {
-        "tags": [
-          "Return Requests management"
-        ],
-        "summary": "Replace return request data.",
-        "operationId": "update_5",
-        "parameters": [
-          {
-            "name": "input",
-            "in": "query",
-            "required": true,
-            "schema": {
-              "$ref": "#/components/schemas/ReturnRequestPojo"
-            }
-          },
-          {
-            "name": "id",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "integer",
-              "format": "int64"
-            }
-          }
-        ],
-        "responses": {
-          "400": {
-            "description": "Bad Request",
-            "content": {
-              "*/*": {
-                "schema": {
-                  "$ref": "#/components/schemas/AppError"
-                }
-              }
-            }
-          },
-          "404": {
-            "description": "Not Found",
-            "content": {
-              "*/*": {
-                "schema": {
-                  "$ref": "#/components/schemas/AppError"
-                }
-              }
-            }
-          },
-          "401": {
-            "description": "Unauthorized",
-            "content": {
-              "*/*": {
-                "schema": {
-                  "$ref": "#/components/schemas/AppError"
-                }
-              }
-            }
-          },
-          "204": {
-            "description": "No Content"
-          }
-        }
-      },
-      "delete": {
-        "tags": [
-          "Return Requests management"
-        ],
-        "summary": "Remove return requests.",
-        "operationId": "delete_6",
-        "parameters": [
-          {
-            "name": "id",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "integer",
-              "format": "int64"
-            }
-          }
-        ],
-        "responses": {
-          "400": {
-            "description": "Bad Request",
-            "content": {
-              "*/*": {
-                "schema": {
-                  "$ref": "#/components/schemas/AppError"
-                }
-              }
-            }
-          },
-          "404": {
-            "description": "Not Found",
-            "content": {
-              "*/*": {
-                "schema": {
-                  "$ref": "#/components/schemas/AppError"
-                }
-              }
-            }
-          },
-          "401": {
-            "description": "Unauthorized",
-            "content": {
-              "*/*": {
-                "schema": {
-                  "$ref": "#/components/schemas/AppError"
-                }
-              }
-            }
-          },
-          "204": {
-            "description": "No Content"
-          }
-        }
-      },
-      "patch": {
-        "tags": [
-          "Return Requests management"
-        ],
-        "summary": "Update parts of return request data.",
-        "operationId": "partialUpdate_3",
-        "parameters": [
-          {
-            "name": "id",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "integer",
-              "format": "int64"
-            }
-          }
-        ],
-        "requestBody": {
-          "content": {
-            "application/json": {
-              "schema": {
-                "type": "object",
-                "additionalProperties": {
-                  "type": "object"
-                }
-              }
-            }
-          },
-          "required": true
-        },
-        "responses": {
-          "400": {
-            "description": "Bad Request",
-            "content": {
-              "*/*": {
-                "schema": {
-                  "$ref": "#/components/schemas/AppError"
-                }
-              }
-            }
-          },
-          "404": {
-            "description": "Not Found",
-            "content": {
-              "*/*": {
-                "schema": {
-                  "$ref": "#/components/schemas/AppError"
-                }
-              }
-            }
-          },
-          "401": {
-            "description": "Unauthorized",
-            "content": {
-              "*/*": {
-                "schema": {
-                  "$ref": "#/components/schemas/AppError"
-                }
-              }
-            }
-          },
-          "204": {
-            "description": "No Content"
-          }
-        }
-      }
-    },
-    "/api/data/products/{id}": {
-      "get": {
-        "tags": [
-          "Products management"
-        ],
-        "operationId": "getById_6",
-        "parameters": [
-          {
-            "name": "id",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "integer",
-              "format": "int64"
-            }
-          }
-        ],
-        "responses": {
-          "400": {
-            "description": "Bad Request",
-            "content": {
-              "*/*": {
-                "schema": {
-                  "$ref": "#/components/schemas/AppError"
-                }
-              }
-            }
-          },
-          "404": {
-            "description": "Not Found",
-            "content": {
-              "*/*": {
-                "schema": {
-                  "$ref": "#/components/schemas/AppError"
-                }
-              }
-            }
-          },
-          "401": {
-            "description": "Unauthorized",
-            "content": {
-              "*/*": {
-                "schema": {
-                  "$ref": "#/components/schemas/AppError"
-                }
-              }
-            }
-          },
-          "200": {
-            "description": "OK",
-            "content": {
-              "*/*": {
-                "schema": {
-                  "$ref": "#/components/schemas/ProductPojo"
-                }
-              }
-            }
-          }
-        }
-      },
-      "put": {
-        "tags": [
-          "Products management"
-        ],
-        "summary": "Replace products data.",
-        "operationId": "update_6",
-        "parameters": [
-          {
-            "name": "id",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "integer",
-              "format": "int64"
-            }
-          }
-        ],
-        "requestBody": {
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/ProductPojo"
-              }
-            }
-          },
-          "required": true
-        },
-        "responses": {
-          "400": {
-            "description": "Bad Request",
-            "content": {
-              "*/*": {
-                "schema": {
-                  "$ref": "#/components/schemas/AppError"
-                }
-              }
-            }
-          },
-          "404": {
-            "description": "Not Found",
-            "content": {
-              "*/*": {
-                "schema": {
-                  "$ref": "#/components/schemas/AppError"
-                }
-              }
-            }
-          },
-          "401": {
-            "description": "Unauthorized",
-            "content": {
-              "*/*": {
-                "schema": {
-                  "$ref": "#/components/schemas/AppError"
-                }
-              }
-            }
-          },
-          "204": {
-            "description": "No Content"
-          }
-        }
-      },
-      "delete": {
-        "tags": [
-          "Products management"
-        ],
-        "summary": "Remove products.",
-        "operationId": "delete_7",
-        "parameters": [
-          {
-            "name": "id",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "integer",
-              "format": "int64"
-            }
-          }
-        ],
-        "responses": {
-          "400": {
-            "description": "Bad Request",
-            "content": {
-              "*/*": {
-                "schema": {
-                  "$ref": "#/components/schemas/AppError"
-                }
-              }
-            }
-          },
-          "404": {
-            "description": "Not Found",
-            "content": {
-              "*/*": {
-                "schema": {
-                  "$ref": "#/components/schemas/AppError"
-                }
-              }
-            }
-          },
-          "401": {
-            "description": "Unauthorized",
-            "content": {
-              "*/*": {
-                "schema": {
-                  "$ref": "#/components/schemas/AppError"
-                }
-              }
-            }
-          },
-          "204": {
-            "description": "No Content"
-          }
-        }
-      },
-      "patch": {
-        "tags": [
-          "Products management"
-        ],
-        "summary": "Update parts of products data.",
-        "operationId": "partialUpdate_4",
-        "parameters": [
-          {
-            "name": "id",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "integer",
-              "format": "int64"
-            }
-          }
-        ],
-        "requestBody": {
-          "content": {
-            "application/json": {
-              "schema": {
-                "type": "object",
-                "additionalProperties": {
-                  "type": "object"
-                }
-              }
-            }
-          },
-          "required": true
-        },
-        "responses": {
-          "400": {
-            "description": "Bad Request",
-            "content": {
-              "*/*": {
-                "schema": {
-                  "$ref": "#/components/schemas/AppError"
-                }
-              }
-            }
-          },
-          "404": {
-            "description": "Not Found",
-            "content": {
-              "*/*": {
-                "schema": {
-                  "$ref": "#/components/schemas/AppError"
-                }
-              }
-            }
-          },
-          "401": {
-            "description": "Unauthorized",
-            "content": {
-              "*/*": {
-                "schema": {
-                  "$ref": "#/components/schemas/AppError"
-                }
-              }
-            }
-          },
-          "204": {
-            "description": "No Content"
-          }
-        }
-      }
-    },
-    "/api/data/product_lists/{id}": {
-      "get": {
-        "tags": [
-          "Product Lists management"
-        ],
-        "operationId": "getById_7",
-        "parameters": [
-          {
-            "name": "id",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "integer",
-              "format": "int64"
-            }
-          }
-        ],
-        "responses": {
-          "400": {
-            "description": "Bad Request",
-            "content": {
-              "*/*": {
-                "schema": {
-                  "$ref": "#/components/schemas/AppError"
-                }
-              }
-            }
-          },
-          "404": {
-            "description": "Not Found",
-            "content": {
-              "*/*": {
-                "schema": {
-                  "$ref": "#/components/schemas/AppError"
-                }
-              }
-            }
-          },
-          "401": {
-            "description": "Unauthorized",
-            "content": {
-              "*/*": {
-                "schema": {
-                  "$ref": "#/components/schemas/AppError"
-                }
-              }
-            }
-          },
-          "200": {
-            "description": "OK",
-            "content": {
-              "*/*": {
-                "schema": {
-                  "$ref": "#/components/schemas/ProductListPojo"
-                }
-              }
-            }
-          }
-        }
-      },
-      "put": {
-        "tags": [
-          "Product Lists management"
-        ],
-        "summary": "Replace product lists data.",
-        "operationId": "update_7",
-        "parameters": [
-          {
-            "name": "input",
-            "in": "query",
-            "required": true,
-            "schema": {
-              "$ref": "#/components/schemas/ProductListPojo"
-            }
-          },
-          {
-            "name": "id",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "integer",
-              "format": "int64"
-            }
-          }
-        ],
-        "responses": {
-          "400": {
-            "description": "Bad Request",
-            "content": {
-              "*/*": {
-                "schema": {
-                  "$ref": "#/components/schemas/AppError"
-                }
-              }
-            }
-          },
-          "404": {
-            "description": "Not Found",
-            "content": {
-              "*/*": {
-                "schema": {
-                  "$ref": "#/components/schemas/AppError"
-                }
-              }
-            }
-          },
-          "401": {
-            "description": "Unauthorized",
-            "content": {
-              "*/*": {
-                "schema": {
-                  "$ref": "#/components/schemas/AppError"
-                }
-              }
-            }
-          },
-          "204": {
-            "description": "No Content"
-          }
-        }
-      },
-      "delete": {
-        "tags": [
-          "Product Lists management"
-        ],
-        "summary": "Remove product lists.",
-        "operationId": "delete_8",
-        "parameters": [
-          {
-            "name": "id",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "integer",
-              "format": "int64"
-            }
-          }
-        ],
-        "responses": {
-          "400": {
-            "description": "Bad Request",
-            "content": {
-              "*/*": {
-                "schema": {
-                  "$ref": "#/components/schemas/AppError"
-                }
-              }
-            }
-          },
-          "404": {
-            "description": "Not Found",
-            "content": {
-              "*/*": {
-                "schema": {
-                  "$ref": "#/components/schemas/AppError"
-                }
-              }
-            }
-          },
-          "401": {
-            "description": "Unauthorized",
-            "content": {
-              "*/*": {
-                "schema": {
-                  "$ref": "#/components/schemas/AppError"
-                }
-              }
-            }
-          },
-          "204": {
-            "description": "No Content"
-          }
-        }
-      },
-      "patch": {
-        "tags": [
-          "Product Lists management"
-        ],
-        "summary": "Update parts of product lists data.",
-        "operationId": "partialUpdate_5",
-        "parameters": [
-          {
-            "name": "id",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "integer",
-              "format": "int64"
-            }
-          }
-        ],
-        "requestBody": {
-          "content": {
-            "application/json": {
-              "schema": {
-                "type": "object",
-                "additionalProperties": {
-                  "type": "object"
-                }
-              }
-            }
-          },
-          "required": true
-        },
-        "responses": {
-          "400": {
-            "description": "Bad Request",
-            "content": {
-              "*/*": {
-                "schema": {
-                  "$ref": "#/components/schemas/AppError"
-                }
-              }
-            }
-          },
-          "404": {
-            "description": "Not Found",
-            "content": {
-              "*/*": {
-                "schema": {
-                  "$ref": "#/components/schemas/AppError"
-                }
-              }
-            }
-          },
-          "401": {
-            "description": "Unauthorized",
-            "content": {
-              "*/*": {
-                "schema": {
-                  "$ref": "#/components/schemas/AppError"
-                }
-              }
-            }
-          },
-          "204": {
-            "description": "No Content"
-          }
-        }
-      }
-    },
-    "/api/data/product_list_contents": {
-      "get": {
-        "tags": [
-          "Product Lists management"
-        ],
-        "summary": "View contents of product lists.",
-        "operationId": "readContents",
-        "parameters": [
-          {
-            "name": "requestParams",
-            "in": "query",
-            "required": true,
-            "schema": {
-              "type": "object",
-              "additionalProperties": {
-                "type": "string"
-              }
-            }
-          }
-        ],
-        "responses": {
-          "400": {
-            "description": "Bad Request",
-            "content": {
-              "*/*": {
-                "schema": {
-                  "$ref": "#/components/schemas/AppError"
-                }
-              }
-            }
-          },
-          "404": {
-            "description": "Not Found",
-            "content": {
-              "*/*": {
-                "schema": {
-                  "$ref": "#/components/schemas/AppError"
-                }
-              }
-            }
-          },
-          "401": {
-            "description": "Unauthorized",
-            "content": {
-              "*/*": {
-                "schema": {
-                  "$ref": "#/components/schemas/AppError"
-                }
-              }
-            }
-          },
-          "200": {
-            "description": "OK",
-            "content": {
-              "*/*": {
-                "schema": {
-                  "$ref": "#/components/schemas/DataPagePojoProductPojo"
-                }
-              }
-            }
-          }
-        }
-      },
-      "put": {
-        "tags": [
-          "Product Lists management"
-        ],
-        "summary": "Fully replace contents of product lists.",
-        "operationId": "updateContents",
-        "parameters": [
-          {
-            "name": "requestParams",
-            "in": "query",
-            "required": true,
-            "schema": {
-              "type": "object",
-              "additionalProperties": {
-                "type": "string"
-              }
-            }
-          }
-        ],
-        "requestBody": {
-          "content": {
-            "application/json": {
-              "schema": {
-                "type": "array",
-                "items": {
-                  "$ref": "#/components/schemas/ProductPojo"
-                }
-              }
-            }
-          },
-          "required": true
-        },
-        "responses": {
-          "400": {
-            "description": "Bad Request",
-            "content": {
-              "*/*": {
-                "schema": {
-                  "$ref": "#/components/schemas/AppError"
-                }
-              }
-            }
-          },
-          "404": {
-            "description": "Not Found",
-            "content": {
-              "*/*": {
-                "schema": {
-                  "$ref": "#/components/schemas/AppError"
-                }
-              }
-            }
-          },
-          "401": {
-            "description": "Unauthorized",
-            "content": {
-              "*/*": {
-                "schema": {
-                  "$ref": "#/components/schemas/AppError"
-                }
-              }
-            }
-          },
-          "204": {
-            "description": "No Content"
-          }
-        }
-      },
-      "post": {
-        "tags": [
-          "Product Lists management"
-        ],
-        "summary": "Add products to lists.",
-        "operationId": "addToContents",
-        "parameters": [
-          {
-            "name": "requestParams",
-            "in": "query",
-            "required": true,
-            "schema": {
-              "type": "object",
-              "additionalProperties": {
-                "type": "string"
-              }
-            }
-          }
-        ],
-        "requestBody": {
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/ProductPojo"
-              }
-            }
-          },
-          "required": true
-        },
-        "responses": {
-          "400": {
-            "description": "Bad Request",
-            "content": {
-              "*/*": {
-                "schema": {
-                  "$ref": "#/components/schemas/AppError"
-                }
-              }
-            }
-          },
-          "404": {
-            "description": "Not Found",
-            "content": {
-              "*/*": {
-                "schema": {
-                  "$ref": "#/components/schemas/AppError"
-                }
-              }
-            }
-          },
-          "401": {
-            "description": "Unauthorized",
-            "content": {
-              "*/*": {
-                "schema": {
-                  "$ref": "#/components/schemas/AppError"
-                }
-              }
-            }
-          },
-          "201": {
-            "description": "Created"
-          }
-        }
-      },
-      "delete": {
-        "tags": [
-          "Product Lists management"
-        ],
-        "summary": "Remove products from lists.",
-        "operationId": "deleteFromContents",
-        "parameters": [
-          {
-            "name": "requestParams",
-            "in": "query",
-            "required": true,
-            "schema": {
-              "type": "object",
-              "additionalProperties": {
-                "type": "string"
-              }
-            }
-          }
-        ],
-        "responses": {
-          "400": {
-            "description": "Bad Request",
-            "content": {
-              "*/*": {
-                "schema": {
-                  "$ref": "#/components/schemas/AppError"
-                }
-              }
-            }
-          },
-          "404": {
-            "description": "Not Found",
-            "content": {
-              "*/*": {
-                "schema": {
-                  "$ref": "#/components/schemas/AppError"
-                }
-              }
-            }
-          },
-          "401": {
-            "description": "Unauthorized",
-            "content": {
-              "*/*": {
-                "schema": {
-                  "$ref": "#/components/schemas/AppError"
-                }
-              }
-            }
-          },
-          "204": {
-            "description": "No Content"
-          }
-        }
-      }
-    },
-    "/api/data/product_categories/{id}": {
-      "get": {
-        "tags": [
-          "Product Categories management"
-        ],
-        "operationId": "getById_8",
-        "parameters": [
-          {
-            "name": "id",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "integer",
-              "format": "int64"
-            }
-          }
-        ],
-        "responses": {
-          "400": {
-            "description": "Bad Request",
-            "content": {
-              "*/*": {
-                "schema": {
-                  "$ref": "#/components/schemas/AppError"
-                }
-              }
-            }
-          },
-          "404": {
-            "description": "Not Found",
-            "content": {
-              "*/*": {
-                "schema": {
-                  "$ref": "#/components/schemas/AppError"
-                }
-              }
-            }
-          },
-          "401": {
-            "description": "Unauthorized",
-            "content": {
-              "*/*": {
-                "schema": {
-                  "$ref": "#/components/schemas/AppError"
-                }
-              }
-            }
-          },
-          "200": {
-            "description": "OK",
-            "content": {
-              "*/*": {
-                "schema": {
-                  "$ref": "#/components/schemas/ProductCategoryPojo"
-                }
-              }
-            }
-          }
-        }
-      },
-      "put": {
-        "tags": [
-          "Product Categories management"
-        ],
-        "summary": "Replace product categories data.",
-        "operationId": "update_8",
-        "parameters": [
-          {
-            "name": "id",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "integer",
-              "format": "int64"
-            }
-          }
-        ],
-        "requestBody": {
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/ProductCategoryPojo"
-              }
-            }
-          },
-          "required": true
-        },
-        "responses": {
-          "400": {
-            "description": "Bad Request",
-            "content": {
-              "*/*": {
-                "schema": {
-                  "$ref": "#/components/schemas/AppError"
-                }
-              }
-            }
-          },
-          "404": {
-            "description": "Not Found",
-            "content": {
-              "*/*": {
-                "schema": {
-                  "$ref": "#/components/schemas/AppError"
-                }
-              }
-            }
-          },
-          "401": {
-            "description": "Unauthorized",
-            "content": {
-              "*/*": {
-                "schema": {
-                  "$ref": "#/components/schemas/AppError"
-                }
-              }
-            }
-          },
-          "204": {
-            "description": "No Content"
-          }
-        }
-      },
-      "delete": {
-        "tags": [
-          "Product Categories management"
-        ],
-        "summary": "Remove product categories.",
-        "operationId": "delete_9",
-        "parameters": [
-          {
-            "name": "id",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "integer",
-              "format": "int64"
-            }
-          }
-        ],
-        "responses": {
-          "400": {
-            "description": "Bad Request",
-            "content": {
-              "*/*": {
-                "schema": {
-                  "$ref": "#/components/schemas/AppError"
-                }
-              }
-            }
-          },
-          "404": {
-            "description": "Not Found",
-            "content": {
-              "*/*": {
-                "schema": {
-                  "$ref": "#/components/schemas/AppError"
-                }
-              }
-            }
-          },
-          "401": {
-            "description": "Unauthorized",
-            "content": {
-              "*/*": {
-                "schema": {
-                  "$ref": "#/components/schemas/AppError"
-                }
-              }
-            }
-          },
-          "204": {
-            "description": "No Content"
-          }
-        }
-      },
-      "patch": {
-        "tags": [
-          "Product Categories management"
-        ],
-        "summary": "Update parts of product categories data.",
-        "operationId": "partialUpdate_6",
-        "parameters": [
-          {
-            "name": "id",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "integer",
-              "format": "int64"
-            }
-          }
-        ],
-        "requestBody": {
-          "content": {
-            "application/json": {
-              "schema": {
-                "type": "object",
-                "additionalProperties": {
-                  "type": "object"
-                }
-              }
-            }
-          },
-          "required": true
-        },
-        "responses": {
-          "400": {
-            "description": "Bad Request",
-            "content": {
-              "*/*": {
-                "schema": {
-                  "$ref": "#/components/schemas/AppError"
-                }
-              }
-            }
-          },
-          "404": {
-            "description": "Not Found",
-            "content": {
-              "*/*": {
-                "schema": {
-                  "$ref": "#/components/schemas/AppError"
-                }
-              }
-            }
-          },
-          "401": {
-            "description": "Unauthorized",
-            "content": {
-              "*/*": {
-                "schema": {
-                  "$ref": "#/components/schemas/AppError"
-                }
-              }
-            }
-          },
-          "204": {
-            "description": "No Content"
-          }
-        }
-      }
-    },
-    "/api/data/product-variants/{id}": {
-      "get": {
-        "tags": [
-          "Product variants management"
-        ],
-        "operationId": "getById_9",
-        "parameters": [
-          {
-            "name": "id",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "integer",
-              "format": "int64"
-            }
-          }
-        ],
-        "responses": {
-          "400": {
-            "description": "Bad Request",
-            "content": {
-              "*/*": {
-                "schema": {
-                  "$ref": "#/components/schemas/AppError"
-                }
-              }
-            }
-          },
-          "404": {
-            "description": "Not Found",
-            "content": {
-              "*/*": {
-                "schema": {
-                  "$ref": "#/components/schemas/AppError"
-                }
-              }
-            }
-          },
-          "401": {
-            "description": "Unauthorized",
-            "content": {
-              "*/*": {
-                "schema": {
-                  "$ref": "#/components/schemas/AppError"
-                }
-              }
-            }
-          },
-          "200": {
-            "description": "OK",
-            "content": {
-              "*/*": {
-                "schema": {
-                  "$ref": "#/components/schemas/ProductVariantPojo"
-                }
-              }
-            }
-          }
-        }
-      },
-      "put": {
-        "tags": [
-          "Product variants management"
-        ],
-        "summary": "Replace product variant data.",
-        "operationId": "update_9",
-        "parameters": [
-          {
-            "name": "input",
-            "in": "query",
-            "required": true,
-            "schema": {
-              "$ref": "#/components/schemas/ProductVariantPojo"
-            }
-          },
-          {
-            "name": "id",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "integer",
-              "format": "int64"
-            }
-          }
-        ],
-        "responses": {
-          "400": {
-            "description": "Bad Request",
-            "content": {
-              "*/*": {
-                "schema": {
-                  "$ref": "#/components/schemas/AppError"
-                }
-              }
-            }
-          },
-          "404": {
-            "description": "Not Found",
-            "content": {
-              "*/*": {
-                "schema": {
-                  "$ref": "#/components/schemas/AppError"
-                }
-              }
-            }
-          },
-          "401": {
-            "description": "Unauthorized",
-            "content": {
-              "*/*": {
-                "schema": {
-                  "$ref": "#/components/schemas/AppError"
-                }
-              }
-            }
-          },
-          "204": {
-            "description": "No Content"
-          }
-        }
-      },
-      "delete": {
-        "tags": [
-          "Product variants management"
-        ],
-        "summary": "Remove product variants.",
-        "operationId": "delete_10",
-        "parameters": [
-          {
-            "name": "id",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "integer",
-              "format": "int64"
-            }
-          }
-        ],
-        "responses": {
-          "400": {
-            "description": "Bad Request",
-            "content": {
-              "*/*": {
-                "schema": {
-                  "$ref": "#/components/schemas/AppError"
-                }
-              }
-            }
-          },
-          "404": {
-            "description": "Not Found",
-            "content": {
-              "*/*": {
-                "schema": {
-                  "$ref": "#/components/schemas/AppError"
-                }
-              }
-            }
-          },
-          "401": {
-            "description": "Unauthorized",
-            "content": {
-              "*/*": {
-                "schema": {
-                  "$ref": "#/components/schemas/AppError"
-                }
-              }
-            }
-          },
-          "204": {
-            "description": "No Content"
-          }
-        }
-      },
-      "patch": {
-        "tags": [
-          "Product variants management"
-        ],
-        "summary": "Update parts of product variant data.",
-        "operationId": "partialUpdate_7",
-        "parameters": [
-          {
-            "name": "id",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "integer",
-              "format": "int64"
-            }
-          }
-        ],
-        "requestBody": {
-          "content": {
-            "application/json": {
-              "schema": {
-                "type": "object",
-                "additionalProperties": {
-                  "type": "object"
-                }
-              }
-            }
-          },
-          "required": true
-        },
-        "responses": {
-          "400": {
-            "description": "Bad Request",
-            "content": {
-              "*/*": {
-                "schema": {
-                  "$ref": "#/components/schemas/AppError"
-                }
-              }
-            }
-          },
-          "404": {
-            "description": "Not Found",
-            "content": {
-              "*/*": {
-                "schema": {
-                  "$ref": "#/components/schemas/AppError"
-                }
-              }
-            }
-          },
-          "401": {
-            "description": "Unauthorized",
-            "content": {
-              "*/*": {
-                "schema": {
-                  "$ref": "#/components/schemas/AppError"
-                }
-              }
-            }
-          },
-          "204": {
-            "description": "No Content"
-          }
-        }
-      }
-    },
-    "/api/data/orders/{id}": {
-      "get": {
-        "tags": [
-          "Orders management"
-        ],
-        "operationId": "getById_12",
-        "parameters": [
-          {
-            "name": "id",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "integer",
-              "format": "int64"
-            }
-          }
-        ],
-        "responses": {
-          "400": {
-            "description": "Bad Request",
-            "content": {
-              "*/*": {
-                "schema": {
-                  "$ref": "#/components/schemas/AppError"
-                }
-              }
-            }
-          },
-          "404": {
-            "description": "Not Found",
-            "content": {
-              "*/*": {
-                "schema": {
-                  "$ref": "#/components/schemas/AppError"
-                }
-              }
-            }
-          },
-          "401": {
-            "description": "Unauthorized",
-            "content": {
-              "*/*": {
-                "schema": {
-                  "$ref": "#/components/schemas/AppError"
-                }
-              }
-            }
-          },
-          "200": {
-            "description": "OK",
-            "content": {
-              "*/*": {
-                "schema": {
-                  "$ref": "#/components/schemas/OrderPojo"
-                }
-              }
-            }
-          }
-        }
-      },
-      "put": {
-        "tags": [
-          "Orders management"
-        ],
-        "summary": "Replace orders data.",
-        "operationId": "update_10",
-        "parameters": [
-          {
-            "name": "input",
-            "in": "query",
-            "required": true,
-            "schema": {
-              "$ref": "#/components/schemas/OrderPojo"
-            }
-          },
-          {
-            "name": "id",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "integer",
-              "format": "int64"
-            }
-          }
-        ],
-        "responses": {
-          "400": {
-            "description": "Bad Request",
-            "content": {
-              "*/*": {
-                "schema": {
-                  "$ref": "#/components/schemas/AppError"
-                }
-              }
-            }
-          },
-          "404": {
-            "description": "Not Found",
-            "content": {
-              "*/*": {
-                "schema": {
-                  "$ref": "#/components/schemas/AppError"
-                }
-              }
-            }
-          },
-          "401": {
-            "description": "Unauthorized",
-            "content": {
-              "*/*": {
-                "schema": {
-                  "$ref": "#/components/schemas/AppError"
-                }
-              }
-            }
-          },
-          "204": {
-            "description": "No Content"
-          }
-        }
-      },
-      "delete": {
-        "tags": [
-          "Orders management"
-        ],
-        "summary": "Remove orders.",
-        "operationId": "delete_11",
-        "parameters": [
-          {
-            "name": "id",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "integer",
-              "format": "int64"
-            }
-          }
-        ],
-        "responses": {
-          "400": {
-            "description": "Bad Request",
-            "content": {
-              "*/*": {
-                "schema": {
-                  "$ref": "#/components/schemas/AppError"
-                }
-              }
-            }
-          },
-          "404": {
-            "description": "Not Found",
-            "content": {
-              "*/*": {
-                "schema": {
-                  "$ref": "#/components/schemas/AppError"
-                }
-              }
-            }
-          },
-          "401": {
-            "description": "Unauthorized",
-            "content": {
-              "*/*": {
-                "schema": {
-                  "$ref": "#/components/schemas/AppError"
-                }
-              }
-            }
-          },
-          "204": {
-            "description": "No Content"
-          }
-        }
-      },
-      "patch": {
-        "tags": [
-          "Orders management"
-        ],
-        "summary": "Update parts of orders data.",
-        "operationId": "partialUpdate_8",
-        "parameters": [
-          {
-            "name": "id",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "integer",
-              "format": "int64"
-            }
-          }
-        ],
-        "requestBody": {
-          "content": {
-            "application/json": {
-              "schema": {
-                "type": "object",
-                "additionalProperties": {
-                  "type": "object"
-                }
-              }
-            }
-          },
-          "required": true
-        },
-        "responses": {
-          "400": {
-            "description": "Bad Request",
-            "content": {
-              "*/*": {
-                "schema": {
-                  "$ref": "#/components/schemas/AppError"
-                }
-              }
-            }
-          },
-          "404": {
-            "description": "Not Found",
-            "content": {
-              "*/*": {
-                "schema": {
-                  "$ref": "#/components/schemas/AppError"
-                }
-              }
-            }
-          },
-          "401": {
-            "description": "Unauthorized",
-            "content": {
-              "*/*": {
-                "schema": {
-                  "$ref": "#/components/schemas/AppError"
-                }
-              }
-            }
-          },
-          "204": {
-            "description": "No Content"
-          }
-        }
-      }
-    },
-    "/api/data/images/{id}": {
-      "get": {
-        "tags": [
-          "Images management"
-        ],
-        "operationId": "getById_14",
-        "parameters": [
-          {
-            "name": "id",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "integer",
-              "format": "int64"
-            }
-          }
-        ],
-        "responses": {
-          "400": {
-            "description": "Bad Request",
-            "content": {
-              "*/*": {
-                "schema": {
-                  "$ref": "#/components/schemas/AppError"
-                }
-              }
-            }
-          },
-          "404": {
-            "description": "Not Found",
-            "content": {
-              "*/*": {
-                "schema": {
-                  "$ref": "#/components/schemas/AppError"
-                }
-              }
-            }
-          },
-          "401": {
-            "description": "Unauthorized",
-            "content": {
-              "*/*": {
-                "schema": {
-                  "$ref": "#/components/schemas/AppError"
-                }
-              }
-            }
-          },
-          "200": {
-            "description": "OK",
-            "content": {
-              "*/*": {
-                "schema": {
-                  "$ref": "#/components/schemas/ImagePojo"
-                }
-              }
-            }
-          }
-        }
-      },
-      "put": {
-        "tags": [
-          "Images management"
-        ],
-        "summary": "Replace image links data.",
-        "operationId": "update_11",
-        "parameters": [
-          {
-            "name": "input",
-            "in": "query",
-            "required": true,
-            "schema": {
-              "$ref": "#/components/schemas/ImagePojo"
-            }
-          },
-          {
-            "name": "id",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "integer",
-              "format": "int64"
-            }
-          }
-        ],
-        "responses": {
-          "400": {
-            "description": "Bad Request",
-            "content": {
-              "*/*": {
-                "schema": {
-                  "$ref": "#/components/schemas/AppError"
-                }
-              }
-            }
-          },
-          "404": {
-            "description": "Not Found",
-            "content": {
-              "*/*": {
-                "schema": {
-                  "$ref": "#/components/schemas/AppError"
-                }
-              }
-            }
-          },
-          "401": {
-            "description": "Unauthorized",
-            "content": {
-              "*/*": {
-                "schema": {
-                  "$ref": "#/components/schemas/AppError"
-                }
-              }
-            }
-          },
-          "204": {
-            "description": "No Content"
-          }
-        }
-      },
-      "delete": {
-        "tags": [
-          "Images management"
-        ],
-        "summary": "Remove image links.",
-        "operationId": "delete_12",
-        "parameters": [
-          {
-            "name": "id",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "integer",
-              "format": "int64"
-            }
-          }
-        ],
-        "responses": {
-          "400": {
-            "description": "Bad Request",
-            "content": {
-              "*/*": {
-                "schema": {
-                  "$ref": "#/components/schemas/AppError"
-                }
-              }
-            }
-          },
-          "404": {
-            "description": "Not Found",
-            "content": {
-              "*/*": {
-                "schema": {
-                  "$ref": "#/components/schemas/AppError"
-                }
-              }
-            }
-          },
-          "401": {
-            "description": "Unauthorized",
-            "content": {
-              "*/*": {
-                "schema": {
-                  "$ref": "#/components/schemas/AppError"
-                }
-              }
-            }
-          },
-          "204": {
-            "description": "No Content"
-          }
-        }
-      },
-      "patch": {
-        "tags": [
-          "Images management"
-        ],
-        "summary": "Update parts of image links data.",
-        "operationId": "partialUpdate_9",
-        "parameters": [
-          {
-            "name": "id",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "integer",
-              "format": "int64"
-            }
-          }
-        ],
-        "requestBody": {
-          "content": {
-            "application/json": {
-              "schema": {
-                "type": "object",
-                "additionalProperties": {
-                  "type": "object"
-                }
-              }
-            }
-          },
-          "required": true
-        },
-        "responses": {
-          "400": {
-            "description": "Bad Request",
-            "content": {
-              "*/*": {
-                "schema": {
-                  "$ref": "#/components/schemas/AppError"
-                }
-              }
-            }
-          },
-          "404": {
-            "description": "Not Found",
-            "content": {
-              "*/*": {
-                "schema": {
-                  "$ref": "#/components/schemas/AppError"
-                }
-              }
-            }
-          },
-          "401": {
-            "description": "Unauthorized",
-            "content": {
-              "*/*": {
-                "schema": {
-                  "$ref": "#/components/schemas/AppError"
-                }
-              }
-            }
-          },
-          "204": {
-            "description": "No Content"
-          }
-        }
-      }
-    },
-    "/api/data/discount-codes/{id}": {
-      "get": {
-        "tags": [
-          "Discount codes management"
-        ],
-        "operationId": "getById_15",
-        "parameters": [
-          {
-            "name": "id",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "integer",
-              "format": "int64"
-            }
-          }
-        ],
-        "responses": {
-          "400": {
-            "description": "Bad Request",
-            "content": {
-              "*/*": {
-                "schema": {
-                  "$ref": "#/components/schemas/AppError"
-                }
-              }
-            }
-          },
-          "404": {
-            "description": "Not Found",
-            "content": {
-              "*/*": {
-                "schema": {
-                  "$ref": "#/components/schemas/AppError"
-                }
-              }
-            }
-          },
-          "401": {
-            "description": "Unauthorized",
-            "content": {
-              "*/*": {
-                "schema": {
-                  "$ref": "#/components/schemas/AppError"
-                }
-              }
-            }
-          },
-          "200": {
-            "description": "OK",
-            "content": {
-              "*/*": {
-                "schema": {
-                  "$ref": "#/components/schemas/DiscountCodePojo"
-                }
-              }
-            }
-          }
-        }
-      },
-      "put": {
-        "tags": [
-          "Discount codes management"
-        ],
-        "summary": "Replace discount code data.",
-        "operationId": "update_12",
-        "parameters": [
-          {
-            "name": "input",
-            "in": "query",
-            "required": true,
-            "schema": {
-              "$ref": "#/components/schemas/DiscountCodePojo"
-            }
-          },
-          {
-            "name": "id",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "integer",
-              "format": "int64"
-            }
-          }
-        ],
-        "responses": {
-          "400": {
-            "description": "Bad Request",
-            "content": {
-              "*/*": {
-                "schema": {
-                  "$ref": "#/components/schemas/AppError"
-                }
-              }
-            }
-          },
-          "404": {
-            "description": "Not Found",
-            "content": {
-              "*/*": {
-                "schema": {
-                  "$ref": "#/components/schemas/AppError"
-                }
-              }
-            }
-          },
-          "401": {
-            "description": "Unauthorized",
-            "content": {
-              "*/*": {
-                "schema": {
-                  "$ref": "#/components/schemas/AppError"
-                }
-              }
-            }
-          },
-          "204": {
-            "description": "No Content"
-          }
-        }
-      },
-      "delete": {
-        "tags": [
-          "Discount codes management"
-        ],
-        "summary": "Remove discount codes.",
-        "operationId": "delete_13",
-        "parameters": [
-          {
-            "name": "id",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "integer",
-              "format": "int64"
-            }
-          }
-        ],
-        "responses": {
-          "400": {
-            "description": "Bad Request",
-            "content": {
-              "*/*": {
-                "schema": {
-                  "$ref": "#/components/schemas/AppError"
-                }
-              }
-            }
-          },
-          "404": {
-            "description": "Not Found",
-            "content": {
-              "*/*": {
-                "schema": {
-                  "$ref": "#/components/schemas/AppError"
-                }
-              }
-            }
-          },
-          "401": {
-            "description": "Unauthorized",
-            "content": {
-              "*/*": {
-                "schema": {
-                  "$ref": "#/components/schemas/AppError"
-                }
-              }
-            }
-          },
-          "204": {
-            "description": "No Content"
-          }
-        }
-      },
-      "patch": {
-        "tags": [
-          "Discount codes management"
-        ],
-        "summary": "Update parts of discount code data.",
-        "operationId": "partialUpdate_10",
-        "parameters": [
-          {
-            "name": "id",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "integer",
-              "format": "int64"
-            }
-          }
-        ],
-        "requestBody": {
-          "content": {
-            "application/json": {
-              "schema": {
-                "type": "object",
-                "additionalProperties": {
-                  "type": "object"
-                }
-              }
-            }
-          },
-          "required": true
-        },
-        "responses": {
-          "400": {
-            "description": "Bad Request",
-            "content": {
-              "*/*": {
-                "schema": {
-                  "$ref": "#/components/schemas/AppError"
-                }
-              }
-            }
-          },
-          "404": {
-            "description": "Not Found",
-            "content": {
-              "*/*": {
-                "schema": {
-                  "$ref": "#/components/schemas/AppError"
-                }
-              }
-            }
-          },
-          "401": {
-            "description": "Unauthorized",
-            "content": {
-              "*/*": {
-                "schema": {
-                  "$ref": "#/components/schemas/AppError"
-                }
-              }
-            }
-          },
-          "204": {
-            "description": "No Content"
-          }
-        }
-      }
-    },
-    "/api/data/customers/{id}": {
-      "get": {
-        "tags": [
-          "People management"
-        ],
-        "operationId": "getById_16",
-        "parameters": [
-          {
-            "name": "id",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "integer",
-              "format": "int64"
-            }
-          }
-        ],
-        "responses": {
-          "400": {
-            "description": "Bad Request",
-            "content": {
-              "*/*": {
-                "schema": {
-                  "$ref": "#/components/schemas/AppError"
-                }
-              }
-            }
-          },
-          "404": {
-            "description": "Not Found",
-            "content": {
-              "*/*": {
-                "schema": {
-                  "$ref": "#/components/schemas/AppError"
-                }
-              }
-            }
-          },
-          "401": {
-            "description": "Unauthorized",
-            "content": {
-              "*/*": {
-                "schema": {
-                  "$ref": "#/components/schemas/AppError"
-                }
-              }
-            }
-          },
-          "200": {
-            "description": "OK",
-            "content": {
-              "*/*": {
-                "schema": {
-                  "$ref": "#/components/schemas/PersonPojo"
-                }
-              }
-            }
-          }
-        }
-      },
-      "put": {
-        "tags": [
-          "People management"
-        ],
-        "summary": "Replace customers data.",
-        "operationId": "update_13",
-        "parameters": [
-          {
-            "name": "input",
-            "in": "query",
-            "required": true,
-            "schema": {
-              "$ref": "#/components/schemas/PersonPojo"
-            }
-          },
-          {
-            "name": "id",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "integer",
-              "format": "int64"
-            }
-          }
-        ],
-        "responses": {
-          "400": {
-            "description": "Bad Request",
-            "content": {
-              "*/*": {
-                "schema": {
-                  "$ref": "#/components/schemas/AppError"
-                }
-              }
-            }
-          },
-          "404": {
-            "description": "Not Found",
-            "content": {
-              "*/*": {
-                "schema": {
-                  "$ref": "#/components/schemas/AppError"
-                }
-              }
-            }
-          },
-          "401": {
-            "description": "Unauthorized",
-            "content": {
-              "*/*": {
-                "schema": {
-                  "$ref": "#/components/schemas/AppError"
-                }
-              }
-            }
-          },
-          "204": {
-            "description": "No Content"
-          }
-        }
-      },
-      "delete": {
-        "tags": [
-          "People management"
-        ],
-        "summary": "Deregister customers.",
-        "operationId": "delete_14",
-        "parameters": [
-          {
-            "name": "id",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "integer",
-              "format": "int64"
-            }
-          }
-        ],
-        "responses": {
-          "400": {
-            "description": "Bad Request",
-            "content": {
-              "*/*": {
-                "schema": {
-                  "$ref": "#/components/schemas/AppError"
-                }
-              }
-            }
-          },
-          "404": {
-            "description": "Not Found",
-            "content": {
-              "*/*": {
-                "schema": {
-                  "$ref": "#/components/schemas/AppError"
-                }
-              }
-            }
-          },
-          "401": {
-            "description": "Unauthorized",
-            "content": {
-              "*/*": {
-                "schema": {
-                  "$ref": "#/components/schemas/AppError"
-                }
-              }
-            }
-          },
-          "204": {
-            "description": "No Content"
-          }
-        }
-      }
-    },
-    "/api/account/profile": {
-      "get": {
-        "tags": [
-          "User Accounts"
-        ],
-        "summary": "View stored profile information",
-        "operationId": "getProfile",
-        "responses": {
-          "400": {
-            "description": "Bad Request",
-            "content": {
-              "*/*": {
-                "schema": {
-                  "$ref": "#/components/schemas/AppError"
-                }
-              }
-            }
-          },
-          "404": {
-            "description": "Not Found",
-            "content": {
-              "*/*": {
-                "schema": {
-                  "$ref": "#/components/schemas/AppError"
-                }
-              }
-            }
-          },
-          "401": {
-            "description": "Unauthorized",
-            "content": {
-              "*/*": {
-                "schema": {
-                  "$ref": "#/components/schemas/AppError"
-                }
-              }
-            }
-          },
-          "200": {
-            "description": "OK",
-            "content": {
-              "*/*": {
-                "schema": {
-                  "$ref": "#/components/schemas/PersonPojo"
-                }
-              }
-            }
-          }
-        }
-      },
-      "put": {
-        "tags": [
-          "User Accounts"
-        ],
-        "summary": "Replace stored profile information",
-        "operationId": "updateProfile",
-        "requestBody": {
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/PersonPojo"
-              }
-            }
-          },
-          "required": true
-        },
-        "responses": {
-          "400": {
-            "description": "Bad Request",
-            "content": {
-              "*/*": {
-                "schema": {
-                  "$ref": "#/components/schemas/AppError"
-                }
-              }
-            }
-          },
-          "404": {
-            "description": "Not Found",
-            "content": {
-              "*/*": {
-                "schema": {
-                  "$ref": "#/components/schemas/AppError"
-                }
-              }
-            }
-          },
-          "401": {
-            "description": "Unauthorized",
-            "content": {
-              "*/*": {
-                "schema": {
-                  "$ref": "#/components/schemas/AppError"
-                }
-              }
-            }
-          },
-          "200": {
-            "description": "OK"
-          }
-        }
-      }
-    },
-    "/api/public/checkout": {
-      "post": {
-        "tags": [
-          "Checkout"
-        ],
-        "summary": "Submit cart contents to request an order and begin a checkout",
-        "operationId": "submitCart",
-        "requestBody": {
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/OrderPojo"
-              }
-            }
-          },
-          "required": true
-        },
-        "responses": {
-          "500": {
-            "description": "Internal Server Error",
-            "content": {
-              "*/*": {
-                "schema": {
-                  "type": "string"
-                }
-              }
-            }
-          },
-          "400": {
-            "description": "Bad Request",
-            "content": {
-              "*/*": {
-                "schema": {
-                  "$ref": "#/components/schemas/AppError"
-                }
-              }
-            }
-          },
-          "404": {
-            "description": "Not Found",
-            "content": {
-              "*/*": {
-                "schema": {
-                  "$ref": "#/components/schemas/AppError"
-                }
-              }
-            }
-          },
-          "401": {
-            "description": "Unauthorized",
-            "content": {
-              "*/*": {
-                "schema": {
-                  "$ref": "#/components/schemas/AppError"
-                }
-              }
-            }
-          },
-          "200": {
-            "description": "OK",
-            "content": {
-              "*/*": {
-                "schema": {
-                  "$ref": "#/components/schemas/PaymentRedirectionDetailsPojo"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/api/public/checkout/validate": {
-      "get": {
-        "tags": [
-          "Checkout"
-        ],
-        "summary": "Request that an order status be updated after having begun checkout",
-        "operationId": "validateSuccesfulTransaction",
-        "parameters": [
-          {
-            "name": "transactionData",
-            "in": "query",
-            "required": true,
-            "schema": {
-              "type": "object",
-              "additionalProperties": {
-                "type": "string"
-              }
-            }
-          }
-        ],
-        "responses": {
-          "500": {
-            "description": "Internal Server Error",
-            "content": {
-              "*/*": {
-                "schema": {
-                  "type": "string"
-                }
-              }
-            }
-          },
-          "400": {
-            "description": "Bad Request",
-            "content": {
-              "*/*": {
-                "schema": {
-                  "$ref": "#/components/schemas/AppError"
-                }
-              }
-            }
-          },
-          "404": {
-            "description": "Not Found",
-            "content": {
-              "*/*": {
-                "schema": {
-                  "$ref": "#/components/schemas/AppError"
-                }
-              }
-            }
-          },
-          "401": {
-            "description": "Unauthorized",
-            "content": {
-              "*/*": {
-                "schema": {
-                  "$ref": "#/components/schemas/AppError"
-                }
-              }
-            }
-          },
-          "200": {
-            "description": "OK"
-          }
-        }
-      },
-      "post": {
-        "tags": [
-          "Checkout"
-        ],
-        "summary": "Submit failed or aborted state for an order after having begun checkout",
-        "operationId": "validateAbortedTransaction",
-        "parameters": [
-          {
-            "name": "transactionData",
-            "in": "query",
-            "required": true,
-            "schema": {
-              "type": "object",
-              "additionalProperties": {
-                "type": "string"
-              }
-            }
-          }
-        ],
-        "responses": {
-          "500": {
-            "description": "Internal Server Error",
-            "content": {
-              "*/*": {
-                "schema": {
-                  "type": "string"
-                }
-              }
-            }
-          },
-          "400": {
-            "description": "Bad Request",
-            "content": {
-              "*/*": {
-                "schema": {
-                  "$ref": "#/components/schemas/AppError"
-                }
-              }
-            }
-          },
-          "404": {
-            "description": "Not Found",
-            "content": {
-              "*/*": {
-                "schema": {
-                  "$ref": "#/components/schemas/AppError"
-                }
-              }
-            }
-          },
-          "401": {
-            "description": "Unauthorized",
-            "content": {
-              "*/*": {
-                "schema": {
-                  "$ref": "#/components/schemas/AppError"
-                }
-              }
-            }
-          },
-          "200": {
-            "description": "OK"
-          }
-        }
-      }
-    },
-    "/api/public/cart/reservations": {
-      "get": {
-        "tags": [
-          "Cart — Stock Reservations"
-        ],
-        "summary": "List active stock reservations for a cart session",
-        "operationId": "listActive",
-        "parameters": [
-          {
-            "name": "X-Session-Token",
-            "in": "header",
-            "required": true,
-            "schema": {
-              "type": "string"
-            }
-          }
-        ],
-        "responses": {
-          "400": {
-            "description": "Bad Request",
-            "content": {
-              "*/*": {
-                "schema": {
-                  "$ref": "#/components/schemas/AppError"
-                }
-              }
-            }
-          },
-          "404": {
-            "description": "Not Found",
-            "content": {
-              "*/*": {
-                "schema": {
-                  "$ref": "#/components/schemas/AppError"
-                }
-              }
-            }
-          },
-          "401": {
-            "description": "Unauthorized",
-            "content": {
-              "*/*": {
-                "schema": {
-                  "$ref": "#/components/schemas/AppError"
-                }
-              }
-            }
-          },
-          "200": {
-            "description": "OK",
-            "content": {
-              "*/*": {
-                "schema": {
-                  "type": "array",
-                  "items": {
-                    "$ref": "#/components/schemas/StockReservationPojo"
-                  }
-                }
-              }
-            }
-          }
-        }
-      },
-      "post": {
-        "tags": [
-          "Cart — Stock Reservations"
-        ],
-        "summary": "Reserve stock for a variant in the cart",
-        "operationId": "reserve",
-        "parameters": [
-          {
-            "name": "X-Session-Token",
-            "in": "header",
-            "required": true,
-            "schema": {
-              "type": "string"
-            }
-          }
-        ],
-        "requestBody": {
-          "content": {
-            "application/json": {
-              "schema": {
-                "type": "object",
-                "additionalProperties": {
-                  "type": "object"
-                }
-              }
-            }
-          },
-          "required": true
-        },
-        "responses": {
-          "400": {
-            "description": "Bad Request",
-            "content": {
-              "*/*": {
-                "schema": {
-                  "$ref": "#/components/schemas/AppError"
-                }
-              }
-            }
-          },
-          "404": {
-            "description": "Not Found",
-            "content": {
-              "*/*": {
-                "schema": {
-                  "$ref": "#/components/schemas/AppError"
-                }
-              }
-            }
-          },
-          "401": {
-            "description": "Unauthorized",
-            "content": {
-              "*/*": {
-                "schema": {
-                  "$ref": "#/components/schemas/AppError"
-                }
-              }
-            }
-          },
-          "200": {
-            "description": "OK",
-            "content": {
-              "*/*": {
-                "schema": {
-                  "$ref": "#/components/schemas/StockReservationPojo"
-                }
-              }
-            }
-          }
-        }
-      },
-      "delete": {
-        "tags": [
-          "Cart — Stock Reservations"
-        ],
-        "summary": "Release all reservations for a cart session (cart cleared)",
-        "operationId": "releaseAll",
-        "parameters": [
-          {
-            "name": "X-Session-Token",
-            "in": "header",
-            "required": true,
-            "schema": {
-              "type": "string"
-            }
-          }
-        ],
-        "responses": {
-          "400": {
-            "description": "Bad Request",
-            "content": {
-              "*/*": {
-                "schema": {
-                  "$ref": "#/components/schemas/AppError"
-                }
-              }
-            }
-          },
-          "404": {
-            "description": "Not Found",
-            "content": {
-              "*/*": {
-                "schema": {
-                  "$ref": "#/components/schemas/AppError"
-                }
-              }
-            }
-          },
-          "401": {
-            "description": "Unauthorized",
-            "content": {
-              "*/*": {
-                "schema": {
-                  "$ref": "#/components/schemas/AppError"
-                }
-              }
-            }
-          },
-          "200": {
-            "description": "OK",
-            "content": {
-              "*/*": {
-                "schema": {
-                  "type": "array",
-                  "items": {
-                    "$ref": "#/components/schemas/StockReservationPojo"
-                  }
-                }
-              }
-            }
-          }
-        }
-      },
-      "patch": {
-        "tags": [
-          "Cart — Stock Reservations"
-        ],
-        "summary": "Update the quantity of an existing reservation",
-        "operationId": "update_14",
-        "parameters": [
-          {
-            "name": "X-Session-Token",
-            "in": "header",
-            "required": true,
-            "schema": {
-              "type": "string"
-            }
-          }
-        ],
-        "requestBody": {
-          "content": {
-            "application/json": {
-              "schema": {
-                "type": "object",
-                "additionalProperties": {
-                  "type": "object"
-                }
-              }
-            }
-          },
-          "required": true
-        },
-        "responses": {
-          "400": {
-            "description": "Bad Request",
-            "content": {
-              "*/*": {
-                "schema": {
-                  "$ref": "#/components/schemas/AppError"
-                }
-              }
-            }
-          },
-          "404": {
-            "description": "Not Found",
-            "content": {
-              "*/*": {
-                "schema": {
-                  "$ref": "#/components/schemas/AppError"
-                }
-              }
-            }
-          },
-          "401": {
-            "description": "Unauthorized",
-            "content": {
-              "*/*": {
-                "schema": {
-                  "$ref": "#/components/schemas/AppError"
-                }
-              }
-            }
-          },
-          "200": {
-            "description": "OK",
-            "content": {
-              "*/*": {
-                "schema": {
-                  "$ref": "#/components/schemas/StockReservationPojo"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/api/public/cart/reservations/confirm": {
-      "post": {
-        "tags": [
-          "Cart — Stock Reservations"
-        ],
-        "summary": "Confirm all reservations (payment succeeded)",
-        "operationId": "confirm",
-        "parameters": [
-          {
-            "name": "X-Session-Token",
-            "in": "header",
-            "required": false,
-            "schema": {
-              "type": "string"
-            }
-          }
-        ],
-        "responses": {
-          "400": {
-            "description": "Bad Request",
-            "content": {
-              "*/*": {
-                "schema": {
-                  "$ref": "#/components/schemas/AppError"
-                }
-              }
-            }
-          },
-          "404": {
-            "description": "Not Found",
-            "content": {
-              "*/*": {
-                "schema": {
-                  "$ref": "#/components/schemas/AppError"
-                }
-              }
-            }
-          },
-          "401": {
-            "description": "Unauthorized",
-            "content": {
-              "*/*": {
-                "schema": {
-                  "$ref": "#/components/schemas/AppError"
-                }
-              }
-            }
-          },
-          "200": {
-            "description": "OK",
-            "content": {
-              "*/*": {
-                "schema": {
-                  "type": "array",
-                  "items": {
-                    "$ref": "#/components/schemas/StockReservationPojo"
-                  }
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/api/public/cart/items": {
-      "post": {
-        "tags": [
-          "Cart"
-        ],
-        "summary": "Add an item to the cart",
-        "operationId": "addItem",
-        "parameters": [
-          {
-            "name": "X-Session-Token",
-            "in": "header",
-            "required": false,
-            "schema": {
-              "type": "string"
-            }
-          }
-        ],
-        "requestBody": {
-          "content": {
-            "application/json": {
-              "schema": {
-                "type": "object",
-                "additionalProperties": {
-                  "type": "object"
-                }
-              }
-            }
-          },
-          "required": true
-        },
-        "responses": {
-          "400": {
-            "description": "Bad Request",
-            "content": {
-              "*/*": {
-                "schema": {
-                  "$ref": "#/components/schemas/AppError"
-                }
-              }
-            }
-          },
-          "404": {
-            "description": "Not Found",
-            "content": {
-              "*/*": {
-                "schema": {
-                  "$ref": "#/components/schemas/AppError"
-                }
-              }
-            }
-          },
-          "401": {
-            "description": "Unauthorized",
-            "content": {
-              "*/*": {
-                "schema": {
-                  "$ref": "#/components/schemas/AppError"
-                }
-              }
-            }
-          },
-          "200": {
-            "description": "OK",
-            "content": {
-              "*/*": {
-                "schema": {
-                  "$ref": "#/components/schemas/CartSessionPojo"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/api/public/auth/register": {
-      "post": {
-        "tags": [
-          "User Accounts"
-        ],
-        "summary": "Request creation of new user account.",
-        "operationId": "register",
-        "requestBody": {
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/RegistrationPojo"
-              }
-            }
-          },
-          "required": true
-        },
-        "responses": {
-          "400": {
-            "description": "Bad Request",
-            "content": {
-              "*/*": {
-                "schema": {
-                  "$ref": "#/components/schemas/AppError"
-                }
-              }
-            }
-          },
-          "404": {
-            "description": "Not Found",
-            "content": {
-              "*/*": {
-                "schema": {
-                  "$ref": "#/components/schemas/AppError"
-                }
-              }
-            }
-          },
-          "401": {
-            "description": "Unauthorized",
-            "content": {
-              "*/*": {
-                "schema": {
-                  "$ref": "#/components/schemas/AppError"
-                }
-              }
-            }
-          },
-          "200": {
-            "description": "OK"
-          }
-        }
-      }
-    },
-    "/api/public/address-book": {
-      "get": {
-        "tags": [
-          "Address Book"
-        ],
-        "summary": "List all saved addresses for the authenticated user",
-        "operationId": "list",
-        "responses": {
-          "400": {
-            "description": "Bad Request",
-            "content": {
-              "*/*": {
-                "schema": {
-                  "$ref": "#/components/schemas/AppError"
-                }
-              }
-            }
-          },
-          "404": {
-            "description": "Not Found",
-            "content": {
-              "*/*": {
-                "schema": {
-                  "$ref": "#/components/schemas/AppError"
-                }
-              }
-            }
-          },
-          "401": {
-            "description": "Unauthorized",
-            "content": {
-              "*/*": {
-                "schema": {
-                  "$ref": "#/components/schemas/AppError"
-                }
-              }
-            }
-          },
-          "200": {
-            "description": "OK",
-            "content": {
-              "*/*": {
-                "schema": {
-                  "type": "array",
-                  "items": {
-                    "$ref": "#/components/schemas/AddressBookPojo"
-                  }
-                }
-              }
-            }
-          }
-        }
-      },
-      "post": {
-        "tags": [
-          "Address Book"
-        ],
-        "summary": "Save a new address to the address book",
-        "operationId": "create",
-        "requestBody": {
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/AddressBookPojo"
-              }
-            }
-          },
-          "required": true
-        },
-        "responses": {
-          "400": {
-            "description": "Bad Request",
-            "content": {
-              "*/*": {
-                "schema": {
-                  "$ref": "#/components/schemas/AppError"
-                }
-              }
-            }
-          },
-          "404": {
-            "description": "Not Found",
-            "content": {
-              "*/*": {
-                "schema": {
-                  "$ref": "#/components/schemas/AppError"
-                }
-              }
-            }
-          },
-          "401": {
-            "description": "Unauthorized",
-            "content": {
-              "*/*": {
-                "schema": {
-                  "$ref": "#/components/schemas/AppError"
-                }
-              }
-            }
-          },
-          "201": {
-            "description": "Created",
-            "content": {
-              "*/*": {
-                "schema": {
-                  "$ref": "#/components/schemas/AddressBookPojo"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/api/data/users": {
-      "get": {
-        "tags": [
-          "Users management"
-        ],
-        "summary": "List users.",
-        "operationId": "readMany",
-        "parameters": [
-          {
-            "name": "allRequestParams",
-            "in": "query",
-            "required": true,
-            "schema": {
-              "type": "object",
-              "additionalProperties": {
-                "type": "string"
-              }
-            }
-          }
-        ],
-        "responses": {
-          "400": {
-            "description": "Bad Request",
-            "content": {
-              "*/*": {
-                "schema": {
-                  "$ref": "#/components/schemas/AppError"
-                }
-              }
-            }
-          },
-          "404": {
-            "description": "Not Found",
-            "content": {
-              "*/*": {
-                "schema": {
-                  "$ref": "#/components/schemas/AppError"
-                }
-              }
-            }
-          },
-          "401": {
-            "description": "Unauthorized",
-            "content": {
-              "*/*": {
-                "schema": {
-                  "$ref": "#/components/schemas/AppError"
-                }
-              }
-            }
-          },
-          "200": {
-            "description": "OK",
-            "content": {
-              "*/*": {
-                "schema": {
-                  "$ref": "#/components/schemas/DataPagePojoUserPojo"
-                }
-              }
-            }
-          }
-        }
-      },
-      "post": {
-        "tags": [
-          "Users management"
-        ],
-        "summary": "Register new users.",
-        "operationId": "create_1",
-        "parameters": [
-          {
-            "name": "input",
-            "in": "query",
-            "required": true,
-            "schema": {
-              "$ref": "#/components/schemas/UserPojo"
-            }
-          }
-        ],
-        "responses": {
-          "400": {
-            "description": "Bad Request",
-            "content": {
-              "*/*": {
-                "schema": {
-                  "$ref": "#/components/schemas/AppError"
-                }
-              }
-            }
-          },
-          "404": {
-            "description": "Not Found",
-            "content": {
-              "*/*": {
-                "schema": {
-                  "$ref": "#/components/schemas/AppError"
-                }
-              }
-            }
-          },
-          "401": {
-            "description": "Unauthorized",
-            "content": {
-              "*/*": {
-                "schema": {
-                  "$ref": "#/components/schemas/AppError"
-                }
-              }
-            }
-          },
-          "201": {
-            "description": "Created"
-          }
-        }
-      }
-    },
-    "/api/data/user_roles": {
-      "get": {
-        "tags": [
-          "Params management"
-        ],
-        "summary": "List user roles.",
-        "operationId": "readMany_1",
-        "parameters": [
-          {
-            "name": "allRequestParams",
-            "in": "query",
-            "required": true,
-            "schema": {
-              "type": "object",
-              "additionalProperties": {
-                "type": "string"
-              }
-            }
-          }
-        ],
-        "responses": {
-          "400": {
-            "description": "Bad Request",
-            "content": {
-              "*/*": {
-                "schema": {
-                  "$ref": "#/components/schemas/AppError"
-                }
-              }
-            }
-          },
-          "404": {
-            "description": "Not Found",
-            "content": {
-              "*/*": {
-                "schema": {
-                  "$ref": "#/components/schemas/AppError"
-                }
-              }
-            }
-          },
-          "401": {
-            "description": "Unauthorized",
-            "content": {
-              "*/*": {
-                "schema": {
-                  "$ref": "#/components/schemas/AppError"
-                }
-              }
-            }
-          },
-          "200": {
-            "description": "OK",
-            "content": {
-              "*/*": {
-                "schema": {
-                  "$ref": "#/components/schemas/DataPagePojoUserRolePojo"
-                }
-              }
-            }
-          }
-        }
-      },
-      "post": {
-        "tags": [
-          "Params management"
-        ],
-        "summary": "Define new user roles.",
-        "operationId": "create_2",
-        "parameters": [
-          {
-            "name": "input",
-            "in": "query",
-            "required": true,
-            "schema": {
-              "$ref": "#/components/schemas/UserRolePojo"
-            }
-          }
-        ],
-        "responses": {
-          "400": {
-            "description": "Bad Request",
-            "content": {
-              "*/*": {
-                "schema": {
-                  "$ref": "#/components/schemas/AppError"
-                }
-              }
-            }
-          },
-          "404": {
-            "description": "Not Found",
-            "content": {
-              "*/*": {
-                "schema": {
-                  "$ref": "#/components/schemas/AppError"
-                }
-              }
-            }
-          },
-          "401": {
-            "description": "Unauthorized",
-            "content": {
-              "*/*": {
-                "schema": {
-                  "$ref": "#/components/schemas/AppError"
-                }
-              }
-            }
-          },
-          "201": {
-            "description": "Created"
-          }
-        }
-      }
-    },
-    "/api/data/shipping-methods": {
-      "get": {
-        "tags": [
-          "Shipping methods management"
-        ],
-        "summary": "List shipping methods.",
-        "operationId": "readMany_2",
-        "parameters": [
-          {
-            "name": "allRequestParams",
-            "in": "query",
-            "required": true,
-            "schema": {
-              "type": "object",
-              "additionalProperties": {
-                "type": "string"
-              }
-            }
-          }
-        ],
-        "responses": {
-          "400": {
-            "description": "Bad Request",
-            "content": {
-              "*/*": {
-                "schema": {
-                  "$ref": "#/components/schemas/AppError"
-                }
-              }
-            }
-          },
-          "404": {
-            "description": "Not Found",
-            "content": {
-              "*/*": {
-                "schema": {
-                  "$ref": "#/components/schemas/AppError"
-                }
-              }
-            }
-          },
-          "401": {
-            "description": "Unauthorized",
-            "content": {
-              "*/*": {
-                "schema": {
-                  "$ref": "#/components/schemas/AppError"
-                }
-              }
-            }
-          },
-          "200": {
-            "description": "OK",
-            "content": {
-              "*/*": {
-                "schema": {
-                  "$ref": "#/components/schemas/DataPagePojoShippingMethodPojo"
-                }
-              }
-            }
-          }
-        }
-      },
-      "post": {
-        "tags": [
-          "Shipping methods management"
-        ],
-        "summary": "Define new shipping methods.",
-        "operationId": "create_3",
-        "parameters": [
-          {
-            "name": "input",
-            "in": "query",
-            "required": true,
-            "schema": {
-              "$ref": "#/components/schemas/ShippingMethodPojo"
-            }
-          }
-        ],
-        "responses": {
-          "400": {
-            "description": "Bad Request",
-            "content": {
-              "*/*": {
-                "schema": {
-                  "$ref": "#/components/schemas/AppError"
-                }
-              }
-            }
-          },
-          "404": {
-            "description": "Not Found",
-            "content": {
-              "*/*": {
-                "schema": {
-                  "$ref": "#/components/schemas/AppError"
-                }
-              }
-            }
-          },
-          "401": {
-            "description": "Unauthorized",
-            "content": {
-              "*/*": {
-                "schema": {
-                  "$ref": "#/components/schemas/AppError"
-                }
-              }
-            }
-          },
-          "201": {
-            "description": "Created"
-          }
-        }
-      }
-    },
-    "/api/data/shippers": {
-      "get": {
-        "tags": [
-          "Shippers management"
-        ],
-        "summary": "List shippers.",
-        "operationId": "readMany_3",
-        "parameters": [
-          {
-            "name": "allRequestParams",
-            "in": "query",
-            "required": true,
-            "schema": {
-              "type": "object",
-              "additionalProperties": {
-                "type": "string"
-              }
-            }
-          }
-        ],
-        "responses": {
-          "400": {
-            "description": "Bad Request",
-            "content": {
-              "*/*": {
-                "schema": {
-                  "$ref": "#/components/schemas/AppError"
-                }
-              }
-            }
-          },
-          "404": {
-            "description": "Not Found",
-            "content": {
-              "*/*": {
-                "schema": {
-                  "$ref": "#/components/schemas/AppError"
-                }
-              }
-            }
-          },
-          "401": {
-            "description": "Unauthorized",
-            "content": {
-              "*/*": {
-                "schema": {
-                  "$ref": "#/components/schemas/AppError"
-                }
-              }
-            }
-          },
-          "200": {
-            "description": "OK",
-            "content": {
-              "*/*": {
-                "schema": {
-                  "$ref": "#/components/schemas/DataPagePojoShipperPojo"
-                }
-              }
-            }
-          }
-        }
-      },
-      "post": {
-        "tags": [
-          "Shippers management"
-        ],
-        "summary": "Define new shippers.",
-        "operationId": "create_4",
-        "parameters": [
-          {
-            "name": "input",
-            "in": "query",
-            "required": true,
-            "schema": {
-              "$ref": "#/components/schemas/ShipperPojo"
-            }
-          }
-        ],
-        "responses": {
-          "400": {
-            "description": "Bad Request",
-            "content": {
-              "*/*": {
-                "schema": {
-                  "$ref": "#/components/schemas/AppError"
-                }
-              }
-            }
-          },
-          "404": {
-            "description": "Not Found",
-            "content": {
-              "*/*": {
-                "schema": {
-                  "$ref": "#/components/schemas/AppError"
-                }
-              }
-            }
-          },
-          "401": {
-            "description": "Unauthorized",
-            "content": {
-              "*/*": {
-                "schema": {
-                  "$ref": "#/components/schemas/AppError"
-                }
-              }
-            }
-          },
-          "201": {
-            "description": "Created"
-          }
-        }
-      }
-    },
-    "/api/data/salespeople": {
-      "get": {
-        "tags": [
-          "People management"
-        ],
-        "summary": "List salespeople.",
-        "operationId": "readMany_4",
-        "parameters": [
-          {
-            "name": "allRequestParams",
-            "in": "query",
-            "required": true,
-            "schema": {
-              "type": "object",
-              "additionalProperties": {
-                "type": "string"
-              }
-            }
-          }
-        ],
-        "responses": {
-          "400": {
-            "description": "Bad Request",
-            "content": {
-              "*/*": {
-                "schema": {
-                  "$ref": "#/components/schemas/AppError"
-                }
-              }
-            }
-          },
-          "404": {
-            "description": "Not Found",
-            "content": {
-              "*/*": {
-                "schema": {
-                  "$ref": "#/components/schemas/AppError"
-                }
-              }
-            }
-          },
-          "401": {
-            "description": "Unauthorized",
-            "content": {
-              "*/*": {
-                "schema": {
-                  "$ref": "#/components/schemas/AppError"
-                }
-              }
-            }
-          },
-          "200": {
-            "description": "OK",
-            "content": {
-              "*/*": {
-                "schema": {
-                  "$ref": "#/components/schemas/DataPagePojoPersonPojo"
-                }
-              }
-            }
-          }
-        }
-      },
-      "post": {
-        "tags": [
-          "People management"
-        ],
-        "summary": "Register new salespeople.",
-        "operationId": "create_5",
-        "parameters": [
-          {
-            "name": "input",
-            "in": "query",
-            "required": true,
-            "schema": {
-              "$ref": "#/components/schemas/PersonPojo"
-            }
-          }
-        ],
-        "responses": {
-          "400": {
-            "description": "Bad Request",
-            "content": {
-              "*/*": {
-                "schema": {
-                  "$ref": "#/components/schemas/AppError"
-                }
-              }
-            }
-          },
-          "404": {
-            "description": "Not Found",
-            "content": {
-              "*/*": {
-                "schema": {
-                  "$ref": "#/components/schemas/AppError"
-                }
-              }
-            }
-          },
-          "401": {
-            "description": "Unauthorized",
-            "content": {
-              "*/*": {
-                "schema": {
-                  "$ref": "#/components/schemas/AppError"
-                }
-              }
-            }
-          },
-          "201": {
-            "description": "Created"
-          }
-        }
-      }
-    },
-    "/api/data/return-requests": {
-      "get": {
-        "tags": [
-          "Return Requests management"
-        ],
-        "summary": "List return requests.",
-        "operationId": "readMany_5",
-        "parameters": [
-          {
-            "name": "allRequestParams",
-            "in": "query",
-            "required": true,
-            "schema": {
-              "type": "object",
-              "additionalProperties": {
-                "type": "string"
-              }
-            }
-          }
-        ],
-        "responses": {
-          "400": {
-            "description": "Bad Request",
-            "content": {
-              "*/*": {
-                "schema": {
-                  "$ref": "#/components/schemas/AppError"
-                }
-              }
-            }
-          },
-          "404": {
-            "description": "Not Found",
-            "content": {
-              "*/*": {
-                "schema": {
-                  "$ref": "#/components/schemas/AppError"
-                }
-              }
-            }
-          },
-          "401": {
-            "description": "Unauthorized",
-            "content": {
-              "*/*": {
-                "schema": {
-                  "$ref": "#/components/schemas/AppError"
-                }
-              }
-            }
-          },
-          "200": {
-            "description": "OK",
-            "content": {
-              "*/*": {
-                "schema": {
-                  "$ref": "#/components/schemas/DataPagePojoReturnRequestPojo"
-                }
-              }
-            }
-          }
-        }
-      },
-      "post": {
-        "tags": [
-          "Return Requests management"
-        ],
-        "summary": "Create a new return request.",
-        "operationId": "create_6",
-        "parameters": [
-          {
-            "name": "input",
-            "in": "query",
-            "required": true,
-            "schema": {
-              "$ref": "#/components/schemas/ReturnRequestPojo"
-            }
-          }
-        ],
-        "responses": {
-          "400": {
-            "description": "Bad Request",
-            "content": {
-              "*/*": {
-                "schema": {
-                  "$ref": "#/components/schemas/AppError"
-                }
-              }
-            }
-          },
-          "404": {
-            "description": "Not Found",
-            "content": {
-              "*/*": {
-                "schema": {
-                  "$ref": "#/components/schemas/AppError"
-                }
-              }
-            }
-          },
-          "401": {
-            "description": "Unauthorized",
-            "content": {
-              "*/*": {
-                "schema": {
-                  "$ref": "#/components/schemas/AppError"
-                }
-              }
-            }
-          },
-          "201": {
-            "description": "Created"
-          }
-        }
-      }
-    },
-    "/api/data/return-requests/tracking/{id}": {
-      "post": {
-        "tags": [
-          "Return Requests management"
-        ],
-        "summary": "Add a tracking number to a return request.",
-        "operationId": "addTrackingNumber",
-        "parameters": [
-          {
-            "name": "id",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "integer",
-              "format": "int64"
-            }
-          }
-        ],
-        "requestBody": {
-          "content": {
-            "application/json": {
-              "schema": {
-                "type": "object",
-                "additionalProperties": {
-                  "type": "string"
-                }
-              }
-            }
-          },
-          "required": true
-        },
-        "responses": {
-          "400": {
-            "description": "Bad Request",
-            "content": {
-              "*/*": {
-                "schema": {
-                  "$ref": "#/components/schemas/AppError"
-                }
-              }
-            }
-          },
-          "404": {
-            "description": "Not Found",
-            "content": {
-              "*/*": {
-                "schema": {
-                  "$ref": "#/components/schemas/AppError"
-                }
-              }
-            }
-          },
-          "401": {
-            "description": "Unauthorized",
-            "content": {
-              "*/*": {
-                "schema": {
-                  "$ref": "#/components/schemas/AppError"
-                }
-              }
-            }
-          },
-          "200": {
-            "description": "OK",
-            "content": {
-              "*/*": {
-                "schema": {
-                  "$ref": "#/components/schemas/ReturnRequestPojo"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/api/data/return-requests/reject/{id}": {
-      "post": {
-        "tags": [
-          "Return Requests management"
-        ],
-        "summary": "Reject a return request.",
-        "operationId": "rejectReturnRequest",
-        "parameters": [
-          {
-            "name": "id",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "integer",
-              "format": "int64"
-            }
-          }
-        ],
-        "responses": {
-          "400": {
-            "description": "Bad Request",
-            "content": {
-              "*/*": {
-                "schema": {
-                  "$ref": "#/components/schemas/AppError"
-                }
-              }
-            }
-          },
-          "404": {
-            "description": "Not Found",
-            "content": {
-              "*/*": {
-                "schema": {
-                  "$ref": "#/components/schemas/AppError"
-                }
-              }
-            }
-          },
-          "401": {
-            "description": "Unauthorized",
-            "content": {
-              "*/*": {
-                "schema": {
-                  "$ref": "#/components/schemas/AppError"
-                }
-              }
-            }
-          },
-          "200": {
-            "description": "OK",
-            "content": {
-              "*/*": {
-                "schema": {
-                  "$ref": "#/components/schemas/ReturnRequestPojo"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/api/data/return-requests/receive/{id}": {
-      "post": {
-        "tags": [
-          "Return Requests management"
-        ],
-        "summary": "Mark returned items as received at warehouse.",
-        "operationId": "markAsReceived",
-        "parameters": [
-          {
-            "name": "id",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "integer",
-              "format": "int64"
-            }
-          }
-        ],
-        "responses": {
-          "400": {
-            "description": "Bad Request",
-            "content": {
-              "*/*": {
-                "schema": {
-                  "$ref": "#/components/schemas/AppError"
-                }
-              }
-            }
-          },
-          "404": {
-            "description": "Not Found",
-            "content": {
-              "*/*": {
-                "schema": {
-                  "$ref": "#/components/schemas/AppError"
-                }
-              }
-            }
-          },
-          "401": {
-            "description": "Unauthorized",
-            "content": {
-              "*/*": {
-                "schema": {
-                  "$ref": "#/components/schemas/AppError"
-                }
-              }
-            }
-          },
-          "200": {
-            "description": "OK",
-            "content": {
-              "*/*": {
-                "schema": {
-                  "$ref": "#/components/schemas/ReturnRequestPojo"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/api/data/return-requests/complete-refund/{id}": {
-      "post": {
-        "tags": [
-          "Return Requests management"
-        ],
-        "summary": "Mark refund as completed.",
-        "operationId": "completeRefund",
-        "parameters": [
-          {
-            "name": "id",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "integer",
-              "format": "int64"
-            }
-          }
-        ],
-        "responses": {
-          "400": {
-            "description": "Bad Request",
-            "content": {
-              "*/*": {
-                "schema": {
-                  "$ref": "#/components/schemas/AppError"
-                }
-              }
-            }
-          },
-          "404": {
-            "description": "Not Found",
-            "content": {
-              "*/*": {
-                "schema": {
-                  "$ref": "#/components/schemas/AppError"
-                }
-              }
-            }
-          },
-          "401": {
-            "description": "Unauthorized",
-            "content": {
-              "*/*": {
-                "schema": {
-                  "$ref": "#/components/schemas/AppError"
-                }
-              }
-            }
-          },
-          "200": {
-            "description": "OK",
-            "content": {
-              "*/*": {
-                "schema": {
-                  "$ref": "#/components/schemas/ReturnRequestPojo"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/api/data/return-requests/cancel/{id}": {
-      "post": {
-        "tags": [
-          "Return Requests management"
-        ],
-        "summary": "Cancel a pending return request.",
-        "operationId": "cancelReturnRequest",
-        "parameters": [
-          {
-            "name": "id",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "integer",
-              "format": "int64"
-            }
-          }
-        ],
-        "responses": {
-          "400": {
-            "description": "Bad Request",
-            "content": {
-              "*/*": {
-                "schema": {
-                  "$ref": "#/components/schemas/AppError"
-                }
-              }
-            }
-          },
-          "404": {
-            "description": "Not Found",
-            "content": {
-              "*/*": {
-                "schema": {
-                  "$ref": "#/components/schemas/AppError"
-                }
-              }
-            }
-          },
-          "401": {
-            "description": "Unauthorized",
-            "content": {
-              "*/*": {
-                "schema": {
-                  "$ref": "#/components/schemas/AppError"
-                }
-              }
-            }
-          },
-          "200": {
-            "description": "OK",
-            "content": {
-              "*/*": {
-                "schema": {
-                  "$ref": "#/components/schemas/ReturnRequestPojo"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/api/data/return-requests/approve/{id}": {
-      "post": {
-        "tags": [
-          "Return Requests management"
-        ],
-        "summary": "Approve a return request and release reserved stock.",
-        "operationId": "approveReturnRequest",
-        "parameters": [
-          {
-            "name": "id",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "integer",
-              "format": "int64"
-            }
-          }
-        ],
-        "responses": {
-          "400": {
-            "description": "Bad Request",
-            "content": {
-              "*/*": {
-                "schema": {
-                  "$ref": "#/components/schemas/AppError"
-                }
-              }
-            }
-          },
-          "404": {
-            "description": "Not Found",
-            "content": {
-              "*/*": {
-                "schema": {
-                  "$ref": "#/components/schemas/AppError"
-                }
-              }
-            }
-          },
-          "401": {
-            "description": "Unauthorized",
-            "content": {
-              "*/*": {
-                "schema": {
-                  "$ref": "#/components/schemas/AppError"
-                }
-              }
-            }
-          },
-          "200": {
-            "description": "OK",
-            "content": {
-              "*/*": {
-                "schema": {
-                  "$ref": "#/components/schemas/ReturnRequestPojo"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/api/data/products": {
-      "get": {
-        "tags": [
-          "Products management"
-        ],
-        "summary": "List products.",
-        "operationId": "readMany_6",
-        "parameters": [
-          {
-            "name": "allRequestParams",
-            "in": "query",
-            "required": true,
-            "schema": {
-              "type": "object",
-              "additionalProperties": {
-                "type": "string"
-              }
-            }
-          }
-        ],
-        "responses": {
-          "400": {
-            "description": "Bad Request",
-            "content": {
-              "*/*": {
-                "schema": {
-                  "$ref": "#/components/schemas/AppError"
-                }
-              }
-            }
-          },
-          "404": {
-            "description": "Not Found",
-            "content": {
-              "*/*": {
-                "schema": {
-                  "$ref": "#/components/schemas/AppError"
-                }
-              }
-            }
-          },
-          "401": {
-            "description": "Unauthorized",
-            "content": {
-              "*/*": {
-                "schema": {
-                  "$ref": "#/components/schemas/AppError"
-                }
-              }
-            }
-          },
-          "200": {
-            "description": "OK",
-            "content": {
-              "*/*": {
-                "schema": {
-                  "$ref": "#/components/schemas/DataPagePojoProductPojo"
-                }
-              }
-            }
-          }
-        }
-      },
-      "post": {
-        "tags": [
-          "Products management"
-        ],
-        "summary": "Define new products.",
-        "operationId": "create_7",
-        "requestBody": {
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/ProductPojo"
-              }
-            }
-          },
-          "required": true
-        },
-        "responses": {
-          "400": {
-            "description": "Bad Request",
-            "content": {
-              "*/*": {
-                "schema": {
-                  "$ref": "#/components/schemas/AppError"
-                }
-              }
-            }
-          },
-          "404": {
-            "description": "Not Found",
-            "content": {
-              "*/*": {
-                "schema": {
-                  "$ref": "#/components/schemas/AppError"
-                }
-              }
-            }
-          },
-          "401": {
-            "description": "Unauthorized",
-            "content": {
-              "*/*": {
-                "schema": {
-                  "$ref": "#/components/schemas/AppError"
-                }
-              }
-            }
-          },
-          "201": {
-            "description": "Created"
-          }
-        }
-      }
-    },
-    "/api/data/product_lists": {
-      "get": {
-        "tags": [
-          "Product Lists management"
-        ],
-        "summary": "View product lists.",
-        "operationId": "readMany_7",
-        "parameters": [
-          {
-            "name": "allRequestParams",
-            "in": "query",
-            "required": true,
-            "schema": {
-              "type": "object",
-              "additionalProperties": {
-                "type": "string"
-              }
-            }
-          }
-        ],
-        "responses": {
-          "400": {
-            "description": "Bad Request",
-            "content": {
-              "*/*": {
-                "schema": {
-                  "$ref": "#/components/schemas/AppError"
-                }
-              }
-            }
-          },
-          "404": {
-            "description": "Not Found",
-            "content": {
-              "*/*": {
-                "schema": {
-                  "$ref": "#/components/schemas/AppError"
-                }
-              }
-            }
-          },
-          "401": {
-            "description": "Unauthorized",
-            "content": {
-              "*/*": {
-                "schema": {
-                  "$ref": "#/components/schemas/AppError"
-                }
-              }
-            }
-          },
-          "200": {
-            "description": "OK",
-            "content": {
-              "*/*": {
-                "schema": {
-                  "$ref": "#/components/schemas/DataPagePojoProductListPojo"
-                }
-              }
-            }
-          }
-        }
-      },
-      "post": {
-        "tags": [
-          "Product Lists management"
-        ],
-        "summary": "Define new product lists.",
-        "operationId": "create_8",
-        "parameters": [
-          {
-            "name": "input",
-            "in": "query",
-            "required": true,
-            "schema": {
-              "$ref": "#/components/schemas/ProductListPojo"
-            }
-          }
-        ],
-        "responses": {
-          "400": {
-            "description": "Bad Request",
-            "content": {
-              "*/*": {
-                "schema": {
-                  "$ref": "#/components/schemas/AppError"
-                }
-              }
-            }
-          },
-          "404": {
-            "description": "Not Found",
-            "content": {
-              "*/*": {
-                "schema": {
-                  "$ref": "#/components/schemas/AppError"
-                }
-              }
-            }
-          },
-          "401": {
-            "description": "Unauthorized",
-            "content": {
-              "*/*": {
-                "schema": {
-                  "$ref": "#/components/schemas/AppError"
-                }
-              }
-            }
-          },
-          "201": {
-            "description": "Created"
-          }
-        }
-      }
-    },
-    "/api/data/product_categories": {
-      "get": {
-        "tags": [
-          "Product Categories management"
-        ],
-        "summary": "List product categories.",
-        "operationId": "readMany_8",
-        "parameters": [
-          {
-            "name": "allRequestParams",
-            "in": "query",
-            "required": true,
-            "schema": {
-              "type": "object",
-              "additionalProperties": {
-                "type": "string"
-              }
-            }
-          }
-        ],
-        "responses": {
-          "400": {
-            "description": "Bad Request",
-            "content": {
-              "*/*": {
-                "schema": {
-                  "$ref": "#/components/schemas/AppError"
-                }
-              }
-            }
-          },
-          "404": {
-            "description": "Not Found",
-            "content": {
-              "*/*": {
-                "schema": {
-                  "$ref": "#/components/schemas/AppError"
-                }
-              }
-            }
-          },
-          "401": {
-            "description": "Unauthorized",
-            "content": {
-              "*/*": {
-                "schema": {
-                  "$ref": "#/components/schemas/AppError"
-                }
-              }
-            }
-          },
-          "200": {
-            "description": "OK",
-            "content": {
-              "*/*": {
-                "schema": {
-                  "$ref": "#/components/schemas/DataPagePojoProductCategoryPojo"
-                }
-              }
-            }
-          }
-        }
-      },
-      "post": {
-        "tags": [
-          "Product Categories management"
-        ],
-        "summary": "Define new product categories.",
-        "operationId": "create_9",
-        "requestBody": {
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/ProductCategoryPojo"
-              }
-            }
-          },
-          "required": true
-        },
-        "responses": {
-          "400": {
-            "description": "Bad Request",
-            "content": {
-              "*/*": {
-                "schema": {
-                  "$ref": "#/components/schemas/AppError"
-                }
-              }
-            }
-          },
-          "404": {
-            "description": "Not Found",
-            "content": {
-              "*/*": {
-                "schema": {
-                  "$ref": "#/components/schemas/AppError"
-                }
-              }
-            }
-          },
-          "401": {
-            "description": "Unauthorized",
-            "content": {
-              "*/*": {
-                "schema": {
-                  "$ref": "#/components/schemas/AppError"
-                }
-              }
-            }
-          },
-          "201": {
-            "description": "Created"
-          }
-        }
-      }
-    },
-    "/api/data/product-variants": {
-      "get": {
-        "tags": [
-          "Product variants management"
-        ],
-        "summary": "List product variants.",
-        "operationId": "readMany_9",
-        "parameters": [
-          {
-            "name": "allRequestParams",
-            "in": "query",
-            "required": true,
-            "schema": {
-              "type": "object",
-              "additionalProperties": {
-                "type": "string"
-              }
-            }
-          }
-        ],
-        "responses": {
-          "400": {
-            "description": "Bad Request",
-            "content": {
-              "*/*": {
-                "schema": {
-                  "$ref": "#/components/schemas/AppError"
-                }
-              }
-            }
-          },
-          "404": {
-            "description": "Not Found",
-            "content": {
-              "*/*": {
-                "schema": {
-                  "$ref": "#/components/schemas/AppError"
-                }
-              }
-            }
-          },
-          "401": {
-            "description": "Unauthorized",
-            "content": {
-              "*/*": {
-                "schema": {
-                  "$ref": "#/components/schemas/AppError"
-                }
-              }
-            }
-          },
-          "200": {
-            "description": "OK",
-            "content": {
-              "*/*": {
-                "schema": {
-                  "$ref": "#/components/schemas/DataPagePojoProductVariantPojo"
-                }
-              }
-            }
-          }
-        }
-      },
-      "post": {
-        "tags": [
-          "Product variants management"
-        ],
-        "summary": "Define a new product variant.",
-        "operationId": "create_10",
-        "parameters": [
-          {
-            "name": "input",
-            "in": "query",
-            "required": true,
-            "schema": {
-              "$ref": "#/components/schemas/ProductVariantPojo"
-            }
-          }
-        ],
-        "responses": {
-          "400": {
-            "description": "Bad Request",
-            "content": {
-              "*/*": {
-                "schema": {
-                  "$ref": "#/components/schemas/AppError"
-                }
-              }
-            }
-          },
-          "404": {
-            "description": "Not Found",
-            "content": {
-              "*/*": {
-                "schema": {
-                  "$ref": "#/components/schemas/AppError"
-                }
-              }
-            }
-          },
-          "401": {
-            "description": "Unauthorized",
-            "content": {
-              "*/*": {
-                "schema": {
-                  "$ref": "#/components/schemas/AppError"
-                }
-              }
-            }
-          },
-          "201": {
-            "description": "Created"
-          }
-        }
-      }
-    },
-    "/api/data/product-reviews": {
-      "get": {
-        "tags": [
-          "Product Reviews — Admin"
-        ],
-        "summary": "List all product reviews (admin — includes unapproved)",
-        "operationId": "readMany_10",
-        "parameters": [
-          {
-            "name": "allRequestParams",
-            "in": "query",
-            "required": true,
-            "schema": {
-              "type": "object",
-              "additionalProperties": {
-                "type": "string"
-              }
-            }
-          }
-        ],
-        "responses": {
-          "400": {
-            "description": "Bad Request",
-            "content": {
-              "*/*": {
-                "schema": {
-                  "$ref": "#/components/schemas/AppError"
-                }
-              }
-            }
-          },
-          "404": {
-            "description": "Not Found",
-            "content": {
-              "*/*": {
-                "schema": {
-                  "$ref": "#/components/schemas/AppError"
-                }
-              }
-            }
-          },
-          "401": {
-            "description": "Unauthorized",
-            "content": {
-              "*/*": {
-                "schema": {
-                  "$ref": "#/components/schemas/AppError"
-                }
-              }
-            }
-          },
-          "200": {
-            "description": "OK",
-            "content": {
-              "*/*": {
-                "schema": {
-                  "$ref": "#/components/schemas/DataPagePojoProductReviewPojo"
-                }
-              }
-            }
-          }
-        }
-      },
-      "post": {
-        "tags": [
-          "Product Reviews — Admin"
-        ],
-        "summary": "Create a product review on behalf of a customer (admin — bypasses approval)",
-        "operationId": "create_11",
-        "parameters": [
-          {
-            "name": "input",
-            "in": "query",
-            "required": true,
-            "schema": {
-              "$ref": "#/components/schemas/ProductReviewPojo"
-            }
-          },
-          {
-            "name": "customerId",
-            "in": "query",
-            "required": true,
-            "schema": {
-              "type": "integer",
-              "format": "int64"
-            }
-          }
-        ],
-        "responses": {
-          "400": {
-            "description": "Bad Request",
-            "content": {
-              "*/*": {
-                "schema": {
-                  "$ref": "#/components/schemas/AppError"
-                }
-              }
-            }
-          },
-          "404": {
-            "description": "Not Found",
-            "content": {
-              "*/*": {
-                "schema": {
-                  "$ref": "#/components/schemas/AppError"
-                }
-              }
-            }
-          },
-          "401": {
-            "description": "Unauthorized",
-            "content": {
-              "*/*": {
-                "schema": {
-                  "$ref": "#/components/schemas/AppError"
-                }
-              }
-            }
-          },
-          "201": {
-            "description": "Created"
-          }
-        }
-      }
-    },
-    "/api/data/orders": {
-      "get": {
-        "tags": [
-          "Orders management"
-        ],
-        "summary": "List orders.",
-        "operationId": "readMany_12",
-        "parameters": [
-          {
-            "name": "allRequestParams",
-            "in": "query",
-            "required": true,
-            "schema": {
-              "type": "object",
-              "additionalProperties": {
-                "type": "string"
-              }
-            }
-          }
-        ],
-        "responses": {
-          "400": {
-            "description": "Bad Request",
-            "content": {
-              "*/*": {
-                "schema": {
-                  "$ref": "#/components/schemas/AppError"
-                }
-              }
-            }
-          },
-          "404": {
-            "description": "Not Found",
-            "content": {
-              "*/*": {
-                "schema": {
-                  "$ref": "#/components/schemas/AppError"
-                }
-              }
-            }
-          },
-          "401": {
-            "description": "Unauthorized",
-            "content": {
-              "*/*": {
-                "schema": {
-                  "$ref": "#/components/schemas/AppError"
-                }
-              }
-            }
-          },
-          "200": {
-            "description": "OK",
-            "content": {
-              "*/*": {
-                "schema": {
-                  "$ref": "#/components/schemas/DataPagePojoOrderPojo"
-                }
-              }
-            }
-          }
-        }
-      },
-      "post": {
-        "tags": [
-          "Orders management"
-        ],
-        "summary": "Create new orders.",
-        "operationId": "create_12",
-        "parameters": [
-          {
-            "name": "input",
-            "in": "query",
-            "required": true,
-            "schema": {
-              "$ref": "#/components/schemas/OrderPojo"
-            }
-          }
-        ],
-        "responses": {
-          "400": {
-            "description": "Bad Request",
-            "content": {
-              "*/*": {
-                "schema": {
-                  "$ref": "#/components/schemas/AppError"
-                }
-              }
-            }
-          },
-          "404": {
-            "description": "Not Found",
-            "content": {
-              "*/*": {
-                "schema": {
-                  "$ref": "#/components/schemas/AppError"
-                }
-              }
-            }
-          },
-          "401": {
-            "description": "Unauthorized",
-            "content": {
-              "*/*": {
-                "schema": {
-                  "$ref": "#/components/schemas/AppError"
-                }
-              }
-            }
-          },
-          "201": {
-            "description": "Created"
-          }
-        }
-      }
-    },
-    "/api/data/orders/rejection": {
-      "post": {
-        "tags": [
-          "Orders management"
-        ],
-        "summary": "Reject a pending order.",
-        "operationId": "rejectSell",
-        "requestBody": {
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/OrderPojo"
-              }
-            }
-          },
-          "required": true
-        },
-        "responses": {
-          "400": {
-            "description": "Bad Request",
-            "content": {
-              "*/*": {
-                "schema": {
-                  "$ref": "#/components/schemas/AppError"
-                }
-              }
-            }
-          },
-          "404": {
-            "description": "Not Found",
-            "content": {
-              "*/*": {
-                "schema": {
-                  "$ref": "#/components/schemas/AppError"
-                }
-              }
-            }
-          },
-          "401": {
-            "description": "Unauthorized",
-            "content": {
-              "*/*": {
-                "schema": {
-                  "$ref": "#/components/schemas/AppError"
-                }
-              }
-            }
-          },
-          "200": {
-            "description": "OK"
-          }
-        }
-      }
-    },
-    "/api/data/orders/confirmation": {
-      "post": {
-        "tags": [
-          "Orders management"
-        ],
-        "summary": "Confirm a pending order.",
-        "operationId": "confirmSell",
-        "requestBody": {
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/OrderPojo"
-              }
-            }
-          },
-          "required": true
-        },
-        "responses": {
-          "400": {
-            "description": "Bad Request",
-            "content": {
-              "*/*": {
-                "schema": {
-                  "$ref": "#/components/schemas/AppError"
-                }
-              }
-            }
-          },
-          "404": {
-            "description": "Not Found",
-            "content": {
-              "*/*": {
-                "schema": {
-                  "$ref": "#/components/schemas/AppError"
-                }
-              }
-            }
-          },
-          "401": {
-            "description": "Unauthorized",
-            "content": {
-              "*/*": {
-                "schema": {
-                  "$ref": "#/components/schemas/AppError"
-                }
-              }
-            }
-          },
-          "204": {
-            "description": "No Content"
-          }
-        }
-      }
-    },
-    "/api/data/orders/completion": {
-      "post": {
-        "tags": [
-          "Orders management"
-        ],
-        "summary": "Mark an order as completed.",
-        "operationId": "completeSell",
-        "requestBody": {
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/OrderPojo"
-              }
-            }
-          },
-          "required": true
-        },
-        "responses": {
-          "400": {
-            "description": "Bad Request",
-            "content": {
-              "*/*": {
-                "schema": {
-                  "$ref": "#/components/schemas/AppError"
-                }
-              }
-            }
-          },
-          "404": {
-            "description": "Not Found",
-            "content": {
-              "*/*": {
-                "schema": {
-                  "$ref": "#/components/schemas/AppError"
-                }
-              }
-            }
-          },
-          "401": {
-            "description": "Unauthorized",
-            "content": {
-              "*/*": {
-                "schema": {
-                  "$ref": "#/components/schemas/AppError"
-                }
-              }
-            }
-          },
-          "200": {
-            "description": "OK"
-          }
-        }
-      }
-    },
-    "/api/data/orders/cancellation": {
-      "post": {
-        "tags": [
-          "Orders management"
-        ],
-        "summary": "Admin cancel — releases stock and triggers refund if already paid.",
-        "operationId": "cancelOrder",
-        "parameters": [
-          {
-            "name": "orderId",
-            "in": "query",
-            "required": true,
-            "schema": {
-              "type": "integer",
-              "format": "int64"
-            }
-          },
-          {
-            "name": "reason",
-            "in": "query",
-            "required": false,
-            "schema": {
-              "type": "string"
-            }
-          }
-        ],
-        "responses": {
-          "400": {
-            "description": "Bad Request",
-            "content": {
-              "*/*": {
-                "schema": {
-                  "$ref": "#/components/schemas/AppError"
-                }
-              }
-            }
-          },
-          "404": {
-            "description": "Not Found",
-            "content": {
-              "*/*": {
-                "schema": {
-                  "$ref": "#/components/schemas/AppError"
-                }
-              }
-            }
-          },
-          "401": {
-            "description": "Unauthorized",
-            "content": {
-              "*/*": {
-                "schema": {
-                  "$ref": "#/components/schemas/AppError"
-                }
-              }
-            }
-          },
-          "200": {
-            "description": "OK"
-          }
-        }
-      }
-    },
-    "/api/data/images": {
-      "get": {
-        "tags": [
-          "Images management"
-        ],
-        "summary": "List image links data.",
-        "operationId": "readMany_14",
-        "parameters": [
-          {
-            "name": "allRequestParams",
-            "in": "query",
-            "required": true,
-            "schema": {
-              "type": "object",
-              "additionalProperties": {
-                "type": "string"
-              }
-            }
-          }
-        ],
-        "responses": {
-          "400": {
-            "description": "Bad Request",
-            "content": {
-              "*/*": {
-                "schema": {
-                  "$ref": "#/components/schemas/AppError"
-                }
-              }
-            }
-          },
-          "404": {
-            "description": "Not Found",
-            "content": {
-              "*/*": {
-                "schema": {
-                  "$ref": "#/components/schemas/AppError"
-                }
-              }
-            }
-          },
-          "401": {
-            "description": "Unauthorized",
-            "content": {
-              "*/*": {
-                "schema": {
-                  "$ref": "#/components/schemas/AppError"
-                }
-              }
-            }
-          },
-          "200": {
-            "description": "OK",
-            "content": {
-              "*/*": {
-                "schema": {
-                  "$ref": "#/components/schemas/DataPagePojoImagePojo"
-                }
-              }
-            }
-          }
-        }
-      },
-      "post": {
-        "tags": [
-          "Images management"
-        ],
-        "summary": "Define new image links.",
-        "operationId": "create_13",
-        "parameters": [
-          {
-            "name": "input",
-            "in": "query",
-            "required": true,
-            "schema": {
-              "$ref": "#/components/schemas/ImagePojo"
-            }
-          }
-        ],
-        "responses": {
-          "400": {
-            "description": "Bad Request",
-            "content": {
-              "*/*": {
-                "schema": {
-                  "$ref": "#/components/schemas/AppError"
-                }
-              }
-            }
-          },
-          "404": {
-            "description": "Not Found",
-            "content": {
-              "*/*": {
-                "schema": {
-                  "$ref": "#/components/schemas/AppError"
-                }
-              }
-            }
-          },
-          "401": {
-            "description": "Unauthorized",
-            "content": {
-              "*/*": {
-                "schema": {
-                  "$ref": "#/components/schemas/AppError"
-                }
-              }
-            }
-          },
-          "201": {
-            "description": "Created"
-          }
-        }
-      }
-    },
-    "/api/data/discount-codes": {
-      "get": {
-        "tags": [
-          "Discount codes management"
-        ],
-        "summary": "List discount codes.",
-        "operationId": "readMany_15",
-        "parameters": [
-          {
-            "name": "allRequestParams",
-            "in": "query",
-            "required": true,
-            "schema": {
-              "type": "object",
-              "additionalProperties": {
-                "type": "string"
-              }
-            }
-          }
-        ],
-        "responses": {
-          "400": {
-            "description": "Bad Request",
-            "content": {
-              "*/*": {
-                "schema": {
-                  "$ref": "#/components/schemas/AppError"
-                }
-              }
-            }
-          },
-          "404": {
-            "description": "Not Found",
-            "content": {
-              "*/*": {
-                "schema": {
-                  "$ref": "#/components/schemas/AppError"
-                }
-              }
-            }
-          },
-          "401": {
-            "description": "Unauthorized",
-            "content": {
-              "*/*": {
-                "schema": {
-                  "$ref": "#/components/schemas/AppError"
-                }
-              }
-            }
-          },
-          "200": {
-            "description": "OK",
-            "content": {
-              "*/*": {
-                "schema": {
-                  "$ref": "#/components/schemas/DataPagePojoDiscountCodePojo"
-                }
-              }
-            }
-          }
-        }
-      },
-      "post": {
-        "tags": [
-          "Discount codes management"
-        ],
-        "summary": "Create a new discount code.",
-        "operationId": "create_14",
-        "parameters": [
-          {
-            "name": "input",
-            "in": "query",
-            "required": true,
-            "schema": {
-              "$ref": "#/components/schemas/DiscountCodePojo"
-            }
-          }
-        ],
-        "responses": {
-          "400": {
-            "description": "Bad Request",
-            "content": {
-              "*/*": {
-                "schema": {
-                  "$ref": "#/components/schemas/AppError"
-                }
-              }
-            }
-          },
-          "404": {
-            "description": "Not Found",
-            "content": {
-              "*/*": {
-                "schema": {
-                  "$ref": "#/components/schemas/AppError"
-                }
-              }
-            }
-          },
-          "401": {
-            "description": "Unauthorized",
-            "content": {
-              "*/*": {
-                "schema": {
-                  "$ref": "#/components/schemas/AppError"
-                }
-              }
-            }
-          },
-          "201": {
-            "description": "Created"
-          }
-        }
-      }
-    },
-    "/api/data/customers": {
-      "get": {
-        "tags": [
-          "People management"
-        ],
-        "summary": "List customers.",
-        "operationId": "readMany_16",
-        "parameters": [
-          {
-            "name": "allRequestParams",
-            "in": "query",
-            "required": true,
-            "schema": {
-              "type": "object",
-              "additionalProperties": {
-                "type": "string"
-              }
-            }
-          }
-        ],
-        "responses": {
-          "400": {
-            "description": "Bad Request",
-            "content": {
-              "*/*": {
-                "schema": {
-                  "$ref": "#/components/schemas/AppError"
-                }
-              }
-            }
-          },
-          "404": {
-            "description": "Not Found",
-            "content": {
-              "*/*": {
-                "schema": {
-                  "$ref": "#/components/schemas/AppError"
-                }
-              }
-            }
-          },
-          "401": {
-            "description": "Unauthorized",
-            "content": {
-              "*/*": {
-                "schema": {
-                  "$ref": "#/components/schemas/AppError"
-                }
-              }
-            }
-          },
-          "200": {
-            "description": "OK",
-            "content": {
-              "*/*": {
-                "schema": {
-                  "$ref": "#/components/schemas/DataPagePojoPersonPojo"
-                }
-              }
-            }
-          }
-        }
-      },
-      "post": {
-        "tags": [
-          "People management"
-        ],
-        "summary": "Register new customer.",
-        "operationId": "create_15",
-        "parameters": [
-          {
-            "name": "input",
-            "in": "query",
-            "required": true,
-            "schema": {
-              "$ref": "#/components/schemas/PersonPojo"
-            }
-          }
-        ],
-        "responses": {
-          "400": {
-            "description": "Bad Request",
-            "content": {
-              "*/*": {
-                "schema": {
-                  "$ref": "#/components/schemas/AppError"
-                }
-              }
-            }
-          },
-          "404": {
-            "description": "Not Found",
-            "content": {
-              "*/*": {
-                "schema": {
-                  "$ref": "#/components/schemas/AppError"
-                }
-              }
-            }
-          },
-          "401": {
-            "description": "Unauthorized",
-            "content": {
-              "*/*": {
-                "schema": {
-                  "$ref": "#/components/schemas/AppError"
-                }
-              }
-            }
-          },
-          "201": {
-            "description": "Created"
-          }
-        }
-      }
-    },
-    "/api/account/reviews": {
-      "get": {
-        "tags": [
-          "My Reviews"
-        ],
-        "summary": "List all reviews written by the authenticated customer",
-        "operationId": "listMyReviews",
-        "responses": {
-          "400": {
-            "description": "Bad Request",
-            "content": {
-              "*/*": {
-                "schema": {
-                  "$ref": "#/components/schemas/AppError"
-                }
-              }
-            }
-          },
-          "404": {
-            "description": "Not Found",
-            "content": {
-              "*/*": {
-                "schema": {
-                  "$ref": "#/components/schemas/AppError"
-                }
-              }
-            }
-          },
-          "401": {
-            "description": "Unauthorized",
-            "content": {
-              "*/*": {
-                "schema": {
-                  "$ref": "#/components/schemas/AppError"
-                }
-              }
-            }
-          },
-          "200": {
-            "description": "OK",
-            "content": {
-              "*/*": {
-                "schema": {
-                  "type": "array",
-                  "items": {
-                    "$ref": "#/components/schemas/ProductReviewPojo"
-                  }
-                }
-              }
-            }
-          }
-        }
-      },
-      "post": {
-        "tags": [
-          "My Reviews"
-        ],
-        "summary": "Submit a product review",
-        "operationId": "submitReview",
-        "requestBody": {
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/ProductReviewPojo"
-              }
-            }
-          },
-          "required": true
-        },
-        "responses": {
-          "400": {
-            "description": "Bad Request",
-            "content": {
-              "*/*": {
-                "schema": {
-                  "$ref": "#/components/schemas/AppError"
-                }
-              }
-            }
-          },
-          "404": {
-            "description": "Not Found",
-            "content": {
-              "*/*": {
-                "schema": {
-                  "$ref": "#/components/schemas/AppError"
-                }
-              }
-            }
-          },
-          "401": {
-            "description": "Unauthorized",
-            "content": {
-              "*/*": {
-                "schema": {
-                  "$ref": "#/components/schemas/AppError"
-                }
-              }
-            }
-          },
-          "201": {
-            "description": "Created",
-            "content": {
-              "*/*": {
-                "schema": {
-                  "$ref": "#/components/schemas/ProductReviewPojo"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/api/public/cart/items/{variantSku}": {
-      "delete": {
-        "tags": [
-          "Cart"
-        ],
-        "summary": "Remove a specific item from the cart",
-        "operationId": "removeItem",
-        "parameters": [
-          {
-            "name": "X-Session-Token",
-            "in": "header",
-            "required": false,
-            "schema": {
-              "type": "string"
-            }
-          },
-          {
-            "name": "variantSku",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "string"
-            }
-          }
-        ],
-        "responses": {
-          "400": {
-            "description": "Bad Request",
-            "content": {
-              "*/*": {
-                "schema": {
-                  "$ref": "#/components/schemas/AppError"
-                }
-              }
-            }
-          },
-          "404": {
-            "description": "Not Found",
-            "content": {
-              "*/*": {
-                "schema": {
-                  "$ref": "#/components/schemas/AppError"
-                }
-              }
-            }
-          },
-          "401": {
-            "description": "Unauthorized",
-            "content": {
-              "*/*": {
-                "schema": {
-                  "$ref": "#/components/schemas/AppError"
-                }
-              }
-            }
-          },
-          "200": {
-            "description": "OK",
-            "content": {
-              "*/*": {
-                "schema": {
-                  "$ref": "#/components/schemas/CartSessionPojo"
-                }
-              }
-            }
-          }
-        }
-      },
-      "patch": {
-        "tags": [
-          "Cart"
-        ],
-        "summary": "Update item quantity in the cart",
-        "operationId": "updateItem",
-        "parameters": [
-          {
-            "name": "X-Session-Token",
-            "in": "header",
-            "required": false,
-            "schema": {
-              "type": "string"
-            }
-          },
-          {
-            "name": "variantSku",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "string"
-            }
-          }
-        ],
-        "requestBody": {
-          "content": {
-            "application/json": {
-              "schema": {
-                "type": "object",
-                "additionalProperties": {
-                  "type": "integer",
-                  "format": "int32"
-                }
-              }
-            }
-          },
-          "required": true
-        },
-        "responses": {
-          "400": {
-            "description": "Bad Request",
-            "content": {
-              "*/*": {
-                "schema": {
-                  "$ref": "#/components/schemas/AppError"
-                }
-              }
-            }
-          },
-          "404": {
-            "description": "Not Found",
-            "content": {
-              "*/*": {
-                "schema": {
-                  "$ref": "#/components/schemas/AppError"
-                }
-              }
-            }
-          },
-          "401": {
-            "description": "Unauthorized",
-            "content": {
-              "*/*": {
-                "schema": {
-                  "$ref": "#/components/schemas/AppError"
-                }
-              }
-            }
-          },
-          "200": {
-            "description": "OK",
-            "content": {
-              "*/*": {
-                "schema": {
-                  "$ref": "#/components/schemas/CartSessionPojo"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/api/data/product-reviews/{id}/reject": {
-      "patch": {
-        "tags": [
-          "Product Reviews — Admin"
-        ],
-        "summary": "Reject a product review",
-        "operationId": "reject",
-        "parameters": [
-          {
-            "name": "id",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "integer",
-              "format": "int64"
-            }
-          }
-        ],
-        "responses": {
-          "400": {
-            "description": "Bad Request",
-            "content": {
-              "*/*": {
-                "schema": {
-                  "$ref": "#/components/schemas/AppError"
-                }
-              }
-            }
-          },
-          "404": {
-            "description": "Not Found",
-            "content": {
-              "*/*": {
-                "schema": {
-                  "$ref": "#/components/schemas/AppError"
-                }
-              }
-            }
-          },
-          "401": {
-            "description": "Unauthorized",
-            "content": {
-              "*/*": {
-                "schema": {
-                  "$ref": "#/components/schemas/AppError"
-                }
-              }
-            }
-          },
-          "204": {
-            "description": "No Content"
-          }
-        }
-      }
-    },
-    "/api/data/product-reviews/{id}/approve": {
-      "patch": {
-        "tags": [
-          "Product Reviews — Admin"
-        ],
-        "summary": "Approve a product review",
-        "operationId": "approve",
-        "parameters": [
-          {
-            "name": "id",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "integer",
-              "format": "int64"
-            }
-          }
-        ],
-        "responses": {
-          "400": {
-            "description": "Bad Request",
-            "content": {
-              "*/*": {
-                "schema": {
-                  "$ref": "#/components/schemas/AppError"
-                }
-              }
-            }
-          },
-          "404": {
-            "description": "Not Found",
-            "content": {
-              "*/*": {
-                "schema": {
-                  "$ref": "#/components/schemas/AppError"
-                }
-              }
-            }
-          },
-          "401": {
-            "description": "Unauthorized",
-            "content": {
-              "*/*": {
-                "schema": {
-                  "$ref": "#/components/schemas/AppError"
-                }
-              }
-            }
-          },
-          "204": {
-            "description": "No Content"
-          }
-        }
-      }
-    },
-    "/api/data/cart-sessions/{id}": {
-      "get": {
-        "tags": [
-          "Cart sessions — Admin read-only"
-        ],
-        "operationId": "getById_17",
-        "parameters": [
-          {
-            "name": "id",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "integer",
-              "format": "int64"
-            }
-          }
-        ],
-        "responses": {
-          "400": {
-            "description": "Bad Request",
-            "content": {
-              "*/*": {
-                "schema": {
-                  "$ref": "#/components/schemas/AppError"
-                }
-              }
-            }
-          },
-          "404": {
-            "description": "Not Found",
-            "content": {
-              "*/*": {
-                "schema": {
-                  "$ref": "#/components/schemas/AppError"
-                }
-              }
-            }
-          },
-          "401": {
-            "description": "Unauthorized",
-            "content": {
-              "*/*": {
-                "schema": {
-                  "$ref": "#/components/schemas/AppError"
-                }
-              }
-            }
-          },
-          "200": {
-            "description": "OK",
-            "content": {
-              "*/*": {
-                "schema": {
-                  "$ref": "#/components/schemas/CartSessionPojo"
-                }
-              }
-            }
-          }
-        }
-      },
-      "delete": {
-        "tags": [
-          "Cart sessions — Admin read-only"
-        ],
-        "summary": "Delete cart sessions (admin). Does NOT release stock reservations.",
-        "operationId": "delete_15",
-        "parameters": [
-          {
-            "name": "id",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "integer",
-              "format": "int64"
-            }
-          }
-        ],
-        "responses": {
-          "400": {
-            "description": "Bad Request",
-            "content": {
-              "*/*": {
-                "schema": {
-                  "$ref": "#/components/schemas/AppError"
-                }
-              }
-            }
-          },
-          "404": {
-            "description": "Not Found",
-            "content": {
-              "*/*": {
-                "schema": {
-                  "$ref": "#/components/schemas/AppError"
-                }
-              }
-            }
-          },
-          "401": {
-            "description": "Unauthorized",
-            "content": {
-              "*/*": {
-                "schema": {
-                  "$ref": "#/components/schemas/AppError"
-                }
-              }
-            }
-          },
-          "204": {
-            "description": "No Content"
-          }
-        }
-      },
-      "patch": {
-        "tags": [
-          "Cart sessions — Admin read-only"
-        ],
-        "summary": "Refresh cart expiry / extend TTL.",
-        "operationId": "partialUpdate_11",
-        "parameters": [
-          {
-            "name": "id",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "integer",
-              "format": "int64"
-            }
-          }
-        ],
-        "requestBody": {
-          "content": {
-            "application/json": {
-              "schema": {
-                "type": "object",
-                "additionalProperties": {
-                  "type": "object"
-                }
-              }
-            }
-          },
-          "required": true
-        },
-        "responses": {
-          "400": {
-            "description": "Bad Request",
-            "content": {
-              "*/*": {
-                "schema": {
-                  "$ref": "#/components/schemas/AppError"
-                }
-              }
-            }
-          },
-          "404": {
-            "description": "Not Found",
-            "content": {
-              "*/*": {
-                "schema": {
-                  "$ref": "#/components/schemas/AppError"
-                }
-              }
-            }
-          },
-          "401": {
-            "description": "Unauthorized",
-            "content": {
-              "*/*": {
-                "schema": {
-                  "$ref": "#/components/schemas/AppError"
-                }
-              }
-            }
-          },
-          "204": {
-            "description": "No Content"
-          }
-        }
-      }
-    },
-    "/api/public/shipping/methods": {
-      "get": {
-        "tags": [
-          "Public shipping"
-        ],
-        "summary": "List active shipping methods with computed fees",
-        "operationId": "getShippingMethods",
-        "parameters": [
-          {
-            "name": "subtotal",
-            "in": "query",
-            "required": false,
-            "schema": {
-              "type": "integer",
-              "format": "int32"
-            }
-          }
-        ],
-        "responses": {
-          "400": {
-            "description": "Bad Request",
-            "content": {
-              "*/*": {
-                "schema": {
-                  "$ref": "#/components/schemas/AppError"
-                }
-              }
-            }
-          },
-          "404": {
-            "description": "Not Found",
-            "content": {
-              "*/*": {
-                "schema": {
-                  "$ref": "#/components/schemas/AppError"
-                }
-              }
-            }
-          },
-          "401": {
-            "description": "Unauthorized",
-            "content": {
-              "*/*": {
-                "schema": {
-                  "$ref": "#/components/schemas/AppError"
-                }
-              }
-            }
-          },
-          "200": {
-            "description": "OK",
-            "content": {
-              "*/*": {
-                "schema": {
-                  "type": "array",
-                  "items": {
-                    "$ref": "#/components/schemas/ShippingRatePojo"
-                  }
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/api/public/receipt/{token}": {
-      "get": {
-        "tags": [
-          "Checkout"
-        ],
-        "summary": "View a summary of an order once complete or rejected",
-        "operationId": "fetchReceiptById",
-        "parameters": [
-          {
-            "name": "token",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "string"
-            }
-          }
-        ],
-        "responses": {
-          "400": {
-            "description": "Bad Request",
-            "content": {
-              "*/*": {
-                "schema": {
-                  "$ref": "#/components/schemas/AppError"
-                }
-              }
-            }
-          },
-          "404": {
-            "description": "Not Found",
-            "content": {
-              "*/*": {
-                "schema": {
-                  "$ref": "#/components/schemas/AppError"
-                }
-              }
-            }
-          },
-          "401": {
-            "description": "Unauthorized",
-            "content": {
-              "*/*": {
-                "schema": {
-                  "$ref": "#/components/schemas/AppError"
-                }
-              }
-            }
-          },
-          "200": {
-            "description": "OK",
-            "content": {
-              "*/*": {
-                "schema": {
-                  "$ref": "#/components/schemas/ReceiptPojo"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/api/public/products/{barcode}/reviews": {
-      "get": {
-        "tags": [
-          "Product Reviews"
-        ],
-        "summary": "List all approved reviews for a product",
-        "operationId": "listByProduct",
-        "parameters": [
-          {
-            "name": "barcode",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "string"
-            }
-          }
-        ],
-        "responses": {
-          "400": {
-            "description": "Bad Request",
-            "content": {
-              "*/*": {
-                "schema": {
-                  "$ref": "#/components/schemas/AppError"
-                }
-              }
-            }
-          },
-          "404": {
-            "description": "Not Found",
-            "content": {
-              "*/*": {
-                "schema": {
-                  "$ref": "#/components/schemas/AppError"
-                }
-              }
-            }
-          },
-          "401": {
-            "description": "Unauthorized",
-            "content": {
-              "*/*": {
-                "schema": {
-                  "$ref": "#/components/schemas/AppError"
-                }
-              }
-            }
-          },
-          "200": {
-            "description": "OK",
-            "content": {
-              "*/*": {
-                "schema": {
-                  "type": "array",
-                  "items": {
-                    "$ref": "#/components/schemas/ProductReviewPojo"
-                  }
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/api/public/products/{barcode}/reviews/stats": {
-      "get": {
-        "tags": [
-          "Product Reviews"
-        ],
-        "summary": "Get review statistics (average rating, total count, distribution) for a product",
-        "operationId": "getStats",
-        "parameters": [
-          {
-            "name": "barcode",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "string"
-            }
-          }
-        ],
-        "responses": {
-          "400": {
-            "description": "Bad Request",
-            "content": {
-              "*/*": {
-                "schema": {
-                  "$ref": "#/components/schemas/AppError"
-                }
-              }
-            }
-          },
-          "404": {
-            "description": "Not Found",
-            "content": {
-              "*/*": {
-                "schema": {
-                  "$ref": "#/components/schemas/AppError"
-                }
-              }
-            }
-          },
-          "401": {
-            "description": "Unauthorized",
-            "content": {
-              "*/*": {
-                "schema": {
-                  "$ref": "#/components/schemas/AppError"
-                }
-              }
-            }
-          },
-          "200": {
-            "description": "OK",
-            "content": {
-              "*/*": {
-                "schema": {
-                  "$ref": "#/components/schemas/ReviewStats"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/api/public/discount/validate": {
-      "get": {
-        "tags": [
-          "Discount codes (public)"
-        ],
-        "summary": "Validate a discount code against a cart subtotal",
-        "operationId": "validateDiscount",
-        "parameters": [
-          {
-            "name": "code",
-            "in": "query",
-            "required": true,
-            "schema": {
-              "type": "string"
-            }
-          },
-          {
-            "name": "subtotal",
-            "in": "query",
-            "required": true,
-            "schema": {
-              "type": "integer",
-              "format": "int32"
-            }
-          }
-        ],
-        "responses": {
-          "400": {
-            "description": "Bad Request",
-            "content": {
-              "*/*": {
-                "schema": {
-                  "$ref": "#/components/schemas/AppError"
-                }
-              }
-            }
-          },
-          "404": {
-            "description": "Not Found",
-            "content": {
-              "*/*": {
-                "schema": {
-                  "$ref": "#/components/schemas/AppError"
-                }
-              }
-            }
-          },
-          "401": {
-            "description": "Unauthorized",
-            "content": {
-              "*/*": {
-                "schema": {
-                  "$ref": "#/components/schemas/AppError"
-                }
-              }
-            }
-          },
-          "200": {
-            "description": "OK",
-            "content": {
-              "*/*": {
-                "schema": {
-                  "$ref": "#/components/schemas/DiscountValidationResult"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/api/public/cart": {
-      "get": {
-        "tags": [
-          "Cart"
-        ],
-        "summary": "Get current cart state (creates session if none)",
-        "operationId": "getCart",
-        "parameters": [
-          {
-            "name": "X-Session-Token",
-            "in": "header",
-            "required": false,
-            "schema": {
-              "type": "string"
-            }
-          }
-        ],
-        "responses": {
-          "400": {
-            "description": "Bad Request",
-            "content": {
-              "*/*": {
-                "schema": {
-                  "$ref": "#/components/schemas/AppError"
-                }
-              }
-            }
-          },
-          "404": {
-            "description": "Not Found",
-            "content": {
-              "*/*": {
-                "schema": {
-                  "$ref": "#/components/schemas/AppError"
-                }
-              }
-            }
-          },
-          "401": {
-            "description": "Unauthorized",
-            "content": {
-              "*/*": {
-                "schema": {
-                  "$ref": "#/components/schemas/AppError"
-                }
-              }
-            }
-          },
-          "200": {
-            "description": "OK",
-            "content": {
-              "*/*": {
-                "schema": {
-                  "$ref": "#/components/schemas/CartSessionPojo"
-                }
-              }
-            }
-          }
-        }
-      },
-      "delete": {
-        "tags": [
-          "Cart"
-        ],
-        "summary": "Clear the entire cart",
-        "operationId": "clearCart",
-        "parameters": [
-          {
-            "name": "X-Session-Token",
-            "in": "header",
-            "required": false,
-            "schema": {
-              "type": "string"
-            }
-          }
-        ],
-        "responses": {
-          "400": {
-            "description": "Bad Request",
-            "content": {
-              "*/*": {
-                "schema": {
-                  "$ref": "#/components/schemas/AppError"
-                }
-              }
-            }
-          },
-          "404": {
-            "description": "Not Found",
-            "content": {
-              "*/*": {
-                "schema": {
-                  "$ref": "#/components/schemas/AppError"
-                }
-              }
-            }
-          },
-          "401": {
-            "description": "Unauthorized",
-            "content": {
-              "*/*": {
-                "schema": {
-                  "$ref": "#/components/schemas/AppError"
-                }
-              }
-            }
-          },
-          "200": {
-            "description": "OK"
-          }
-        }
-      }
-    },
-    "/api/public/cart/validate": {
-      "get": {
-        "tags": [
-          "Cart"
-        ],
-        "summary": "Validate cart stock availability before checkout",
-        "operationId": "validateCart",
-        "parameters": [
-          {
-            "name": "X-Session-Token",
-            "in": "header",
-            "required": false,
-            "schema": {
-              "type": "string"
-            }
-          }
-        ],
-        "responses": {
-          "400": {
-            "description": "Bad Request",
-            "content": {
-              "*/*": {
-                "schema": {
-                  "$ref": "#/components/schemas/AppError"
-                }
-              }
-            }
-          },
-          "404": {
-            "description": "Not Found",
-            "content": {
-              "*/*": {
-                "schema": {
-                  "$ref": "#/components/schemas/AppError"
-                }
-              }
-            }
-          },
-          "401": {
-            "description": "Unauthorized",
-            "content": {
-              "*/*": {
-                "schema": {
-                  "$ref": "#/components/schemas/AppError"
-                }
-              }
-            }
-          },
-          "200": {
-            "description": "OK",
-            "content": {
-              "*/*": {
-                "schema": {
-                  "type": "object",
-                  "additionalProperties": {
-                    "type": "object"
-                  }
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/api/public/cart/reservations/availability": {
-      "get": {
-        "tags": [
-          "Cart — Stock Reservations"
-        ],
-        "summary": "Check available stock for a variant",
-        "operationId": "checkAvailability",
-        "parameters": [
-          {
-            "name": "variantSku",
-            "in": "query",
-            "required": true,
-            "schema": {
-              "type": "string"
-            }
-          }
-        ],
-        "responses": {
-          "400": {
-            "description": "Bad Request",
-            "content": {
-              "*/*": {
-                "schema": {
-                  "$ref": "#/components/schemas/AppError"
-                }
-              }
-            }
-          },
-          "404": {
-            "description": "Not Found",
-            "content": {
-              "*/*": {
-                "schema": {
-                  "$ref": "#/components/schemas/AppError"
-                }
-              }
-            }
-          },
-          "401": {
-            "description": "Unauthorized",
-            "content": {
-              "*/*": {
-                "schema": {
-                  "$ref": "#/components/schemas/AppError"
-                }
-              }
-            }
-          },
-          "200": {
-            "description": "OK",
-            "content": {
-              "*/*": {
-                "schema": {
-                  "type": "object",
-                  "additionalProperties": {
-                    "type": "object"
-                  }
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/api/public/about": {
-      "get": {
-        "tags": [
-          "About"
-        ],
-        "summary": "View information useful to customers regarding the business.",
-        "operationId": "readCompanyDetails",
-        "responses": {
-          "400": {
-            "description": "Bad Request",
-            "content": {
-              "*/*": {
-                "schema": {
-                  "$ref": "#/components/schemas/AppError"
-                }
-              }
-            }
-          },
-          "404": {
-            "description": "Not Found",
-            "content": {
-              "*/*": {
-                "schema": {
-                  "$ref": "#/components/schemas/AppError"
-                }
-              }
-            }
-          },
-          "401": {
-            "description": "Unauthorized",
-            "content": {
-              "*/*": {
-                "schema": {
-                  "$ref": "#/components/schemas/AppError"
-                }
-              }
-            }
-          },
-          "200": {
-            "description": "OK",
-            "content": {
-              "*/*": {
-                "schema": {
-                  "$ref": "#/components/schemas/CompanyDetailsPojo"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/api/data/product_categories/{code}": {
-      "get": {
-        "tags": [
-          "Product Categories management"
-        ],
-        "summary": "Get product category by code.",
-        "operationId": "readOne",
-        "parameters": [
-          {
-            "name": "code",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "string"
-            }
-          }
-        ],
-        "responses": {
-          "400": {
-            "description": "Bad Request",
-            "content": {
-              "*/*": {
-                "schema": {
-                  "$ref": "#/components/schemas/AppError"
-                }
-              }
-            }
-          },
-          "404": {
-            "description": "Not Found",
-            "content": {
-              "*/*": {
-                "schema": {
-                  "$ref": "#/components/schemas/AppError"
-                }
-              }
-            }
-          },
-          "401": {
-            "description": "Unauthorized",
-            "content": {
-              "*/*": {
-                "schema": {
-                  "$ref": "#/components/schemas/AppError"
-                }
-              }
-            }
-          },
-          "200": {
-            "description": "OK",
-            "content": {
-              "*/*": {
-                "schema": {
-                  "$ref": "#/components/schemas/ProductCategoryPojo"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/api/data/product_categories/{code}/products": {
-      "get": {
-        "tags": [
-          "Product Categories management"
-        ],
-        "summary": "List products for a category code.",
-        "operationId": "listProductsByCategory",
-        "parameters": [
-          {
-            "name": "code",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "string"
-            }
-          },
-          {
-            "name": "params",
-            "in": "query",
-            "required": true,
-            "schema": {
-              "type": "object",
-              "additionalProperties": {
-                "type": "string"
-              }
-            }
-          }
-        ],
-        "responses": {
-          "400": {
-            "description": "Bad Request",
-            "content": {
-              "*/*": {
-                "schema": {
-                  "$ref": "#/components/schemas/AppError"
-                }
-              }
-            }
-          },
-          "404": {
-            "description": "Not Found",
-            "content": {
-              "*/*": {
-                "schema": {
-                  "$ref": "#/components/schemas/AppError"
-                }
-              }
-            }
-          },
-          "401": {
-            "description": "Unauthorized",
-            "content": {
-              "*/*": {
-                "schema": {
-                  "$ref": "#/components/schemas/AppError"
-                }
-              }
-            }
-          },
-          "200": {
-            "description": "OK",
-            "content": {
-              "*/*": {
-                "schema": {
-                  "$ref": "#/components/schemas/DataPagePojoProductPojo"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/api/data/product-reviews/{id}": {
-      "get": {
-        "tags": [
-          "Product Reviews — Admin"
-        ],
-        "operationId": "getById_10",
-        "parameters": [
-          {
-            "name": "id",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "integer",
-              "format": "int64"
-            }
-          }
-        ],
-        "responses": {
-          "400": {
-            "description": "Bad Request",
-            "content": {
-              "*/*": {
-                "schema": {
-                  "$ref": "#/components/schemas/AppError"
-                }
-              }
-            }
-          },
-          "404": {
-            "description": "Not Found",
-            "content": {
-              "*/*": {
-                "schema": {
-                  "$ref": "#/components/schemas/AppError"
-                }
-              }
-            }
-          },
-          "401": {
-            "description": "Unauthorized",
-            "content": {
-              "*/*": {
-                "schema": {
-                  "$ref": "#/components/schemas/AppError"
-                }
-              }
-            }
-          },
-          "200": {
-            "description": "OK",
-            "content": {
-              "*/*": {
-                "schema": {
-                  "$ref": "#/components/schemas/ProductReviewPojo"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/api/data/people": {
-      "get": {
-        "tags": [
-          "People management"
-        ],
-        "summary": "List people.",
-        "operationId": "readMany_11",
-        "parameters": [
-          {
-            "name": "allRequestParams",
-            "in": "query",
-            "required": true,
-            "schema": {
-              "type": "object",
-              "additionalProperties": {
-                "type": "string"
-              }
-            }
-          }
-        ],
-        "responses": {
-          "400": {
-            "description": "Bad Request",
-            "content": {
-              "*/*": {
-                "schema": {
-                  "$ref": "#/components/schemas/AppError"
-                }
-              }
-            }
-          },
-          "404": {
-            "description": "Not Found",
-            "content": {
-              "*/*": {
-                "schema": {
-                  "$ref": "#/components/schemas/AppError"
-                }
-              }
-            }
-          },
-          "401": {
-            "description": "Unauthorized",
-            "content": {
-              "*/*": {
-                "schema": {
-                  "$ref": "#/components/schemas/AppError"
-                }
-              }
-            }
-          },
-          "200": {
-            "description": "OK",
-            "content": {
-              "*/*": {
-                "schema": {
-                  "$ref": "#/components/schemas/DataPagePojoPersonPojo"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/api/data/people/{id}": {
-      "get": {
-        "tags": [
-          "People management"
-        ],
-        "operationId": "getById_11",
-        "parameters": [
-          {
-            "name": "id",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "integer",
-              "format": "int64"
-            }
-          }
-        ],
-        "responses": {
-          "400": {
-            "description": "Bad Request",
-            "content": {
-              "*/*": {
-                "schema": {
-                  "$ref": "#/components/schemas/AppError"
-                }
-              }
-            }
-          },
-          "404": {
-            "description": "Not Found",
-            "content": {
-              "*/*": {
-                "schema": {
-                  "$ref": "#/components/schemas/AppError"
-                }
-              }
-            }
-          },
-          "401": {
-            "description": "Unauthorized",
-            "content": {
-              "*/*": {
-                "schema": {
-                  "$ref": "#/components/schemas/AppError"
-                }
-              }
-            }
-          },
-          "200": {
-            "description": "OK",
-            "content": {
-              "*/*": {
-                "schema": {
-                  "$ref": "#/components/schemas/PersonPojo"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/api/data/order_statuses": {
-      "get": {
-        "tags": [
-          "Params management"
-        ],
-        "summary": "List order statuses.",
-        "operationId": "readMany_13",
-        "parameters": [
-          {
-            "name": "allRequestParams",
-            "in": "query",
-            "required": true,
-            "schema": {
-              "type": "object",
-              "additionalProperties": {
-                "type": "string"
-              }
-            }
-          }
-        ],
-        "responses": {
-          "400": {
-            "description": "Bad Request",
-            "content": {
-              "*/*": {
-                "schema": {
-                  "$ref": "#/components/schemas/AppError"
-                }
-              }
-            }
-          },
-          "404": {
-            "description": "Not Found",
-            "content": {
-              "*/*": {
-                "schema": {
-                  "$ref": "#/components/schemas/AppError"
-                }
-              }
-            }
-          },
-          "401": {
-            "description": "Unauthorized",
-            "content": {
-              "*/*": {
-                "schema": {
-                  "$ref": "#/components/schemas/AppError"
-                }
-              }
-            }
-          },
-          "200": {
-            "description": "OK",
-            "content": {
-              "*/*": {
-                "schema": {
-                  "$ref": "#/components/schemas/DataPagePojoOrderStatusPojo"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/api/data/order_statuses/{id}": {
-      "get": {
-        "tags": [
-          "Params management"
-        ],
-        "operationId": "getById_13",
-        "parameters": [
-          {
-            "name": "id",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "integer",
-              "format": "int64"
-            }
-          }
-        ],
-        "responses": {
-          "400": {
-            "description": "Bad Request",
-            "content": {
-              "*/*": {
-                "schema": {
-                  "$ref": "#/components/schemas/AppError"
-                }
-              }
-            }
-          },
-          "404": {
-            "description": "Not Found",
-            "content": {
-              "*/*": {
-                "schema": {
-                  "$ref": "#/components/schemas/AppError"
-                }
-              }
-            }
-          },
-          "401": {
-            "description": "Unauthorized",
-            "content": {
-              "*/*": {
-                "schema": {
-                  "$ref": "#/components/schemas/AppError"
-                }
-              }
-            }
-          },
-          "200": {
-            "description": "OK",
-            "content": {
-              "*/*": {
-                "schema": {
-                  "$ref": "#/components/schemas/OrderStatusPojo"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/api/data/cart-sessions": {
-      "get": {
-        "tags": [
-          "Cart sessions — Admin read-only"
-        ],
-        "summary": "List cart sessions (admin read-only).",
-        "operationId": "readMany_17",
-        "parameters": [
-          {
-            "name": "allRequestParams",
-            "in": "query",
-            "required": true,
-            "schema": {
-              "type": "object",
-              "additionalProperties": {
-                "type": "string"
-              }
-            }
-          }
-        ],
-        "responses": {
-          "400": {
-            "description": "Bad Request",
-            "content": {
-              "*/*": {
-                "schema": {
-                  "$ref": "#/components/schemas/AppError"
-                }
-              }
-            }
-          },
-          "404": {
-            "description": "Not Found",
-            "content": {
-              "*/*": {
-                "schema": {
-                  "$ref": "#/components/schemas/AppError"
-                }
-              }
-            }
-          },
-          "401": {
-            "description": "Unauthorized",
-            "content": {
-              "*/*": {
-                "schema": {
-                  "$ref": "#/components/schemas/AppError"
-                }
-              }
-            }
-          },
-          "200": {
-            "description": "OK",
-            "content": {
-              "*/*": {
-                "schema": {
-                  "$ref": "#/components/schemas/DataPagePojoCartSessionPojo"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/api/data/billing_types": {
-      "get": {
-        "tags": [
-          "Params management"
-        ],
-        "summary": "List billing types.",
-        "operationId": "readMany_18",
-        "parameters": [
-          {
-            "name": "allRequestParams",
-            "in": "query",
-            "required": true,
-            "schema": {
-              "type": "object",
-              "additionalProperties": {
-                "type": "string"
-              }
-            }
-          }
-        ],
-        "responses": {
-          "400": {
-            "description": "Bad Request",
-            "content": {
-              "*/*": {
-                "schema": {
-                  "$ref": "#/components/schemas/AppError"
-                }
-              }
-            }
-          },
-          "404": {
-            "description": "Not Found",
-            "content": {
-              "*/*": {
-                "schema": {
-                  "$ref": "#/components/schemas/AppError"
-                }
-              }
-            }
-          },
-          "401": {
-            "description": "Unauthorized",
-            "content": {
-              "*/*": {
-                "schema": {
-                  "$ref": "#/components/schemas/AppError"
-                }
-              }
-            }
-          },
-          "200": {
-            "description": "OK",
-            "content": {
-              "*/*": {
-                "schema": {
-                  "$ref": "#/components/schemas/DataPagePojoBillingTypePojo"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/api/data/billing_types/{id}": {
-      "get": {
-        "tags": [
-          "Params management"
-        ],
-        "operationId": "getById_18",
-        "parameters": [
-          {
-            "name": "id",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "integer",
-              "format": "int64"
-            }
-          }
-        ],
-        "responses": {
-          "400": {
-            "description": "Bad Request",
-            "content": {
-              "*/*": {
-                "schema": {
-                  "$ref": "#/components/schemas/AppError"
-                }
-              }
-            }
-          },
-          "404": {
-            "description": "Not Found",
-            "content": {
-              "*/*": {
-                "schema": {
-                  "$ref": "#/components/schemas/AppError"
-                }
-              }
-            }
-          },
-          "401": {
-            "description": "Unauthorized",
-            "content": {
-              "*/*": {
-                "schema": {
-                  "$ref": "#/components/schemas/AppError"
-                }
-              }
-            }
-          },
-          "200": {
-            "description": "OK",
-            "content": {
-              "*/*": {
-                "schema": {
-                  "$ref": "#/components/schemas/BillingTypePojo"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/api/admin/dashboard/stats": {
-      "get": {
-        "tags": [
-          "Admin Dashboard"
-        ],
-        "summary": "Get all dashboard statistics for a date range.",
-        "operationId": "getDashboardStats",
-        "parameters": [
-          {
-            "name": "from",
-            "in": "query",
-            "required": false,
-            "schema": {
-              "type": "string",
-              "format": "date"
-            }
-          },
-          {
-            "name": "to",
-            "in": "query",
-            "required": false,
-            "schema": {
-              "type": "string",
-              "format": "date"
-            }
-          }
-        ],
-        "responses": {
-          "400": {
-            "description": "Bad Request",
-            "content": {
-              "*/*": {
-                "schema": {
-                  "$ref": "#/components/schemas/AppError"
-                }
-              }
-            }
-          },
-          "404": {
-            "description": "Not Found",
-            "content": {
-              "*/*": {
-                "schema": {
-                  "$ref": "#/components/schemas/AppError"
-                }
-              }
-            }
-          },
-          "401": {
-            "description": "Unauthorized",
-            "content": {
-              "*/*": {
-                "schema": {
-                  "$ref": "#/components/schemas/AppError"
-                }
-              }
-            }
-          },
-          "200": {
-            "description": "OK",
-            "content": {
-              "*/*": {
-                "schema": {
-                  "$ref": "#/components/schemas/AdminDashboardStatsPojo"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/api/admin/dashboard/stats/top-products": {
-      "get": {
-        "tags": [
-          "Admin Dashboard"
-        ],
-        "summary": "Get top selling products by units sold.",
-        "operationId": "getTopProducts",
-        "parameters": [
-          {
-            "name": "from",
-            "in": "query",
-            "required": false,
-            "schema": {
-              "type": "string",
-              "format": "date"
-            }
-          },
-          {
-            "name": "to",
-            "in": "query",
-            "required": false,
-            "schema": {
-              "type": "string",
-              "format": "date"
-            }
-          },
-          {
-            "name": "limit",
-            "in": "query",
-            "required": false,
-            "schema": {
-              "type": "integer",
-              "format": "int32",
-              "default": 10
-            }
-          }
-        ],
-        "responses": {
-          "400": {
-            "description": "Bad Request",
-            "content": {
-              "*/*": {
-                "schema": {
-                  "$ref": "#/components/schemas/AppError"
-                }
-              }
-            }
-          },
-          "404": {
-            "description": "Not Found",
-            "content": {
-              "*/*": {
-                "schema": {
-                  "$ref": "#/components/schemas/AppError"
-                }
-              }
-            }
-          },
-          "401": {
-            "description": "Unauthorized",
-            "content": {
-              "*/*": {
-                "schema": {
-                  "$ref": "#/components/schemas/AppError"
-                }
-              }
-            }
-          },
-          "200": {
-            "description": "OK",
-            "content": {
-              "*/*": {
-                "schema": {
-                  "type": "array",
-                  "items": {
-                    "$ref": "#/components/schemas/TopProductPojo"
-                  }
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/api/admin/dashboard/stats/revenue": {
-      "get": {
-        "tags": [
-          "Admin Dashboard"
-        ],
-        "summary": "Get revenue statistics grouped by time period.",
-        "operationId": "getRevenueByPeriod",
-        "parameters": [
-          {
-            "name": "from",
-            "in": "query",
-            "required": false,
-            "schema": {
-              "type": "string",
-              "format": "date"
-            }
-          },
-          {
-            "name": "to",
-            "in": "query",
-            "required": false,
-            "schema": {
-              "type": "string",
-              "format": "date"
-            }
-          },
-          {
-            "name": "groupBy",
-            "in": "query",
-            "required": false,
-            "schema": {
-              "type": "string"
-            }
-          }
-        ],
-        "responses": {
-          "400": {
-            "description": "Bad Request",
-            "content": {
-              "*/*": {
-                "schema": {
-                  "$ref": "#/components/schemas/AppError"
-                }
-              }
-            }
-          },
-          "404": {
-            "description": "Not Found",
-            "content": {
-              "*/*": {
-                "schema": {
-                  "$ref": "#/components/schemas/AppError"
-                }
-              }
-            }
-          },
-          "401": {
-            "description": "Unauthorized",
-            "content": {
-              "*/*": {
-                "schema": {
-                  "$ref": "#/components/schemas/AppError"
-                }
-              }
-            }
-          },
-          "200": {
-            "description": "OK",
-            "content": {
-              "*/*": {
-                "schema": {
-                  "type": "array",
-                  "items": {
-                    "$ref": "#/components/schemas/RevenueStatPojo"
-                  }
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/api/admin/dashboard/stats/order-statuses": {
-      "get": {
-        "tags": [
-          "Admin Dashboard"
-        ],
-        "summary": "Get order counts grouped by status.",
-        "operationId": "getOrderStatusBreakdown",
-        "parameters": [
-          {
-            "name": "from",
-            "in": "query",
-            "required": false,
-            "schema": {
-              "type": "string",
-              "format": "date"
-            }
-          },
-          {
-            "name": "to",
-            "in": "query",
-            "required": false,
-            "schema": {
-              "type": "string",
-              "format": "date"
-            }
-          }
-        ],
-        "responses": {
-          "400": {
-            "description": "Bad Request",
-            "content": {
-              "*/*": {
-                "schema": {
-                  "$ref": "#/components/schemas/AppError"
-                }
-              }
-            }
-          },
-          "404": {
-            "description": "Not Found",
-            "content": {
-              "*/*": {
-                "schema": {
-                  "$ref": "#/components/schemas/AppError"
-                }
-              }
-            }
-          },
-          "401": {
-            "description": "Unauthorized",
-            "content": {
-              "*/*": {
-                "schema": {
-                  "$ref": "#/components/schemas/AppError"
-                }
-              }
-            }
-          },
-          "200": {
-            "description": "OK",
-            "content": {
-              "*/*": {
-                "schema": {
-                  "type": "array",
-                  "items": {
-                    "$ref": "#/components/schemas/OrderStatusCountPojo"
-                  }
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/api/admin/dashboard/stats/low-stock": {
-      "get": {
-        "tags": [
-          "Admin Dashboard"
-        ],
-        "summary": "Get all variants at or below critical stock level.",
-        "operationId": "getLowStockAlerts",
-        "responses": {
-          "400": {
-            "description": "Bad Request",
-            "content": {
-              "*/*": {
-                "schema": {
-                  "$ref": "#/components/schemas/AppError"
-                }
-              }
-            }
-          },
-          "404": {
-            "description": "Not Found",
-            "content": {
-              "*/*": {
-                "schema": {
-                  "$ref": "#/components/schemas/AppError"
-                }
-              }
-            }
-          },
-          "401": {
-            "description": "Unauthorized",
-            "content": {
-              "*/*": {
-                "schema": {
-                  "$ref": "#/components/schemas/AppError"
-                }
-              }
-            }
-          },
-          "200": {
-            "description": "OK",
-            "content": {
-              "*/*": {
-                "schema": {
-                  "type": "array",
-                  "items": {
-                    "$ref": "#/components/schemas/LowStockAlertPojo"
-                  }
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/api/access": {
-      "get": {
-        "tags": [
-          "User Accounts"
-        ],
-        "summary": "List authorized API routes",
-        "operationId": "getApiRoutesAccess",
-        "responses": {
-          "401": {
-            "description": "Unauthorized"
-          },
-          "400": {
-            "description": "Bad Request",
-            "content": {
-              "*/*": {
-                "schema": {
-                  "$ref": "#/components/schemas/AppError"
-                }
-              }
-            }
-          },
-          "404": {
-            "description": "Not Found",
-            "content": {
-              "*/*": {
-                "schema": {
-                  "$ref": "#/components/schemas/AppError"
-                }
-              }
-            }
-          },
-          "200": {
-            "description": "OK",
-            "content": {
-              "*/*": {
-                "schema": {
-                  "$ref": "#/components/schemas/AuthorizedAccessPojo"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/api/access/{apiRoute}": {
-      "get": {
-        "tags": [
-          "User Accounts"
-        ],
-        "summary": "List authorized access to API route",
-        "operationId": "getApiResourceAccess",
-        "parameters": [
-          {
-            "name": "apiRoute",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "string"
-            }
-          }
-        ],
-        "responses": {
-          "401": {
-            "description": "Unauthorized"
-          },
-          "400": {
-            "description": "Bad Request",
-            "content": {
-              "*/*": {
-                "schema": {
-                  "$ref": "#/components/schemas/AppError"
-                }
-              }
-            }
-          },
-          "404": {
-            "description": "Not Found",
-            "content": {
-              "*/*": {
-                "schema": {
-                  "$ref": "#/components/schemas/AppError"
-                }
-              }
-            }
-          },
-          "200": {
-            "description": "OK",
-            "content": {
-              "*/*": {
-                "schema": {
-                  "$ref": "#/components/schemas/AuthorizedAccessPojo"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/": {
-      "get": {
-        "tags": [
-          "Health check"
-        ],
-        "summary": "Non-operating endpoint.",
-        "operationId": "defaultMapping_1",
-        "responses": {
-          "400": {
-            "description": "Bad Request",
-            "content": {
-              "*/*": {
-                "schema": {
-                  "$ref": "#/components/schemas/AppError"
-                }
-              }
-            }
-          },
-          "404": {
-            "description": "Not Found",
-            "content": {
-              "*/*": {
-                "schema": {
-                  "$ref": "#/components/schemas/AppError"
-                }
-              }
-            }
-          },
-          "401": {
-            "description": "Unauthorized",
-            "content": {
-              "*/*": {
-                "schema": {
-                  "$ref": "#/components/schemas/AppError"
-                }
-              }
-            }
-          },
-          "200": {
-            "description": "OK"
-          }
-        }
-      }
-    },
-    "/api/public/cart/reservations/{variantSku}": {
-      "delete": {
-        "tags": [
-          "Cart — Stock Reservations"
-        ],
-        "summary": "Release a specific reservation item from the cart",
-        "operationId": "releaseItem",
-        "parameters": [
-          {
-            "name": "X-Session-Token",
-            "in": "header",
-            "required": true,
-            "schema": {
-              "type": "string"
-            }
-          },
-          {
-            "name": "variantSku",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "string"
-            }
-          }
-        ],
-        "responses": {
-          "400": {
-            "description": "Bad Request",
-            "content": {
-              "*/*": {
-                "schema": {
-                  "$ref": "#/components/schemas/AppError"
-                }
-              }
-            }
-          },
-          "404": {
-            "description": "Not Found",
-            "content": {
-              "*/*": {
-                "schema": {
-                  "$ref": "#/components/schemas/AppError"
-                }
-              }
-            }
-          },
-          "401": {
-            "description": "Unauthorized",
-            "content": {
-              "*/*": {
-                "schema": {
-                  "$ref": "#/components/schemas/AppError"
-                }
-              }
-            }
-          },
-          "200": {
-            "description": "OK",
-            "content": {
-              "*/*": {
-                "schema": {
-                  "$ref": "#/components/schemas/StockReservationPojo"
-                }
-              }
-            }
-          }
-        }
-      }
-    }
-  },
-  "components": {
-    "schemas": {
-      "AppError": {
-        "type": "object",
-        "properties": {
-          "code": {
-            "type": "string"
-          },
-          "message": {
-            "type": "string"
-          },
-          "detailMessage": {
-            "type": "string"
-          },
-          "canRetry": {
-            "type": "boolean"
-          }
-        }
-      },
-      "AddressBookPojo": {
-        "required": [
-          "address",
-          "label"
-        ],
-        "type": "object",
-        "properties": {
-          "id": {
-            "type": "integer",
-            "format": "int64"
-          },
-          "label": {
-            "type": "string"
-          },
-          "defaultShipping": {
-            "type": "boolean"
-          },
-          "defaultBilling": {
-            "type": "boolean"
-          },
-          "address": {
-            "$ref": "#/components/schemas/AddressPojo"
-          },
-          "createdAt": {
-            "type": "string",
-            "format": "date-time"
-          },
-          "updatedAt": {
-            "type": "string",
-            "format": "date-time"
-          }
-        }
-      },
-      "AddressPojo": {
-        "required": [
-          "city",
-          "firstLine",
-          "municipality"
-        ],
-        "type": "object",
-        "properties": {
-          "firstLine": {
-            "type": "string"
-          },
-          "secondLine": {
-            "type": "string"
-          },
-          "municipality": {
-            "type": "string"
-          },
-          "city": {
-            "type": "string"
-          },
-          "postalCode": {
-            "type": "string"
-          },
-          "notes": {
-            "type": "string"
-          }
-        }
-      },
-      "PersonPojo": {
-        "required": [
-          "email",
-          "firstName",
-          "lastName"
-        ],
-        "type": "object",
-        "properties": {
-          "firstName": {
-            "type": "string"
-          },
-          "lastName": {
-            "type": "string"
-          },
-          "idNumber": {
-            "type": "string"
-          },
-          "email": {
-            "type": "string"
-          },
-          "phone1": {
-            "type": "string"
-          },
-          "phone2": {
-            "type": "string"
-          }
-        }
-      },
-      "UserPojo": {
-        "required": [
-          "name",
-          "password"
-        ],
-        "type": "object",
-        "properties": {
-          "name": {
-            "type": "string"
-          },
-          "password": {
-            "type": "string"
-          },
-          "person": {
-            "$ref": "#/components/schemas/PersonPojo"
-          },
-          "role": {
-            "type": "string"
-          }
-        }
-      },
-      "UserRolePojo": {
-        "required": [
-          "name"
-        ],
-        "type": "object",
-        "properties": {
-          "name": {
-            "type": "string"
-          }
-        }
-      },
-      "ShippingMethodPojo": {
-        "required": [
-          "active",
-          "baseFee",
-          "estimatedDaysMax",
-          "estimatedDaysMin",
-          "name"
-        ],
-        "type": "object",
-        "properties": {
-          "id": {
-            "type": "integer",
-            "format": "int64"
-          },
-          "name": {
-            "type": "string"
-          },
-          "baseFee": {
-            "minimum": 0,
-            "type": "integer",
-            "format": "int32"
-          },
-          "freeShippingThreshold": {
-            "minimum": 0,
-            "type": "integer",
-            "format": "int32"
-          },
-          "estimatedDaysMin": {
-            "minimum": 1,
-            "type": "integer",
-            "format": "int32"
-          },
-          "estimatedDaysMax": {
-            "minimum": 1,
-            "type": "integer",
-            "format": "int32"
-          },
-          "active": {
-            "type": "boolean"
-          }
-        }
-      },
-      "ShipperPojo": {
-        "required": [
-          "name"
-        ],
-        "type": "object",
-        "properties": {
-          "name": {
-            "type": "string"
-          }
-        }
-      },
-      "ImagePojo": {
-        "required": [
-          "code",
-          "filename",
-          "url"
-        ],
-        "type": "object",
-        "properties": {
-          "code": {
-            "type": "string"
-          },
-          "filename": {
-            "type": "string"
-          },
-          "url": {
-            "type": "string"
-          }
-        }
-      },
-      "ProductCategoryPojo": {
-        "required": [
-          "code",
-          "name"
-        ],
-        "type": "object",
-        "properties": {
-          "code": {
-            "type": "string"
-          },
-          "name": {
-            "type": "string"
-          },
-          "parent": {
-            "$ref": "#/components/schemas/ProductCategoryPojo"
-          }
-        }
-      },
-      "ProductPojo": {
-        "required": [
-          "barcode",
-          "name",
-          "price"
-        ],
-        "type": "object",
-        "properties": {
-          "name": {
-            "type": "string"
-          },
-          "barcode": {
-            "type": "string"
-          },
-          "description": {
-            "type": "string"
-          },
-          "price": {
-            "type": "integer",
-            "format": "int32"
-          },
-          "currentStock": {
-            "type": "integer",
-            "format": "int32"
-          },
-          "criticalStock": {
-            "type": "integer",
-            "format": "int32"
-          },
-          "category": {
-            "$ref": "#/components/schemas/ProductCategoryPojo"
-          },
-          "images": {
-            "type": "array",
-            "items": {
-              "$ref": "#/components/schemas/ImagePojo"
-            }
-          },
-          "averageRating": {
-            "type": "number",
-            "format": "double"
-          },
-          "totalReviews": {
-            "type": "integer",
-            "format": "int32"
-          }
-        }
-      },
-      "ReturnRequestItemPojo": {
-        "required": [
-          "quantity"
-        ],
-        "type": "object",
-        "properties": {
-          "id": {
-            "type": "integer",
-            "format": "int64"
-          },
-          "quantity": {
-            "minimum": 1,
-            "type": "integer",
-            "format": "int32"
-          },
-          "reason": {
-            "type": "string"
-          },
-          "productId": {
-            "type": "integer",
-            "format": "int64"
-          },
-          "product": {
-            "$ref": "#/components/schemas/ProductPojo"
-          },
-          "variantId": {
-            "type": "integer",
-            "format": "int64"
-          },
-          "active": {
-            "type": "boolean"
-          }
-        }
-      },
-      "ReturnRequestPojo": {
-        "required": [
-          "items",
-          "reason",
-          "refundMethod",
-          "status"
-        ],
-        "type": "object",
-        "properties": {
-          "id": {
-            "type": "integer",
-            "format": "int64"
-          },
-          "date": {
-            "type": "string",
-            "format": "date-time"
-          },
-          "lastModified": {
-            "type": "string",
-            "format": "date-time"
-          },
-          "reason": {
-            "type": "string"
-          },
-          "adminNotes": {
-            "type": "string"
-          },
-          "status": {
-            "type": "string"
-          },
-          "refundMethod": {
-            "type": "string"
-          },
-          "refundAmount": {
-            "type": "integer",
-            "format": "int32"
-          },
-          "trackingNumber": {
-            "type": "string"
-          },
-          "orderId": {
-            "type": "integer",
-            "format": "int64"
-          },
-          "items": {
-            "type": "array",
-            "items": {
-              "$ref": "#/components/schemas/ReturnRequestItemPojo"
-            }
-          }
-        }
-      },
-      "ProductListPojo": {
-        "required": [
-          "code"
-        ],
-        "type": "object",
-        "properties": {
-          "name": {
-            "type": "string"
-          },
-          "code": {
-            "type": "string"
-          },
-          "totalCount": {
-            "type": "integer",
-            "format": "int64"
-          }
-        }
-      },
-      "ProductVariantPojo": {
-        "required": [
-          "productBarcode",
-          "size",
-          "sku"
-        ],
-        "type": "object",
-        "properties": {
-          "id": {
-            "type": "integer",
-            "format": "int64"
-          },
-          "sku": {
-            "type": "string"
-          },
-          "size": {
-            "type": "string"
-          },
-          "color": {
-            "type": "string"
-          },
-          "attributes": {
-            "type": "string"
-          },
-          "priceModifier": {
-            "type": "integer",
-            "format": "int32"
-          },
-          "currentStock": {
-            "type": "integer",
-            "format": "int32"
-          },
-          "criticalStock": {
-            "type": "integer",
-            "format": "int32"
-          },
-          "reservedStock": {
-            "type": "integer",
-            "format": "int32"
-          },
-          "availableStock": {
-            "type": "integer",
-            "format": "int32"
-          },
-          "active": {
-            "type": "boolean"
-          },
-          "barcode": {
-            "type": "string"
-          },
-          "productBarcode": {
-            "type": "string"
-          },
-          "productName": {
-            "type": "string"
-          },
-          "productBasePrice": {
-            "type": "integer",
-            "format": "int32"
-          },
-          "finalPrice": {
-            "type": "integer",
-            "format": "int32"
-          },
-          "createdAt": {
-            "type": "string",
-            "format": "date-time"
-          }
-        }
-      },
-      "BillingCompanyPojo": {
-        "type": "object",
-        "properties": {
-          "idNumber": {
-            "type": "string"
-          },
-          "name": {
-            "type": "string"
-          }
-        }
-      },
-      "OrderDetailPojo": {
-        "required": [
-          "product"
-        ],
-        "type": "object",
-        "properties": {
-          "id": {
-            "type": "integer",
-            "format": "int64"
-          },
-          "units": {
-            "minimum": 1,
-            "type": "integer",
-            "format": "int32"
-          },
-          "unitValue": {
-            "type": "integer",
-            "format": "int32"
-          },
-          "description": {
-            "type": "string"
-          },
-          "product": {
-            "$ref": "#/components/schemas/ProductPojo"
-          },
-          "variantId": {
-            "type": "integer",
-            "format": "int64"
-          }
-        }
-      },
-      "OrderPojo": {
-        "required": [
-          "details",
-          "paymentType"
-        ],
-        "type": "object",
-        "properties": {
-          "buyOrder": {
-            "type": "integer",
-            "format": "int64"
-          },
-          "cartSessionToken": {
-            "type": "string"
-          },
-          "date": {
-            "type": "string",
-            "format": "date-time"
-          },
-          "details": {
-            "type": "array",
-            "items": {
-              "$ref": "#/components/schemas/OrderDetailPojo"
-            }
-          },
-          "netValue": {
-            "type": "integer",
-            "format": "int32"
-          },
-          "taxValue": {
-            "type": "integer",
-            "format": "int32"
-          },
-          "transportValue": {
-            "type": "integer",
-            "format": "int32"
-          },
-          "totalValue": {
-            "type": "integer",
-            "format": "int32"
-          },
-          "totalItems": {
-            "type": "integer",
-            "format": "int32"
-          },
-          "totalRefundedAmount": {
-            "type": "integer",
-            "format": "int32"
-          },
-          "discountCode": {
-            "type": "string"
-          },
-          "discountValue": {
-            "type": "integer",
-            "format": "int32"
-          },
-          "status": {
-            "type": "string"
-          },
-          "billingType": {
-            "type": "string"
-          },
-          "paymentType": {
-            "type": "string"
-          },
-          "customer": {
-            "$ref": "#/components/schemas/PersonPojo"
-          },
-          "salesperson": {
-            "$ref": "#/components/schemas/PersonPojo"
-          },
-          "shipper": {
-            "type": "string"
-          },
-          "billingCompany": {
-            "$ref": "#/components/schemas/BillingCompanyPojo"
-          },
-          "billingAddress": {
-            "$ref": "#/components/schemas/AddressPojo"
-          },
-          "shippingAddress": {
-            "$ref": "#/components/schemas/AddressPojo"
-          }
-        }
-      },
-      "DiscountCodePojo": {
-        "required": [
-          "code",
-          "type",
-          "value"
-        ],
-        "type": "object",
-        "properties": {
-          "id": {
-            "type": "integer",
-            "format": "int64"
-          },
-          "code": {
-            "type": "string"
-          },
-          "description": {
-            "type": "string"
-          },
-          "type": {
-            "type": "string"
-          },
-          "value": {
-            "type": "integer",
-            "format": "int32"
-          },
-          "maxUses": {
-            "type": "integer",
-            "format": "int32"
-          },
-          "useCount": {
-            "type": "integer",
-            "format": "int32"
-          },
-          "maxUsesPerCustomer": {
-            "type": "integer",
-            "format": "int32"
-          },
-          "minCartValue": {
-            "type": "integer",
-            "format": "int32"
-          },
-          "validFrom": {
-            "type": "string",
-            "format": "date-time"
-          },
-          "validUntil": {
-            "type": "string",
-            "format": "date-time"
-          },
-          "active": {
-            "type": "boolean"
-          },
-          "createdAt": {
-            "type": "string",
-            "format": "date-time"
-          },
-          "updatedAt": {
-            "type": "string",
-            "format": "date-time"
-          },
-          "currentlyValid": {
-            "type": "boolean"
-          },
-          "remainingUses": {
-            "type": "integer",
-            "format": "int32"
-          }
-        }
-      },
-      "PaymentRedirectionDetailsPojo": {
-        "type": "object",
-        "properties": {
-          "url": {
-            "type": "string"
-          },
-          "token": {
-            "type": "string"
-          }
-        }
-      },
-      "StockReservationPojo": {
-        "required": [
-          "quantity",
-          "sessionId",
-          "variantSku"
-        ],
-        "type": "object",
-        "properties": {
-          "id": {
-            "type": "integer",
-            "format": "int64"
-          },
-          "sessionId": {
-            "type": "string"
-          },
-          "variantSku": {
-            "type": "string"
-          },
-          "variantSkuResolved": {
-            "type": "string"
-          },
-          "variantSize": {
-            "type": "string"
-          },
-          "variantColor": {
-            "type": "string"
-          },
-          "productName": {
-            "type": "string"
-          },
-          "productBarcode": {
-            "type": "string"
-          },
-          "quantity": {
-            "minimum": 1,
-            "type": "integer",
-            "format": "int32"
-          },
-          "status": {
-            "type": "string"
-          },
-          "expiresAt": {
-            "type": "string",
-            "format": "date-time"
-          },
-          "createdAt": {
-            "type": "string",
-            "format": "date-time"
-          },
-          "updatedAt": {
-            "type": "string",
-            "format": "date-time"
-          }
-        }
-      },
-      "CartItemPojo": {
-        "required": [
-          "variantSku"
-        ],
-        "type": "object",
-        "properties": {
-          "id": {
-            "type": "integer",
-            "format": "int64"
-          },
-          "sessionToken": {
-            "type": "string"
-          },
-          "variantSku": {
-            "type": "string"
-          },
-          "quantity": {
-            "minimum": 1,
-            "type": "integer",
-            "format": "int32"
-          },
-          "variantSkuResolved": {
-            "type": "string"
-          },
-          "variantSize": {
-            "type": "string"
-          },
-          "variantColor": {
-            "type": "string"
-          },
-          "productName": {
-            "type": "string"
-          },
-          "productBarcode": {
-            "type": "string"
-          },
-          "productBasePrice": {
-            "type": "integer",
-            "format": "int32"
-          },
-          "priceModifier": {
-            "type": "integer",
-            "format": "int32"
-          },
-          "unitPrice": {
-            "type": "integer",
-            "format": "int32"
-          },
-          "lineTotal": {
-            "type": "integer",
-            "format": "int32"
-          },
-          "availableStock": {
-            "type": "integer",
-            "format": "int32"
-          },
-          "inStock": {
-            "type": "boolean"
-          },
-          "active": {
-            "type": "boolean"
-          },
-          "addedAt": {
-            "type": "string",
-            "format": "date-time"
-          },
-          "updatedAt": {
-            "type": "string",
-            "format": "date-time"
-          }
-        }
-      },
-      "CartSessionPojo": {
-        "required": [
-          "token"
-        ],
-        "type": "object",
-        "properties": {
-          "id": {
-            "type": "integer",
-            "format": "int64"
-          },
-          "token": {
-            "type": "string"
-          },
-          "items": {
-            "type": "array",
-            "items": {
-              "$ref": "#/components/schemas/CartItemPojo"
-            }
-          },
-          "subtotal": {
-            "type": "integer",
-            "format": "int32"
-          },
-          "itemCount": {
-            "type": "integer",
-            "format": "int32"
-          },
-          "totalUnits": {
-            "type": "integer",
-            "format": "int32"
-          },
-          "appliedDiscountCode": {
-            "type": "string"
-          },
-          "discountAmount": {
-            "type": "integer",
-            "format": "int32"
-          },
-          "totalAfterDiscount": {
-            "type": "integer",
-            "format": "int32"
-          },
-          "createdAt": {
-            "type": "string",
-            "format": "date-time"
-          },
-          "updatedAt": {
-            "type": "string",
-            "format": "date-time"
-          },
-          "expiresAt": {
-            "type": "string",
-            "format": "date-time"
-          },
-          "expired": {
-            "type": "boolean"
-          }
-        }
-      },
-      "RegistrationPojo": {
-        "required": [
-          "name",
-          "password"
-        ],
-        "type": "object",
-        "properties": {
-          "name": {
-            "maxLength": 50,
-            "minLength": 3,
-            "type": "string"
-          },
-          "password": {
-            "maxLength": 100,
-            "minLength": 8,
-            "pattern": "^(?=.*[a-z])(?=.*[A-Z])(?=.*\\d)(?=.*[@$!%*#?&])[A-Za-z\\d@$!%*#?&]{8,}$",
-            "type": "string"
-          },
-          "profile": {
-            "$ref": "#/components/schemas/PersonPojo"
-          }
-        }
-      },
-      "ProductReviewPojo": {
-        "required": [
-          "productBarcode",
-          "rating"
-        ],
-        "type": "object",
-        "properties": {
-          "id": {
-            "type": "integer",
-            "format": "int64"
-          },
-          "rating": {
-            "maximum": 5,
-            "minimum": 1,
-            "type": "integer",
-            "format": "int32"
-          },
-          "title": {
-            "type": "string"
-          },
-          "body": {
-            "type": "string"
-          },
-          "approved": {
-            "type": "boolean"
-          },
-          "verifiedPurchase": {
-            "type": "boolean"
-          },
-          "productBarcode": {
-            "type": "string"
-          },
-          "productName": {
-            "type": "string"
-          },
-          "reviewerName": {
-            "type": "string"
-          },
-          "createdAt": {
-            "type": "string",
-            "format": "date-time"
-          },
-          "updatedAt": {
-            "type": "string",
-            "format": "date-time"
-          }
-        }
-      },
-      "ShippingRatePojo": {
-        "type": "object",
-        "properties": {
-          "id": {
-            "type": "integer",
-            "format": "int64"
-          },
-          "name": {
-            "type": "string"
-          },
-          "fee": {
-            "type": "integer",
-            "format": "int32"
-          },
-          "estimatedDaysMin": {
-            "type": "integer",
-            "format": "int32"
-          },
-          "estimatedDaysMax": {
-            "type": "integer",
-            "format": "int32"
-          },
-          "freeShipping": {
-            "type": "boolean"
-          }
-        }
-      },
-      "ReceiptDetailPojo": {
-        "type": "object",
-        "properties": {
-          "product": {
-            "$ref": "#/components/schemas/ProductPojo"
-          },
-          "units": {
-            "type": "integer",
-            "format": "int32"
-          },
-          "unitValue": {
-            "type": "integer",
-            "format": "int32"
-          },
-          "description": {
-            "type": "string"
-          }
-        }
-      },
-      "ReceiptPojo": {
-        "type": "object",
-        "properties": {
-          "buyOrder": {
-            "type": "integer",
-            "format": "int64"
-          },
-          "details": {
-            "type": "array",
-            "items": {
-              "$ref": "#/components/schemas/ReceiptDetailPojo"
-            }
-          },
-          "date": {
-            "type": "string",
-            "format": "date-time"
-          },
-          "status": {
-            "type": "string"
-          },
-          "token": {
-            "type": "string"
-          },
-          "totalValue": {
-            "type": "integer",
-            "format": "int32"
-          },
-          "taxValue": {
-            "type": "integer",
-            "format": "int32"
-          },
-          "transportValue": {
-            "type": "integer",
-            "format": "int32"
-          },
-          "totalItems": {
-            "type": "integer",
-            "format": "int32"
-          }
-        }
-      },
-      "ReviewStats": {
-        "type": "object",
-        "properties": {
-          "totalReviews": {
-            "type": "integer",
-            "format": "int64"
-          },
-          "averageRating": {
-            "type": "number",
-            "format": "double"
-          },
-          "ratingDistribution": {
-            "type": "array",
-            "items": {
-              "type": "integer",
-              "format": "int32"
-            }
-          }
-        }
-      },
-      "DiscountValidationResult": {
-        "type": "object",
-        "properties": {
-          "valid": {
-            "type": "boolean"
-          },
-          "discountAmount": {
-            "type": "integer",
-            "format": "int32"
-          },
-          "message": {
-            "type": "string"
-          },
-          "code": {
-            "type": "string"
-          },
-          "type": {
-            "type": "string"
-          },
-          "value": {
-            "type": "integer",
-            "format": "int32"
-          }
-        }
-      },
-      "CompanyDetailsPojo": {
-        "type": "object",
-        "properties": {
-          "name": {
-            "type": "string"
-          },
-          "description": {
-            "type": "string"
-          },
-          "bannerImageURL": {
-            "type": "string"
-          },
-          "logoImageURL": {
-            "type": "string"
-          }
-        }
-      },
-      "DataPagePojoUserPojo": {
-        "type": "object",
-        "properties": {
-          "items": {
-            "type": "array",
-            "items": {
-              "$ref": "#/components/schemas/UserPojo"
-            }
-          },
-          "pageIndex": {
-            "type": "integer",
-            "format": "int32"
-          },
-          "totalCount": {
-            "type": "integer",
-            "format": "int64"
-          },
-          "pageSize": {
-            "type": "integer",
-            "format": "int32"
-          }
-        }
-      },
-      "DataPagePojoUserRolePojo": {
-        "type": "object",
-        "properties": {
-          "items": {
-            "type": "array",
-            "items": {
-              "$ref": "#/components/schemas/UserRolePojo"
-            }
-          },
-          "pageIndex": {
-            "type": "integer",
-            "format": "int32"
-          },
-          "totalCount": {
-            "type": "integer",
-            "format": "int64"
-          },
-          "pageSize": {
-            "type": "integer",
-            "format": "int32"
-          }
-        }
-      },
-      "DataPagePojoShippingMethodPojo": {
-        "type": "object",
-        "properties": {
-          "items": {
-            "type": "array",
-            "items": {
-              "$ref": "#/components/schemas/ShippingMethodPojo"
-            }
-          },
-          "pageIndex": {
-            "type": "integer",
-            "format": "int32"
-          },
-          "totalCount": {
-            "type": "integer",
-            "format": "int64"
-          },
-          "pageSize": {
-            "type": "integer",
-            "format": "int32"
-          }
-        }
-      },
-      "DataPagePojoShipperPojo": {
-        "type": "object",
-        "properties": {
-          "items": {
-            "type": "array",
-            "items": {
-              "$ref": "#/components/schemas/ShipperPojo"
-            }
-          },
-          "pageIndex": {
-            "type": "integer",
-            "format": "int32"
-          },
-          "totalCount": {
-            "type": "integer",
-            "format": "int64"
-          },
-          "pageSize": {
-            "type": "integer",
-            "format": "int32"
-          }
-        }
-      },
-      "DataPagePojoPersonPojo": {
-        "type": "object",
-        "properties": {
-          "items": {
-            "type": "array",
-            "items": {
-              "$ref": "#/components/schemas/PersonPojo"
-            }
-          },
-          "pageIndex": {
-            "type": "integer",
-            "format": "int32"
-          },
-          "totalCount": {
-            "type": "integer",
-            "format": "int64"
-          },
-          "pageSize": {
-            "type": "integer",
-            "format": "int32"
-          }
-        }
-      },
-      "DataPagePojoReturnRequestPojo": {
-        "type": "object",
-        "properties": {
-          "items": {
-            "type": "array",
-            "items": {
-              "$ref": "#/components/schemas/ReturnRequestPojo"
-            }
-          },
-          "pageIndex": {
-            "type": "integer",
-            "format": "int32"
-          },
-          "totalCount": {
-            "type": "integer",
-            "format": "int64"
-          },
-          "pageSize": {
-            "type": "integer",
-            "format": "int32"
-          }
-        }
-      },
-      "DataPagePojoProductPojo": {
-        "type": "object",
-        "properties": {
-          "items": {
-            "type": "array",
-            "items": {
-              "$ref": "#/components/schemas/ProductPojo"
-            }
-          },
-          "pageIndex": {
-            "type": "integer",
-            "format": "int32"
-          },
-          "totalCount": {
-            "type": "integer",
-            "format": "int64"
-          },
-          "pageSize": {
-            "type": "integer",
-            "format": "int32"
-          }
-        }
-      },
-      "DataPagePojoProductListPojo": {
-        "type": "object",
-        "properties": {
-          "items": {
-            "type": "array",
-            "items": {
-              "$ref": "#/components/schemas/ProductListPojo"
-            }
-          },
-          "pageIndex": {
-            "type": "integer",
-            "format": "int32"
-          },
-          "totalCount": {
-            "type": "integer",
-            "format": "int64"
-          },
-          "pageSize": {
-            "type": "integer",
-            "format": "int32"
-          }
-        }
-      },
-      "DataPagePojoProductCategoryPojo": {
-        "type": "object",
-        "properties": {
-          "items": {
-            "type": "array",
-            "items": {
-              "$ref": "#/components/schemas/ProductCategoryPojo"
-            }
-          },
-          "pageIndex": {
-            "type": "integer",
-            "format": "int32"
-          },
-          "totalCount": {
-            "type": "integer",
-            "format": "int64"
-          },
-          "pageSize": {
-            "type": "integer",
-            "format": "int32"
-          }
-        }
-      },
-      "DataPagePojoProductVariantPojo": {
-        "type": "object",
-        "properties": {
-          "items": {
-            "type": "array",
-            "items": {
-              "$ref": "#/components/schemas/ProductVariantPojo"
-            }
-          },
-          "pageIndex": {
-            "type": "integer",
-            "format": "int32"
-          },
-          "totalCount": {
-            "type": "integer",
-            "format": "int64"
-          },
-          "pageSize": {
-            "type": "integer",
-            "format": "int32"
-          }
-        }
-      },
-      "DataPagePojoProductReviewPojo": {
-        "type": "object",
-        "properties": {
-          "items": {
-            "type": "array",
-            "items": {
-              "$ref": "#/components/schemas/ProductReviewPojo"
-            }
-          },
-          "pageIndex": {
-            "type": "integer",
-            "format": "int32"
-          },
-          "totalCount": {
-            "type": "integer",
-            "format": "int64"
-          },
-          "pageSize": {
-            "type": "integer",
-            "format": "int32"
-          }
-        }
-      },
-      "DataPagePojoOrderPojo": {
-        "type": "object",
-        "properties": {
-          "items": {
-            "type": "array",
-            "items": {
-              "$ref": "#/components/schemas/OrderPojo"
-            }
-          },
-          "pageIndex": {
-            "type": "integer",
-            "format": "int32"
-          },
-          "totalCount": {
-            "type": "integer",
-            "format": "int64"
-          },
-          "pageSize": {
-            "type": "integer",
-            "format": "int32"
-          }
-        }
-      },
-      "DataPagePojoOrderStatusPojo": {
-        "type": "object",
-        "properties": {
-          "items": {
-            "type": "array",
-            "items": {
-              "$ref": "#/components/schemas/OrderStatusPojo"
-            }
-          },
-          "pageIndex": {
-            "type": "integer",
-            "format": "int32"
-          },
-          "totalCount": {
-            "type": "integer",
-            "format": "int64"
-          },
-          "pageSize": {
-            "type": "integer",
-            "format": "int32"
-          }
-        }
-      },
-      "OrderStatusPojo": {
-        "required": [
-          "code",
-          "name"
-        ],
-        "type": "object",
-        "properties": {
-          "code": {
-            "type": "integer",
-            "format": "int32"
-          },
-          "name": {
-            "type": "string"
-          }
-        }
-      },
-      "DataPagePojoImagePojo": {
-        "type": "object",
-        "properties": {
-          "items": {
-            "type": "array",
-            "items": {
-              "$ref": "#/components/schemas/ImagePojo"
-            }
-          },
-          "pageIndex": {
-            "type": "integer",
-            "format": "int32"
-          },
-          "totalCount": {
-            "type": "integer",
-            "format": "int64"
-          },
-          "pageSize": {
-            "type": "integer",
-            "format": "int32"
-          }
-        }
-      },
-      "DataPagePojoDiscountCodePojo": {
-        "type": "object",
-        "properties": {
-          "items": {
-            "type": "array",
-            "items": {
-              "$ref": "#/components/schemas/DiscountCodePojo"
-            }
-          },
-          "pageIndex": {
-            "type": "integer",
-            "format": "int32"
-          },
-          "totalCount": {
-            "type": "integer",
-            "format": "int64"
-          },
-          "pageSize": {
-            "type": "integer",
-            "format": "int32"
-          }
-        }
-      },
-      "DataPagePojoCartSessionPojo": {
-        "type": "object",
-        "properties": {
-          "items": {
-            "type": "array",
-            "items": {
-              "$ref": "#/components/schemas/CartSessionPojo"
-            }
-          },
-          "pageIndex": {
-            "type": "integer",
-            "format": "int32"
-          },
-          "totalCount": {
-            "type": "integer",
-            "format": "int64"
-          },
-          "pageSize": {
-            "type": "integer",
-            "format": "int32"
-          }
-        }
-      },
-      "BillingTypePojo": {
-        "required": [
-          "name"
-        ],
-        "type": "object",
-        "properties": {
-          "name": {
-            "type": "string"
-          }
-        }
-      },
-      "DataPagePojoBillingTypePojo": {
-        "type": "object",
-        "properties": {
-          "items": {
-            "type": "array",
-            "items": {
-              "$ref": "#/components/schemas/BillingTypePojo"
-            }
-          },
-          "pageIndex": {
-            "type": "integer",
-            "format": "int32"
-          },
-          "totalCount": {
-            "type": "integer",
-            "format": "int64"
-          },
-          "pageSize": {
-            "type": "integer",
-            "format": "int32"
-          }
-        }
-      },
-      "AdminDashboardStatsPojo": {
-        "type": "object",
-        "properties": {
-          "totalRevenue": {
-            "type": "integer",
-            "format": "int64"
-          },
-          "totalOrders": {
-            "type": "integer",
-            "format": "int64"
-          },
-          "orderStatusBreakdown": {
-            "type": "array",
-            "items": {
-              "$ref": "#/components/schemas/OrderStatusCountPojo"
-            }
-          },
-          "revenueByPeriod": {
-            "type": "array",
-            "items": {
-              "$ref": "#/components/schemas/RevenueStatPojo"
-            }
-          },
-          "topProducts": {
-            "type": "array",
-            "items": {
-              "$ref": "#/components/schemas/TopProductPojo"
-            }
-          },
-          "lowStockAlerts": {
-            "type": "array",
-            "items": {
-              "$ref": "#/components/schemas/LowStockAlertPojo"
-            }
-          }
-        }
-      },
-      "LowStockAlertPojo": {
-        "type": "object",
-        "properties": {
-          "variantId": {
-            "type": "integer",
-            "format": "int64"
-          },
-          "productName": {
-            "type": "string"
-          },
-          "size": {
-            "type": "string"
-          },
-          "color": {
-            "type": "string"
-          },
-          "currentStock": {
-            "type": "integer",
-            "format": "int32"
-          },
-          "criticalStock": {
-            "type": "integer",
-            "format": "int32"
-          }
-        }
-      },
-      "OrderStatusCountPojo": {
-        "type": "object",
-        "properties": {
-          "status": {
-            "type": "string"
-          },
-          "count": {
-            "type": "integer",
-            "format": "int64"
-          }
-        }
-      },
-      "RevenueStatPojo": {
-        "type": "object",
-        "properties": {
-          "date": {
-            "type": "string",
-            "format": "date"
-          },
-          "revenue": {
-            "type": "integer",
-            "format": "int64"
-          },
-          "orderCount": {
-            "type": "integer",
-            "format": "int64"
-          }
-        }
-      },
-      "TopProductPojo": {
-        "type": "object",
-        "properties": {
-          "productId": {
-            "type": "integer",
-            "format": "int64"
-          },
-          "productName": {
-            "type": "string"
-          },
-          "unitsSold": {
-            "type": "integer",
-            "format": "int64"
-          },
-          "revenue": {
-            "type": "integer",
-            "format": "int64"
-          }
-        }
-      },
-      "AuthorizedAccessPojo": {
-        "type": "object",
-        "properties": {
-          "routes": {
-            "type": "array",
-            "items": {
-              "type": "string"
-            }
-          },
-          "permissions": {
-            "type": "array",
-            "items": {
-              "type": "string"
-            }
-          }
-        }
-      }
-    }
+  "name": "johndoe",
+  "password": "Secret123!",
+  "profile": {
+    "firstName": "John",
+    "lastName": "Doe",
+    "email": "john@example.com"
   }
 }
+
+// Response 201 — (empty body)
+```
+
+**Errors:**
+- `EXISTS_01` (400) — username already taken
+- `REJECTED_02` (400) — validation failure
+
+---
+
+### `POST /public/guest` — Guest Session
+
+**Security:** permitAll
+
+Creates a guest JWT token. No request body required.
+
+```json
+// Response 200 — JWT token set as Bearer
+```
+
+---
+
+## 2. Account & Profile
+
+### `GET /account/profile` — View Profile
+
+**Security:** authenticated
+
+```json
+// Response 200
+{
+  "firstName": "John",
+  "lastName": "Doe",
+  "email": "john@example.com",
+  "phone1": "0912345678",
+  "phone2": null,
+  "idNumber": null
+}
+```
+
+---
+
+### `PUT /account/profile` — Update Profile
+
+**Security:** authenticated
+
+```json
+// Request — full PersonPojo
+{
+  "firstName": "John",
+  "lastName": "Smith",
+  "email": "john.smith@example.com",
+  "phone1": "0912345678",
+  "phone2": "0999999999",
+  "idNumber": "001234567890"
+}
+
+// Response 204 — (empty body)
+```
+
+---
+
+### `GET /access` — List Authorized Routes
+
+**Security:** authenticated
+
+```json
+// Response 200
+{
+  "routes": ["api/account/profile", "api/data/orders", "api/admin/dashboard/stats"]
+}
+```
+
+---
+
+### `GET /access/{apiRoute}` — Check Permissions for Route
+
+**Security:** authenticated
+
+**Path Params:**
+- `apiRoute` — route prefix to check (e.g. `orders`)
+
+```json
+// Response 200
+{
+  "permissions": ["orders:read", "orders:update"]
+}
+```
+
+---
+
+## 3. My Orders (Customer)
+
+### `GET /account/orders` — List My Orders
+
+**Security:** authenticated
+
+Returns paginated list of all orders belonging to the authenticated customer, sorted by date descending.
+
+**Query Params:**
+| Param | Type | Default | Description |
+|---|---|---|---|
+| `pageIndex` | int | 0 | Zero-based page index |
+| `pageSize` | int | 20 | Items per page |
+
+```json
+// Response 200 — DataPagePojo<OrderPojo>
+{
+  "items": [
+    {
+      "buyOrder": 12345,
+      "date": "2026-04-18T14:30:00",
+      "totalValue": 672800,
+      "totalItems": 2,
+      "status": "Delivery Complete",
+      "paymentType": "Webpay Plus",
+      "shippingAddress": { "city": "Ho Chi Minh" }
+    }
+  ],
+  "totalCount": 5,
+  "pageSize": 20
+}
+```
+
+**Errors:**
+- `NOTFOUND_01` (404) — no orders found for this account
+
+---
+
+### `GET /account/orders/{buyOrder}` — Get Order Detail
+
+**Security:** authenticated
+
+Returns full order details. Customers can only view their own orders.
+
+**Path Params:** `buyOrder` — the order ID
+
+```json
+// Response 200 — full OrderPojo
+{
+  "buyOrder": 12345,
+  "date": "2026-04-18T14:30:00",
+  "details": [
+    {
+      "productName": "Basic T-Shirt",
+      "variant": "Red / S",
+      "quantity": 2,
+      "unitPrice": 299000,
+      "lineTotal": 598000
+    }
+  ],
+  "netValue": 598000,
+  "taxValue": 59800,
+  "transportValue": 15000,
+  "totalValue": 672800,
+  "totalItems": 2,
+  "discountCode": "SUMMER20",
+  "discountValue": 11960,
+  "status": "Delivery Complete",
+  "billingType": "individual",
+  "paymentType": "Webpay Plus",
+  "customer": { "firstName": "John", "lastName": "Doe" },
+  "shippingAddress": { "recipientName": "John Doe", "city": "Ho Chi Minh" }
+}
+```
+
+**Errors:**
+- `NOTFOUND_01` (404) — order not found or does not belong to the customer
+
+---
+
+## 4. Public Product Data
+
+### `GET /public/products/{barcode}` — Get Product by Barcode
+
+**Security:** permitAll
+
+```json
+// Response 200
+{
+  "name": "Basic T-Shirt",
+  "barcode": "123456789",
+  "description": "Premium cotton t-shirt",
+  "price": 299000,
+  "currentStock": 50,
+  "criticalStock": 10,
+  "category": { ... },
+  "images": [{ "url": "...", "alt": "..." }],
+  "averageRating": 4.5,
+  "totalReviews": 23,
+  "variants": [
+    {
+      "sku": "BT-RED-S",
+      "size": "S",
+      "color": "Red",
+      "price": 299000,
+      "stock": 15
+    }
+  ]
+}
+```
+
+**Errors:**
+- `NOTFOUND_01` (404) — product not found
+
+---
+
+### `GET /public/products` — Search / List Products
+
+**Security:** permitAll
+
+**Query Params:**
+| Param | Type | Default | Description |
+|---|---|---|---|
+| `q` | string | — | Search query (name/description) |
+| `category` | string | — | Filter by category code |
+| `minPrice` | number | — | Minimum price |
+| `maxPrice` | number | — | Maximum price |
+| `pageIndex` | int | 0 | Page index |
+| `pageSize` | int | 20 | Items per page |
+| `sortBy` | string | — | Sort field |
+| `order` | string | `asc` | `asc` or `desc` |
+
+```json
+// Response 200
+{
+  "items": [{ ...productPojo }],
+  "totalCount": 42,
+  "pageSize": 20
+}
+```
+
+---
+
+### `GET /data/products` — List Products (Admin Read)
+
+**Security:** `products:read` authority (also permitted via config for GET)
+
+Same params as above. Returns full product list including hidden ones.
+
+---
+
+### `GET /data/products/{id}` — Get Product by ID (Admin)
+
+**Security:** `products:read`
+
+```json
+// Response 200 — ProductPojo with full details
+```
+
+---
+
+### `POST /data/products` — Create Product
+
+**Security:** `products:create`
+
+```json
+// Request
+{
+  "name": "string",
+  "barcode": "string",
+  "description": "string",
+  "price": 299000,
+  "currentStock": 50,
+  "criticalStock": 10,
+  "categoryCode": "tshirts"
+}
+
+// Response 201 — created ProductPojo
+```
+
+---
+
+### `PUT /data/products/{id}` — Replace Product
+
+**Security:** `products:update`
+
+Full product replacement. All fields required.
+
+---
+
+### `PATCH /data/products/{id}` — Partial Update Product
+
+**Security:** `products:update`
+
+```json
+// Request — partial fields
+{ "price": 249000, "currentStock": 40 }
+
+// Response 200 — updated ProductPojo
+```
+
+---
+
+### `DELETE /data/products/{id}` — Delete Product
+
+**Security:** `products:delete`
+
+```json
+// Response 204 — (empty body)
+```
+
+---
+
+## 4. Reviews (Public)
+
+### `GET /public/products/{barcode}/reviews` — List Approved Reviews
+
+**Security:** permitAll
+
+Returns only `approved: true` reviews, sorted by `createdAt desc`.
+
+```json
+// Response 200 — List<ProductReviewPojo>
+[
+  {
+    "id": 1,
+    "rating": 5,
+    "title": "Great quality!",
+    "body": "Fabric is soft and comfortable.",
+    "productBarcode": "123456789",
+    "productName": "Basic T-Shirt",
+    "reviewerName": "John D.",
+    "createdAt": "2026-04-10T14:00:00",
+    "approved": true,
+    "verifiedPurchase": true
+  }
+]
+```
+
+---
+
+### `GET /public/products/{barcode}/reviews/stats` — Review Statistics
+
+**Security:** permitAll
+
+```json
+// Response 200
+{
+  "averageRating": 4.3,
+  "totalReviews": 47,
+  "distribution": { "5": 20, "4": 15, "3": 8, "2": 3, "1": 1 }
+}
+```
+
+**Errors:**
+- `NOTFOUND_01` (404) — product not found
+
+---
+
+### `POST /account/reviews` — Submit Review
+
+**Security:** authenticated
+
+| Field | Type | Required | Description |
+|---|---|---|---|
+| `productBarcode` | string | ✅ | Product to review |
+| `rating` | int | ✅ | 1–5 stars |
+| `title` | string | ❌ | Review title |
+| `body` | string | ❌ | Review content |
+
+```json
+// Request
+{
+  "productBarcode": "123456789",
+  "rating": 5,
+  "title": "Great quality!",
+  "body": "Fabric is soft and comfortable."
+}
+
+// Response 201 — created ProductReviewPojo
+{
+  "id": 10,
+  "rating": 5,
+  "title": "Great quality!",
+  "body": "Fabric is soft and comfortable.",
+  "approved": false,
+  "verifiedPurchase": true,
+  "productBarcode": "123456789",
+  "reviewerName": "John D.",
+  "createdAt": "2026-04-18T10:00:00"
+}
+```
+
+**Notes:**
+- `verifiedPurchase` is auto-set based on whether the customer purchased the product
+- New reviews start with `approved: false` (pending, not visible publicly)
+
+---
+
+### `GET /account/reviews` — List My Reviews
+
+**Security:** authenticated
+
+Returns all reviews written by the authenticated customer, including pending ones.
+
+```json
+// Response 200 — List<ProductReviewPojo>
+```
+
+---
+
+## 5. Cart
+
+### `GET /public/cart` — Get Cart State
+
+**Security:** permitAll
+
+**Headers:** `X-Session-Token` (optional — creates new session if absent)
+
+```json
+// Response 200 — CartSessionPojo
+{
+  "id": 1,
+  "token": "550e8400-e29b-41d4-a716-446655440000",
+  "items": [
+    {
+      "variantSku": "BT-RED-S",
+      "variantSize": "S",
+      "variantColor": "Red",
+      "productName": "Basic T-Shirt",
+      "productBarcode": "123456789",
+      "price": 299000,
+      "quantity": 2,
+      "lineTotal": 598000,
+      "imageUrl": "https://..."
+    }
+  ],
+  "subtotal": 598000,
+  "itemCount": 1,
+  "totalUnits": 2,
+  "appliedDiscountCode": null,
+  "discountAmount": 0,
+  "totalAfterDiscount": 598000,
+  "createdAt": "2026-04-18T10:00:00",
+  "updatedAt": "2026-04-18T10:05:00",
+  "expiresAt": "2026-04-25T10:00:00",
+  "expired": false
+}
+```
+
+---
+
+### `POST /public/cart/items` — Add Item to Cart
+
+**Security:** permitAll
+
+**Headers:** `X-Session-Token` (optional)
+
+| Field | Type | Required | Description |
+|---|---|---|---|
+| `variantSku` | string | ✅ | SKU of the product variant |
+| `quantity` | int | ✅ | Quantity to add (> 0) |
+
+```json
+// Request
+{ "variantSku": "BT-RED-S", "quantity": 2 }
+
+// Response 200 — updated CartSessionPojo
+```
+
+**Errors:**
+- `REJECTED_01` (400) — invalid SKU or quantity ≤ 0
+
+---
+
+### `PATCH /public/cart/items/{variantSku}` — Update Item Quantity
+
+**Security:** permitAll
+
+**Path Params:** `variantSku` — SKU of the cart item
+
+```json
+// Request
+{ "quantity": 3 }
+
+// Response 200 — updated CartSessionPojo
+```
+
+**Errors:**
+- `REJECTED_01` (400) — quantity ≤ 0 or item not in cart
+
+---
+
+### `DELETE /public/cart/items/{variantSku}` — Remove Item
+
+**Security:** permitAll
+
+**Path Params:** `variantSku`
+
+```json
+// Response 200 — updated CartSessionPojo (item removed)
+```
+
+---
+
+### `DELETE /public/cart` — Clear Cart
+
+**Security:** permitAll
+
+```json
+// Response 204 — (empty body)
+```
+
+---
+
+### `GET /public/cart/validate` — Validate Cart Stock
+
+**Security:** permitAll
+
+Checks stock availability for all items in the cart.
+
+```json
+// Response 200 — all available
+{ "valid": true, "message": "All items available" }
+
+// Response 200 — some unavailable
+{
+  "valid": false,
+  "message": "Some items are unavailable",
+  "unavailableItems": [
+    { "variantSku": "BT-RED-S", "requested": 5, "available": 2 }
+  ]
+}
+```
+
+---
+
+## 6. Stock Reservations
+
+All stock reservation endpoints require the `X-Session-Token` header (except `/confirm`).
+
+### `GET /public/cart/reservations` — List Active Reservations
+
+**Security:** permitAll
+
+**Headers:** `X-Session-Token` (required)
+
+```json
+// Response 200 — List<StockReservationPojo>
+[
+  {
+    "id": 1,
+    "sessionId": "550e8400-...",
+    "variantSku": "BT-RED-S",
+    "variantSkuResolved": "BT-RED-S",
+    "variantSize": "S",
+    "variantColor": "Red",
+    "productName": "Basic T-Shirt",
+    "productBarcode": "123456789",
+    "quantity": 2,
+    "status": "RESERVED",
+    "expiresAt": "2026-04-18T12:00:00",
+    "createdAt": "2026-04-18T10:00:00",
+    "updatedAt": "2026-04-18T10:00:00"
+  }
+]
+```
+
+**Status values:** `RESERVED` | `CONFIRMED` | `RELEASED`
+
+---
+
+### `POST /public/cart/reservations` — Reserve Stock
+
+**Security:** permitAll
+
+**Headers:** `X-Session-Token` (required)
+
+| Field | Type | Required | Description |
+|---|---|---|---|
+| `variantSku` | string | ✅ | Variant SKU |
+| `quantity` | int | ✅ | Quantity to reserve (> 0) |
+
+```json
+// Request
+{ "variantSku": "BT-RED-S", "quantity": 2 }
+
+// Response 201 — StockReservationPojo
+```
+
+**Errors:**
+- `REJECTED_01` (400) — insufficient stock or invalid SKU
+
+---
+
+### `PATCH /public/cart/reservations` — Update Reservation Quantity
+
+**Security:** permitAll
+
+**Headers:** `X-Session-Token` (required)
+
+```json
+// Request
+{ "variantSku": "BT-RED-S", "quantity": 3 }
+
+// Response 200 — updated StockReservationPojo
+```
+
+---
+
+### `DELETE /public/cart/reservations` — Release All Reservations
+
+**Security:** permitAll
+
+**Headers:** `X-Session-Token` (required)
+
+```json
+// Response 200 — List<StockReservationPojo> (released)
+```
+
+---
+
+### `DELETE /public/cart/reservations/{variantSku}` — Release Single Reservation
+
+**Security:** permitAll
+
+**Headers:** `X-Session-Token` (required)
+
+```json
+// Response 200 — StockReservationPojo (released)
+// or 204 — if no reservation existed for this SKU
+```
+
+---
+
+### `GET /public/cart/reservations/availability?variantSku=X` — Check Stock Availability
+
+**Security:** permitAll
+
+**Query Params:** `variantSku` (required)
+
+```json
+// Response 200
+{ "variantSku": "BT-RED-S", "availableStock": 42 }
+
+// Response 404 — variant not found
+```
+
+---
+
+### `POST /public/cart/reservations/confirm` — Confirm Reservations (Payment Success)
+
+**Security:** permitAll
+
+Confirms all RESERVED items as CONFIRMED (stock is deducted).
+
+**Headers:** `X-Session-Token` (optional — also accepts body field `sessionId`)
+
+```json
+// Request body (optional — header takes precedence)
+{ "sessionId": "550e8400-..." }
+
+// Response 200 — List<StockReservationPojo> (status = CONFIRMED)
+```
+
+---
+
+## 7. Checkout & Payment
+
+> **Payment Gateway:** Webpay Plus (Transbank Chile) — `paymentType` value: `"Webpay Plus"`
+
+### `POST /public/checkout` — Start Checkout
+
+**Security:** requires `checkout` authority (authenticated user)
+
+| Field | Type | Required | Description |
+|---|---|---|---|
+| `sessionToken` | string | ✅ | Cart session token |
+| `shippingMethodId` | long | ✅ | Shipping method ID |
+| `discountCode` | string | ❌ | Discount code |
+| `customer` | PersonPojo | ❌ | Override customer info |
+| `shippingAddress` | AddressPojo | ✅ | Delivery address |
+| `paymentType` | string | ✅ | `"Webpay Plus"` |
+| `billingType` | string | ✅ | `"enterprise"` or `"individual"` |
+| `billingCompany` | BillingCompanyPojo | ❌ | Required if `billingType=enterprise` |
+| `billingAddress` | AddressPojo | ❌ | Required if `billingType=enterprise` |
+
+**AddressPojo fields:**
+```json
+{
+  "recipientName": "John Doe",
+  "phone": "0912345678",
+  "addressLine1": "123 Nguyen Hue",
+  "addressLine2": "Floor 2",
+  "ward": "Ben Thanh",
+  "district": "District 1",
+  "city": "Ho Chi Minh",
+  "postalCode": "700000",
+  "country": "Vietnam"
+}
+```
+
+**BillingCompanyPojo fields:**
+```json
+{
+  "name": "Mono Studio Co.",
+  "taxCode": "0123456789",
+  "email": "billing@monostudio.vn"
+}
+```
+
+```json
+// Request
+{
+  "sessionToken": "550e8400-...",
+  "shippingMethodId": 1,
+  "discountCode": "SUMMER20",
+  "shippingAddress": {
+    "recipientName": "John Doe",
+    "phone": "0912345678",
+    "addressLine1": "123 Nguyen Hue",
+    "city": "Ho Chi Minh"
+  },
+  "paymentType": "Webpay Plus",
+  "billingType": "enterprise",
+  "billingCompany": {
+    "name": "Mono Studio Co.",
+    "taxCode": "0123456789",
+    "email": "billing@monostudio.vn"
+  },
+  "billingAddress": {
+    "recipientName": "Mono Studio",
+    "addressLine1": "456 Le Duan",
+    "city": "Ho Chi Minh"
+  }
+}
+
+// Response 200 — PaymentRedirectionDetailsPojo
+{
+  "url": "https://webpay.example.com/...",
+  "token": "xxx"
+}
+```
+
+**Errors:**
+- `REJECTED_01` (400) — bad input
+- `PAYMENT_01` (400) — payment gateway failure
+
+---
+
+### `GET /public/checkout/validate?token_ws=X` — Payment Success Callback (WebPay)
+
+**Security:** permitAll
+
+Called by WebPay after successful payment. Redirects client to receipt page.
+
+**Query Params:** `token_ws` (WebPay success token — required)
+
+```json
+// Response 303 → /receipt?token=<order_token>
+// or error redirect to error page
+```
+
+**Errors:**
+- `REJECTED_01` (400) — missing token
+- `NOTFOUND_01` (404) — order not found
+- `PAYMENT_01` (400) — payment verification failed
+
+---
+
+### `POST /public/checkout/validate` — Payment Aborted Callback (WebPay)
+
+**Security:** permitAll
+
+Called by WebPay when customer cancels. Uses `TBK_TOKEN` param.
+
+**Query Params:** `TBK_TOKEN` (WebPay abortion token — required)
+
+```json
+// Response 303 → /result?status=aborted&token=<token>
+// or error redirect to error page
+```
+
+---
+
+## 8. Receipt
+
+### `GET /public/receipt/{token}` — Fetch Receipt
+
+**Security:** permitAll
+
+**Path Params:** `token` — transaction/order token
+
+```json
+// Response 200 — ReceiptPojo
+{
+  "buyOrder": 12345,
+  "token": "550e8400-...",
+  "date": "2026-04-18T14:30:00",
+  "customerName": "John Doe",
+  "customerEmail": "john@example.com",
+  "totalValue": 124000,
+  "status": "Delivery Complete",
+  "paymentType": "Webpay Plus",
+  "details": [
+    {
+      "productName": "Basic T-Shirt",
+      "variant": "Red / S",
+      "quantity": 2,
+      "unitPrice": 299000,
+      "lineTotal": 598000
+    }
+  ],
+  "shippingAddress": { ... },
+  "billingAddress": { ... }
+}
+```
+
+**Errors:**
+- `REJECTED_01` (400) — blank token
+- `NOTFOUND_01` (404) — no matching transaction
+
+---
+
+## 9. Discount Codes (Public)
+
+### `GET /public/discount/validate?code=X&subtotal=Y` — Validate Discount Code
+
+**Security:** permitAll
+
+| Param | Type | Required | Description |
+|---|---|---|---|
+| `code` | string | ✅ | Discount code to validate |
+| `subtotal` | number | ✅ | Cart subtotal in VND (without formatting) |
+
+```json
+// Response 200 — DiscountValidationResult
+{
+  "valid": true,
+  "code": "SUMMER20",
+  "type": "PERCENTAGE",
+  "value": 20,
+  "discountAmount": 11960,
+  "message": "20% discount applied"
+}
+
+// Response 200 — invalid code
+{
+  "valid": false,
+  "code": "EXPIRED",
+  "discountAmount": 0,
+  "message": "This discount code has expired"
+}
+```
+
+**Discount Types:** `PERCENTAGE` | `FIXED_AMOUNT` | `FREE_SHIPPING`
+
+---
+
+## 10. Shipping Methods (Public)
+
+### `GET /public/shipping/methods?subtotal=X` — List Active Shipping Methods
+
+**Security:** permitAll
+
+**Query Params:** `subtotal` (optional) — cart subtotal in VND; if provided, fee is waived when subtotal ≥ method's freeShippingThreshold
+
+```json
+// Response 200 — List<ShippingRatePojo>
+[
+  {
+    "id": 1,
+    "name": "Standard Delivery",
+    "description": "3–5 business days",
+    "fee": 15000,
+    "freeShippingThreshold": 200000,
+    "estimatedDays": "3-5"
+  },
+  {
+    "id": 2,
+    "name": "Express Delivery",
+    "description": "1–2 business days",
+    "fee": 35000,
+    "freeShippingThreshold": null,
+    "estimatedDays": "1-2"
+  }
+]
+```
+
+---
+
+## 11. Address Book
+
+### `GET /public/address-book` — List My Addresses
+
+**Security:** authenticated
+
+```json
+// Response 200 — List<AddressBookPojo>
+[
+  {
+    "id": 1,
+    "label": "Home",
+    "defaultShipping": true,
+    "defaultBilling": false,
+    "address": {
+      "recipientName": "John Doe",
+      "phone": "0912345678",
+      "addressLine1": "123 Nguyen Hue",
+      "city": "Ho Chi Minh"
+    }
+  }
+]
+```
+
+---
+
+### `GET /public/address-book/{id}` — Get Address Entry
+
+**Security:** authenticated
+
+```json
+// Response 200 — AddressBookPojo
+```
+
+---
+
+### `POST /public/address-book` — Create Address Entry
+
+**Security:** authenticated
+
+```json
+// Request
+{
+  "label": "Office",
+  "defaultShipping": false,
+  "defaultBilling": false,
+  "address": { ...AddressPojo }
+}
+
+// Response 201 — created AddressBookPojo
+```
+
+---
+
+### `PUT /public/address-book/{id}` — Replace Address Entry
+
+**Security:** authenticated
+
+Full replacement — all fields required.
+
+---
+
+### `PATCH /public/address-book/{id}` — Partial Update Address
+
+**Security:** authenticated
+
+```json
+// Request — partial fields
+{ "label": "Home 2", "defaultShipping": true }
+
+// Response 200 — updated AddressBookPojo
+```
+
+---
+
+### `DELETE /public/address-book/{id}` — Delete Address Entry
+
+**Security:** authenticated
+
+```json
+// Response 204 — (empty body)
+```
+
+---
+
+## 12. Admin — Dashboard
+
+> **Auth:** requires `dashboard:read` authority
+
+### `GET /admin/dashboard/stats` — Full Dashboard Stats
+
+**Query Params:**
+| Param | Type | Required | Description |
+|---|---|---|---|
+| `from` | date | ❌ | Start of date range (inclusive), format `YYYY-MM-DD` |
+| `to` | date | ❌ | End of date range (inclusive), format `YYYY-MM-DD` |
+
+```json
+// Response 200 — AdminDashboardStatsPojo
+{
+  "totalRevenue": 15000000,
+  "totalOrders": 120,
+  "orderStatusBreakdown": [
+    { "status": "Pending", "count": 15 },
+    { "status": "Confirmed", "count": 30 },
+    { "status": "Delivery Complete", "count": 75 }
+  ],
+  "revenueByPeriod": [
+    { "period": "2026-04-01", "revenue": 1200000 },
+    { "period": "2026-04-02", "revenue": 980000 }
+  ],
+  "topProducts": [
+    { "barcode": "123456789", "name": "Basic T-Shirt", "unitsSold": 150, "revenue": 44850000 }
+  ],
+  "lowStockAlerts": [
+    { "sku": "BT-RED-S", "name": "Basic T-Shirt Red S", "stock": 3, "criticalLevel": 10 }
+  ]
+}
+```
+
+---
+
+### `GET /admin/dashboard/stats/revenue` — Revenue by Period
+
+**Query Params:** `from`, `to`, `groupBy` (`day` | `week` | `month`, default `day`)
+
+```json
+// Response 200 — Collection<RevenueStatPojo>
+[
+  { "period": "2026-04-01", "revenue": 1200000 },
+  { "period": "2026-04-02", "revenue": 980000 }
+]
+```
+
+---
+
+### `GET /admin/dashboard/stats/top-products` — Top Selling Products
+
+**Query Params:** `from`, `to`, `limit` (default 10)
+
+```json
+// Response 200 — Collection<TopProductPojo>
+[
+  { "barcode": "123456789", "name": "Basic T-Shirt", "unitsSold": 150, "revenue": 44850000 }
+]
+```
+
+---
+
+### `GET /admin/dashboard/stats/low-stock` — Low Stock Alerts
+
+Returns all variants where `stockCurrent <= criticalStock`.
+
+```json
+// Response 200 — Collection<LowStockAlertPojo>
+[
+  { "sku": "BT-RED-S", "name": "Basic T-Shirt Red S", "stock": 3, "criticalLevel": 10 }
+]
+```
+
+---
+
+### `GET /admin/dashboard/stats/order-statuses` — Order Status Breakdown
+
+**Query Params:** `from`, `to`
+
+```json
+// Response 200 — Collection<OrderStatusCountPojo>
+[
+  { "status": "Pending", "count": 15 },
+  { "status": "Confirmed", "count": 30 }
+]
+```
+
+---
+
+## 14. Admin — Products
+
+`DataCrudGenericController<ProductPojo, Product>`
+
+**CRUD Authority:** `products:create` | `products:read` | `products:update` | `products:delete`
+
+### Standard CRUD
+
+| Method | Path | Auth | Description |
+|---|---|---|---|
+| `GET` | `/data/products` | read | List products (paginated) |
+| `GET` | `/data/products/{id}` | read | Get product by ID |
+| `POST` | `/data/products` | create | Create product |
+| `PUT` | `/data/products/{id}` | update | Replace product |
+| `PATCH` | `/data/products/{id}` | update | Partial update |
+| `DELETE` | `/data/products/{id}` | delete | Delete product |
+
+### `GET /data/products?barcode=X` — Get by Barcode (Admin)
+
+```json
+// Response 200 — ProductPojo
+```
+
+### Product Visibility Control
+
+All products have a `status` field with lifecycle values. Newly created products default to `DRAFT`.
+
+| Status | Description |
+|---|---|
+| `DRAFT` | Not visible to customers (pre-launch preparation) |
+| `PUBLISHED` | Live and visible to customers |
+| `UNLISTED` | Was available, now hidden (discontinued, seasonal) |
+
+| Method | Path | Auth | Description |
+|---|---|---|---|
+| `PATCH` | `/data/products/{id}/publish` | `products:update` | DRAFT → PUBLISHED |
+| `PATCH` | `/data/products/{id}/unpublish` | `products:update` | PUBLISHED → UNLISTED |
+| `PATCH` | `/data/products/{id}/revert-to-draft` | `products:update` | any → DRAFT |
+| `GET` | `/data/products?status=DRAFT` | read | Admin filter by status |
+
+```json
+// PATCH /data/products/5/publish
+// Response 200 — ProductPojo with status: "PUBLISHED"
+
+// GET /data/products?status=DRAFT
+// Response 200 — all draft products (admin review)
+```
+
+---
+
+## 15. Admin — Product Categories
+
+`DataCrudGenericController<ProductCategoryPojo, ProductCategory>`
+
+**CRUD Authority:** `product_categories:create` | `product_categories:read` | `product_categories:update` | `product_categories:delete`
+
+### Standard CRUD
+
+| Method | Path | Auth |
+|---|---|---|
+| `GET` | `/data/product_categories` | read |
+| `GET` | `/data/product_categories/{id}` | read |
+| `POST` | `/data/product_categories` | create |
+| `PUT` | `/data/product_categories/{id}` | update |
+| `PATCH` | `/data/product_categories/{id}` | update |
+| `DELETE` | `/data/product_categories/{id}` | delete |
+
+### `GET /data/product_categories/{code:[a-zA-Z0-9\\-]+}` — Get by Code
+
+**Auth:** none (also permitted via config)
+
+```json
+// Response 200 — ProductCategoryPojo
+{
+  "id": 1,
+  "code": "tshirts",
+  "name": "T-Shirts",
+  "description": "All t-shirt products",
+  "parentCode": null,
+  "active": true
+}
+```
+
+---
+
+### `GET /data/product_categories/{code}/products` — List Products in Category
+
+**Auth:** none
+
+**Query Params:** standard pagination + filter params
+
+```json
+// Response 200 — DataPagePojo<ProductPojo>
+```
+
+---
+
+## 16. Admin — Product Variants
+
+`DataCrudGenericController<ProductVariantPojo, ProductVariant>`
+
+**CRUD Authority:** `productVariants:create` | `productVariants:read` | `productVariants:update` | `productVariants:delete`
+
+### Standard CRUD
+
+| Method | Path | Auth |
+|---|---|---|
+| `GET` | `/data/product-variants` | read |
+| `GET` | `/data/product-variants/{id}` | read |
+| `POST` | `/data/product-variants` | create |
+| `PUT` | `/data/product-variants/{id}` | update |
+| `PATCH` | `/data/product-variants/{id}` | update |
+| `DELETE` | `/data/product-variants/{id}` | delete |
+
+---
+
+## 17. Admin — Product Lists
+
+`DataCrudGenericController<ProductListPojo, ProductList>`
+
+**CRUD Authority:** `product_lists:create` | `product_lists:read` | `product_lists:update` | `product_lists:delete`
+
+### Standard CRUD
+
+| Method | Path | Auth |
+|---|---|---|
+| `GET` | `/data/product_lists` | read |
+| `GET` | `/data/product_lists/{id}` | read |
+| `POST` | `/data/product_lists` | create |
+| `PUT` | `/data/product_lists/{id}` | update |
+| `PATCH` | `/data/product_lists/{id}` | update |
+| `DELETE` | `/data/product_lists/{id}` | delete |
+
+---
+
+### Product List Contents (Standalone Controller)
+
+**Auth:** `product_lists:contents` (add/remove/replace), none for read
+
+| Method | Path | Auth | Operation |
+|---|---|---|---|
+| `GET` | `/data/product_list_contents?listCode=X` | read | View list contents |
+| `POST` | `/data/product_list_contents?listCode=X` | contents | Add products |
+| `PUT` | `/data/product_list_contents?listCode=X` | contents | Replace all contents |
+| `DELETE` | `/data/product_list_contents?listCode=X` | contents | Remove products |
+
+**POST body:**
+```json
+[{ "barcode": "123456789" }, { "barcode": "987654321" }]
+```
+
+**DELETE query params:** `listCode` (required) + `barcode` (optional filter)
+
+---
+
+## 18. Admin — Product Reviews
+
+`DataCrudGenericController<ProductReviewPojo, ProductReview>` + custom actions
+
+**CRUD Authority:** `productReviews:create` | `productReviews:read` | `productReviews:update` | `productReviews:delete`
+
+### Standard CRUD (admin sees ALL reviews including pending)
+
+| Method | Path | Auth |
+|---|---|---|
+| `GET` | `/data/product-reviews` | read |
+| `GET` | `/data/product-reviews/{id}` | read |
+| `POST` | `/data/product-reviews?customerId=X` | create |
+| `PUT` | `/data/product-reviews/{id}` | update |
+| `PATCH` | `/data/product-reviews/{id}` | update |
+| `DELETE` | `/data/product-reviews/{id}` | delete |
+
+**POST notes:** `customerId` is a required **query parameter**.
+
+### Custom Action Endpoints
+
+| Method | Path | Auth | Description |
+|---|---|---|---|
+| `PATCH` | `/data/product-reviews/{id}/approve` | `productReviews:update` | Approve review (make public) |
+| `PATCH` | `/data/product-reviews/{id}/reject` | `productReviews:update` | Reject review |
+
+```json
+// PATCH /data/product-reviews/10/approve
+// Response 204 — (empty body)
+```
+
+---
+
+## 19. Admin — Images
+
+`DataCrudGenericController<ImagePojo, Image>`
+
+**CRUD Authority:** `images:create` | `images:read` | `images:update` | `images:delete`
+
+> ⚠️ No multipart file upload endpoint — CRUD only (create/update via image URL/URL references).
+
+### Standard CRUD
+
+| Method | Path | Auth |
+|---|---|---|
+| `GET` | `/data/images` | read (also permitted via config) |
+| `GET` | `/data/images/{id}` | read |
+| `POST` | `/data/images` | create |
+| `PUT` | `/data/images/{id}` | update |
+| `PATCH` | `/data/images/{id}` | update |
+| `DELETE` | `/data/images/{id}` | delete |
+
+---
+
+## 20. Admin — Billing Types
+
+`DataCrudGenericController<BillingTypePojo, BillingType>`
+
+**Security:** class-level `@PreAuthorize("isAuthenticated()")`; method-level:
+- `GET` — `billing_types:read`
+- `POST/PUT/PATCH/DELETE` — `billing_types:create` / `billing_types:update` / `billing_types:delete`
+
+Also permitted via config for GET.
+
+### Standard CRUD
+
+| Method | Path | Auth |
+|---|---|---|
+| `GET` | `/data/billing_types` | read |
+| `GET` | `/data/billing_types/{id}` | read |
+| `POST` | `/data/billing_types` | create |
+| `PUT` | `/data/billing_types/{id}` | update |
+| `PATCH` | `/data/billing_types/{id}` | update |
+| `DELETE` | `/data/billing_types/{id}` | delete |
+
+---
+
+## 21. Admin — Order Statuses
+
+`DataGenericController<OrderStatusPojo, OrderStatus>` — **read-only**
+
+**CRUD Authority:** `order_statuses:read` (GET only; no create/update/delete)
+
+### Read-Only Endpoints
+
+| Method | Path | Auth |
+|---|---|---|
+| `GET` | `/data/order_statuses` | `order_statuses:read` |
+| `GET` | `/data/order_statuses/{id}` | `order_statuses:read` |
+
+---
+
+## 22. Admin — Shipping Methods
+
+`DataCrudGenericController<ShippingMethodPojo, ShippingMethod>`
+
+**CRUD Authority:** `shipping-methods:create` | `shipping-methods:read` | `shipping-methods:update` | `shipping-methods:delete`
+
+### Standard CRUD
+
+| Method | Path | Auth |
+|---|---|---|
+| `GET` | `/data/shipping-methods` | read |
+| `GET` | `/data/shipping-methods/{id}` | read |
+| `POST` | `/data/shipping-methods` | create |
+| `PUT` | `/data/shipping-methods/{id}` | update |
+| `PATCH` | `/data/shipping-methods/{id}` | update |
+| `DELETE` | `/data/shipping-methods/{id}` | delete |
+
+---
+
+## 23. Admin — Shippers
+
+`DataCrudGenericController<ShipperPojo, Shipper>`
+
+**CRUD Authority:** `shippers:create` | `shippers:read` | `shippers:update` | `shippers:delete`
+
+### Standard CRUD
+
+| Method | Path | Auth |
+|---|---|---|
+| `GET` | `/data/shippers` | read |
+| `GET` | `/data/shippers/{id}` | read |
+| `POST` | `/data/shippers` | create |
+| `PUT` | `/data/shippers/{id}` | update |
+| `PATCH` | `/data/shippers/{id}` | update |
+| `DELETE` | `/data/shippers/{id}` | delete |
+
+---
+
+## 24. Admin — Orders
+
+`DataCrudGenericController<OrderPojo, Order>` + custom action endpoints
+
+**CRUD Authority:** `orders:create` | `orders:read` | `orders:update` | `orders:delete`
+
+### Standard CRUD
+
+| Method | Path | Auth |
+|---|---|---|
+| `GET` | `/data/orders` | read |
+| `GET` | `/data/orders/{id}` | read |
+| `POST` | `/data/orders` | create |
+| `PUT` | `/data/orders/{id}` | update |
+| `PATCH` | `/data/orders/{id}` | update |
+| `DELETE` | `/data/orders/{id}` | delete |
+
+**Special GET behavior:** If `buyOrder` query param is present, returns single-item page sorted by `buyOrder desc`.
+
+### Order Status State Machine Actions
+
+| Method | Path | Auth | Description |
+|---|---|---|---|
+| `POST` | `/data/orders/confirmation` | `orders:update` | Confirm a pending order |
+| `POST` | `/data/orders/rejection` | `orders:update` | Reject a pending order |
+| `POST` | `/data/orders/completion` | `orders:update` | Mark as completed |
+| `POST` | `/data/orders/cancellation?orderId=X&reason=Y` | `orders:update` | Admin cancel — releases stock + refund if paid |
+
+```json
+// POST /data/orders/confirmation
+// Request — OrderPojo
+// Response 200 — updated OrderPojo
+
+// POST /data/orders/cancellation?orderId=123&reason=Wrong+size
+// Response 200 — updated OrderPojo (status = Cancelled)
+```
+
+---
+
+## 25. Admin — Return Requests
+
+`DataCrudGenericController<ReturnRequestPojo, ReturnRequest>` + custom action endpoints
+
+**CRUD Authority:** `returnRequests:create` | `returnRequests:read` | `returnRequests:update` | `returnRequests:delete`
+
+### Standard CRUD
+
+| Method | Path | Auth |
+|---|---|---|
+| `GET` | `/data/return-requests` | read |
+| `GET` | `/data/return-requests/{id}` | read |
+| `POST` | `/data/return-requests` | create |
+| `PUT` | `/data/return-requests/{id}` | update |
+| `PATCH` | `/data/return-requests/{id}` | update |
+| `DELETE` | `/data/return-requests/{id}` | delete |
+
+**Special GET behavior:** If `id` query param present, returns single-item page; defaults `sortBy=id&order=desc`.
+
+### Return Request Lifecycle Actions
+
+| Method | Path | Auth | Description |
+|---|---|---|---|
+| `POST` | `/data/return-requests/approve/{id}` | `returnRequests:update` | Approve — releases stock, initiates refund |
+| `POST` | `/data/return-requests/reject/{id}` | `returnRequests:update` | Reject return request |
+| `POST` | `/data/return-requests/receive/{id}` | `returnRequests:update` | Mark items received at warehouse |
+| `POST` | `/data/return-requests/complete-refund/{id}` | `returnRequests:update` | Complete refund processing |
+| `POST` | `/data/return-requests/tracking/{id}` | `returnRequests:update` | Add tracking number |
+| `POST` | `/data/return-requests/cancel/{id}` | `returnRequests:update` | Cancel pending return |
+
+**Optional body for approve/receive/complete-refund:**
+```json
+{ "adminNotes": "Refund processed via bank transfer", "refundAmount": 50000 }
+```
+
+---
+
+## 26. Admin — Discount Codes
+
+`DataCrudGenericController<DiscountCodePojo, DiscountCode>`
+
+**CRUD Authority:** `discountCodes:create` | `discountCodes:read` | `discountCodes:update` | `discountCodes:delete`
+
+### Standard CRUD
+
+| Method | Path | Auth |
+|---|---|---|
+| `GET` | `/data/discount-codes` | read |
+| `GET` | `/data/discount-codes/{id}` | read |
+| `POST` | `/data/discount-codes` | create |
+| `PUT` | `/data/discount-codes/{id}` | update |
+| `PATCH` | `/data/discount-codes/{id}` | update |
+| `DELETE` | `/data/discount-codes/{id}` | delete |
+
+---
+
+## 27. Admin — Cart Sessions
+
+`DataGenericController<CartSessionPojo, CartSession>` — **read-only**
+
+> ⚠️ `create()` and `update()` are overridden to throw `UnsupportedOperationException`. Admin cannot create carts.
+
+**CRUD Authority:** `cartSessions:read` (GET), `cartSessions:update` (PATCH), `cartSessions:delete` (DELETE)
+
+### Endpoints
+
+| Method | Path | Auth | Description |
+|---|---|---|---|
+| `GET` | `/data/cart-sessions` | read | List cart sessions |
+| `GET` | `/data/cart-sessions/{id}` | read | Get session details |
+| `PATCH` | `/data/cart-sessions/{id}` | update | Refresh cart TTL |
+| `DELETE` | `/data/cart-sessions/{id}` | delete | Delete session |
+
+**PATCH body (refresh TTL):**
+```json
+{ "refreshExpiry": true, "expiresAt": "2026-04-25T00:00:00" }
+```
+
+> ⚠️ `DELETE` does NOT release stock reservations — use `DELETE /public/cart/reservations` first.
+
+---
+
+## 28. Admin — Users & Roles
+
+### Users
+
+`DataCrudGenericController<UserPojo, User>`
+
+**CRUD Authority:** `users:create` | `users:read` | `users:update` | `users:delete`
+
+### Standard CRUD
+
+| Method | Path | Auth |
+|---|---|---|
+| `GET` | `/data/users` | read |
+| `GET` | `/data/users/{id}` | read |
+| `POST` | `/data/users` | create |
+| `PUT` | `/data/users/{id}` | update |
+| `PATCH` | `/data/users/{id}` | update |
+| `DELETE` | `/data/users/{id}` | delete |
+
+### User Roles
+
+`DataCrudGenericController<UserRolePojo, UserRole>`
+
+**CRUD Authority:** `user_roles:create` | `user_roles:read` | `user_roles:update` | `user_roles:delete`
+
+### Standard CRUD
+
+| Method | Path | Auth |
+|---|---|---|
+| `GET` | `/data/user_roles` | read |
+| `GET` | `/data/user_roles/{id}` | read |
+| `POST` | `/data/user_roles` | create |
+| `PUT` | `/data/user_roles/{id}` | update |
+| `PATCH` | `/data/user_roles/{id}` | update |
+| `DELETE` | `/data/user_roles/{id}` | delete |
+
+---
+
+## 29. Admin — People & Customers
+
+### People — Read Only
+
+`DataGenericController<PersonPojo, Person>`
+
+**CRUD Authority:** `people:read` (GET only — no create/update/delete)
+
+| Method | Path | Auth |
+|---|---|---|
+| `GET` | `/data/people` | `people:read` |
+| `GET` | `/data/people/{id}` | `people:read` |
+
+---
+
+### Customers — Full CRUD
+
+`DataCrudGenericController<PersonPojo, Customer>`
+
+**CRUD Authority:** `customers:create` | `customers:read` | `customers:update` | `customers:delete`
+
+| Method | Path | Auth |
+|---|---|---|
+| `GET` | `/data/customers` | read |
+| `GET` | `/data/customers/{id}` | read |
+| `POST` | `/data/customers` | create |
+| `PUT` | `/data/customers/{id}` | update |
+| `PATCH` | `/data/customers/{id}` | update |
+| `DELETE` | `/data/customers/{id}` | delete |
+
+---
+
+## 30. Admin — Salespeople
+
+`DataCrudGenericController<PersonPojo, Salesperson>`
+
+**CRUD Authority:** `salespeople:create` | `salespeople:read` | `salespeople:update` | `salespeople:delete`
+
+### Standard CRUD
+
+| Method | Path | Auth |
+|---|---|---|
+| `GET` | `/data/salespeople` | read |
+| `GET` | `/data/salespeople/{id}` | read |
+| `POST` | `/data/salespeople` | create |
+| `PUT` | `/data/salespeople/{id}` | update |
+| `PATCH` | `/data/salespeople/{id}` | update |
+| `DELETE` | `/data/salespeople/{id}` | delete |
+
+---
+
+## 31. Error Reference
+
+All errors follow this structure:
+
+```json
+{
+  "code": "NOTFOUND_01",
+  "message": "Entity not found",
+  "detail": "Optional additional context"
+}
+```
+
+### Exception → HTTP Status Mapping
+
+| Exception | HTTP Status | Code | Description |
+|---|---|---|---|
+| `EntityNotFoundException` | 404 | `NOTFOUND_01` | Resource not found |
+| `EntityExistsException` | 400 | `EXISTS_01` | Resource already exists |
+| `BadInputException` | 400 | `REJECTED_01` | Invalid input / business rule violation |
+| `MethodArgumentNotValidException` | 400 | `REJECTED_02` | Validation annotation failure |
+| `PaymentServiceException` | 400 | `PAYMENT_01` | Payment gateway error |
+| `AuthenticationException` / `AccessDeniedException` | 401 | `AUTH_01` | Auth failure |
+
+---
+
+## 32. Pagination & Filtering
+
+All `DataGenericController` `GET /` list endpoints accept:
+
+| Param | Type | Default | Description |
+|---|---|---|---|
+| `pageIndex` | int | `0` | Zero-based page index |
+| `pageSize` | int | configurable (20) | Items per page |
+| `sortBy` | string | varies | Field to sort by (e.g. `id`, `name`, `price`) |
+| `order` | string | `asc` | `asc` or `desc` |
+| `{field}` | string | — | Filter by entity field (via PredicateService — exact or partial match depending on field type) |
+
+### Response Wrapper — DataPagePojo
+
+```json
+{
+  "items": [ ... ],
+  "totalCount": 100,
+  "pageSize": 20
+}
+```
+
+### Date Range Filtering
+
+For date fields, use `from` and `to` params with format `YYYY-MM-DD`.
+
+---
+
+## Appendix: Pojo Reference
+
+### ProductPojo
+```json
+{
+  "id": 1,
+  "name": "Basic T-Shirt",
+  "barcode": "123456789",
+  "description": "Premium cotton t-shirt",
+  "price": 299000,
+  "currentStock": 50,
+  "criticalStock": 10,
+  "status": "PUBLISHED",
+  "category": { "id": 1, "code": "tshirts", "name": "T-Shirts" },
+  "images": [{ "id": 1, "url": "https://...", "alt": "Product image" }],
+  "averageRating": 4.5,
+  "totalReviews": 23,
+  "variants": [{ "sku": "BT-RED-S", "size": "S", "color": "Red", "price": 299000, "stock": 15 }]
+}
+```
+
+### CartSessionPojo
+```json
+{
+  "id": 1,
+  "token": "550e8400-...",
+  "items": [{ "variantSku": "BT-RED-S", "productName": "Basic T-Shirt", "price": 299000, "quantity": 2, "lineTotal": 598000, "imageUrl": "https://..." }],
+  "subtotal": 598000,
+  "itemCount": 1,
+  "totalUnits": 2,
+  "appliedDiscountCode": null,
+  "discountAmount": 0,
+  "totalAfterDiscount": 598000,
+  "createdAt": "2026-04-18T10:00:00",
+  "updatedAt": "2026-04-18T10:05:00",
+  "expiresAt": "2026-04-25T10:00:00",
+  "expired": false
+}
+```
+
+### StockReservationPojo
+```json
+{
+  "id": 1,
+  "sessionId": "550e8400-...",
+  "variantSku": "BT-RED-S",
+  "variantSkuResolved": "BT-RED-S",
+  "variantSize": "S",
+  "variantColor": "Red",
+  "productName": "Basic T-Shirt",
+  "productBarcode": "123456789",
+  "quantity": 2,
+  "status": "RESERVED",
+  "expiresAt": "2026-04-18T12:00:00",
+  "createdAt": "2026-04-18T10:00:00",
+  "updatedAt": "2026-04-18T10:00:00"
+}
+```
+
+### OrderPojo
+```json
+{
+  "id": 1,
+  "buyOrder": 12345,
+  "token": "550e8400-...",
+  "cartSessionToken": "...",
+  "date": "2026-04-18T14:30:00",
+  "details": [{ "productName": "Basic T-Shirt", "variant": "Red / S", "quantity": 2, "unitPrice": 299000, "lineTotal": 598000 }],
+  "netValue": 598000,
+  "taxValue": 59800,
+  "transportValue": 15000,
+  "totalValue": 672800,
+  "totalItems": 2,
+  "totalRefundedAmount": 0,
+  "discountCode": "SUMMER20",
+  "discountValue": 11960,
+  "status": "Confirmed",
+  "billingType": "enterprise",
+  "paymentType": "Webpay Plus",
+  "customer": { "firstName": "John", "lastName": "Doe", "email": "john@example.com" },
+  "salesperson": { "firstName": "Jane", "lastName": "Smith" },
+  "shipper": "FastShip Co.",
+  "billingCompany": { "name": "Mono Studio", "taxCode": "0123456789" },
+  "billingAddress": { "recipientName": "Mono Studio", "addressLine1": "456 Le Duan", "city": "Ho Chi Minh" },
+  "shippingAddress": { "recipientName": "John Doe", "phone": "0912345678", "addressLine1": "123 Nguyen Hue", "city": "Ho Chi Minh" }
+}
+```
+
+### ProductReviewPojo
+```json
+{
+  "id": 1,
+  "rating": 5,
+  "title": "Great quality!",
+  "body": "Fabric is soft and comfortable.",
+  "productBarcode": "123456789",
+  "productName": "Basic T-Shirt",
+  "reviewerName": "John D.",
+  "createdAt": "2026-04-10T14:00:00",
+  "updatedAt": "2026-04-10T14:00:00",
+  "approved": false,
+  "verifiedPurchase": true
+}
+```
+
+### ReturnRequestPojo
+```json
+{
+  "id": 1,
+  "date": "2026-04-15T10:00:00",
+  "lastModified": "2026-04-18T09:00:00",
+  "reason": "Wrong size",
+  "adminNotes": null,
+  "status": "PENDING",
+  "refundMethod": null,
+  "refundAmount": 0,
+  "trackingNumber": null,
+  "orderId": 123,
+  "items": [{ "productName": "Basic T-Shirt", "variant": "Red / S", "quantity": 1, "unitPrice": 299000 }]
+}
+```
+
+### AddressPojo
+```json
+{
+  "recipientName": "John Doe",
+  "phone": "0912345678",
+  "addressLine1": "123 Nguyen Hue",
+  "addressLine2": "Floor 2",
+  "ward": "Ben Thanh",
+  "district": "District 1",
+  "city": "Ho Chi Minh",
+  "postalCode": "700000",
+  "country": "Vietnam"
+}
+```
+
+### ShippingRatePojo
+```json
+{
+  "id": 1,
+  "name": "Standard Delivery",
+  "description": "3–5 business days",
+  "fee": 15000,
+  "freeShippingThreshold": 200000,
+  "estimatedDays": "3-5"
+}
+```
+
+### DiscountValidationResult
+```json
+{
+  "valid": true,
+  "code": "SUMMER20",
+  "type": "PERCENTAGE",
+  "value": 20,
+  "discountAmount": 11960,
+  "message": "20% discount applied"
+}
+```

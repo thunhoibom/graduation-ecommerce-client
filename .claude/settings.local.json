@@ -1,0 +1,10 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(python -)",
+      "Read(//d/GRADUATION_PROJECT/graduation_ecommerce/graduation-ecommerce-backend/src/main/java/org/monostudio/**)",
+      "Read(//d/GRADUATION_PROJECT/graduation_ecommerce/graduation-ecommerce-backend/**)",
+      "Read(//d/GRADUATION_PROJECT/graduation_ecommerce/**)"
+    ]
+  }
+}

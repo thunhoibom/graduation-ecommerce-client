@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
@@ -21,6 +21,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
 import { formatMoney } from "@/lib/utils";
+import { LocationPicker } from "@/components/ui/location-picker";
 import type { AddressBookPojo } from "@/types/person";
 import type { ShippingMethod } from "@/types/common";
 import type { CheckoutStartPayload } from "@/types/checkout";
@@ -51,6 +52,8 @@ interface AddressFormData {
   city: string;
   postalCode: string;
   notes: string;
+  latitude?: number;
+  longitude?: number;
 }
 
 function emptyCustomer(): CustomerFormData {
@@ -58,7 +61,7 @@ function emptyCustomer(): CustomerFormData {
 }
 
 function emptyAddress(): AddressFormData {
-  return { firstLine: "", municipality: "", city: "", postalCode: "", notes: "" };
+  return { firstLine: "", municipality: "", city: "", postalCode: "", notes: "", latitude: undefined, longitude: undefined };
 }
 
 // ─── Step indicator ─────────────────────────────────────────────────────────────
@@ -148,11 +151,12 @@ function ShippingCard({
   selected: boolean;
   onSelect: () => void;
 }) {
+  const fee = (method as any).fee ?? method.baseFee ?? 0;
   const feeLabel =
-    method.baseFee === 0 ? (
+    fee === 0 ? (
       <span className="text-green-600 dark:text-green-400">Miễn phí</span>
     ) : (
-      formatMoney(method.baseFee)
+      formatMoney(fee)
     );
 
   const eta =
@@ -366,46 +370,6 @@ export function CheckoutForm() {
   const [discountLoading, setDiscountLoading] = useState(false);
   const [billingType, setBillingType] = useState<"individual" | "enterprise">("individual");
 
-  // ── Load saved addresses on mount ──────────────────────────────────────────
-  useEffect(() => {
-    getAddressBook()
-      .then(setSavedAddresses)
-      .catch(() => {/* non-authenticated guest — silently skip */});
-  }, []);
-
-  // ── Load shipping methods when entering step 2 ─────────────────────────────
-  useEffect(() => {
-    if (step !== "shipping_method") return;
-    if (shippingMethods.length > 0) return; // already loaded
-    setShippingLoading(true);
-    getShippingMethods()
-      .then((methods) => {
-        setShippingMethods(methods);
-        // Auto-select if only one
-        if (methods.length === 1 && methods[0]?.id != null) {
-          setSelectedShipping(methods[0].id);
-        }
-      })
-      .catch(() => toast.error("Không thể tải phương thức vận chuyển"))
-      .finally(() => setShippingLoading(false));
-  }, [step, shippingMethods.length]);
-
-  // ── Fill address form from saved address ───────────────────────────────────
-  const selectedSavedAddress = savedAddresses.find((a) => a.id === selectedAddressId);
-
-  useEffect(() => {
-    if (selectedSavedAddress && !useNewAddress) {
-      const addr = selectedSavedAddress.address;
-      setAddressForm({
-        firstLine: addr?.firstLine ?? "",
-        municipality: addr?.municipality ?? "",
-        city: addr?.city ?? "",
-        postalCode: addr?.postalCode ?? "",
-        notes: addr?.notes ?? "",
-      });
-    }
-  }, [selectedAddressId, useNewAddress, selectedSavedAddress]);
-
   // ── Computed totals ───────────────────────────────────────────────────────
   const items = cart?.items ?? [];
   const subtotal = cart?.subtotal ?? 0;
@@ -416,8 +380,60 @@ export function CheckoutForm() {
       : 0;
   const totalDiscount = cartDiscount + extraDiscount;
   const selectedMethod = shippingMethods.find((m) => m.id === selectedShipping);
-  const shippingFee = selectedMethod?.baseFee ?? 0;
+  const shippingFee = (selectedMethod as any)?.fee ?? selectedMethod?.baseFee ?? 0;
   const total = Math.max(subtotal + shippingFee - totalDiscount, 0);
+
+  // ── Load saved addresses on mount ──────────────────────────────────────────
+  useEffect(() => {
+    getAddressBook()
+      .then(setSavedAddresses)
+      .catch(() => {/* non-authenticated guest — silently skip */});
+  }, []);
+
+  // ── Fill address form from saved address ───────────────────────────────────
+  const selectedSavedAddress = savedAddresses.find((a) => a.id === selectedAddressId);
+
+  // ── Load shipping methods when entering step 2 ─────────────────────────────
+  const lastFetchKey = useRef<string>("");
+
+  useEffect(() => {
+    if (step !== "shipping_method") return;
+
+    const isUsingMap = useNewAddress || savedAddresses.length === 0;
+    const lat = isUsingMap ? addressForm.latitude : selectedSavedAddress?.address?.latitude;
+    const lng = isUsingMap ? addressForm.longitude : selectedSavedAddress?.address?.longitude;
+    const fetchKey = `${subtotal}-${lat}-${lng}`;
+
+    if (shippingMethods.length > 0 && lastFetchKey.current === fetchKey) return; // already loaded with same inputs
+
+    setShippingLoading(true);
+    getShippingMethods(subtotal, lat, lng)
+      .then((methods) => {
+        lastFetchKey.current = fetchKey;
+        setShippingMethods(methods);
+        // Auto-select if only one
+        if (methods.length === 1 && methods[0]?.id != null) {
+          setSelectedShipping(methods[0].id);
+        }
+      })
+      .catch(() => toast.error("Không thể tải phương thức vận chuyển"))
+      .finally(() => setShippingLoading(false));
+  }, [step, subtotal, addressForm.latitude, addressForm.longitude, selectedSavedAddress, useNewAddress, shippingMethods.length]);
+
+  useEffect(() => {
+    if (selectedSavedAddress && !useNewAddress) {
+      const addr = selectedSavedAddress.address;
+      setAddressForm({
+        firstLine: addr?.firstLine ?? "",
+        municipality: addr?.municipality ?? "",
+        city: addr?.city ?? "",
+        postalCode: addr?.postalCode ?? "",
+        notes: addr?.notes ?? "",
+        latitude: addr?.latitude,
+        longitude: addr?.longitude,
+      });
+    }
+  }, [selectedAddressId, useNewAddress, selectedSavedAddress]);
 
   // ── Validation helpers ───────────────────────────────────────────────────
   const hasValidCustomer =
@@ -499,6 +515,8 @@ export function CheckoutForm() {
         city: addressForm.city.trim(),
         postalCode: addressForm.postalCode.trim() || undefined,
         notes: addressForm.notes.trim() || undefined,
+        latitude: addressForm.latitude,
+        longitude: addressForm.longitude,
       },
       paymentType,
       billingType,
@@ -676,8 +694,41 @@ export function CheckoutForm() {
                   <h2>Địa chỉ giao hàng</h2>
                 </div>
                 <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                  <div className="sm:col-span-2 space-y-1.5 z-0">
+                    <Label>Ghim vị trí trên Bản đồ *</Label>
+                    <div className="border border-neutral-200 dark:border-neutral-800 rounded-sm overflow-hidden">
+                       <LocationPicker 
+                         position={addressForm.latitude && addressForm.longitude ? { lat: addressForm.latitude, lng: addressForm.longitude } : null}
+                         onChange={(lat: number, lng: number, data: any) => {
+                             setAddressForm(prev => {
+                                 // Build street
+                                 let newFirstLine = "";
+                                 const roadName = data?.road || data?.pedestrian || data?.path || data?.residential || data?.neighbourhood;
+                                 if (roadName) {
+                                     newFirstLine = data.house_number ? `${data.house_number} ${roadName}` : roadName;
+                                 }
+                                 
+                                 // Build municipality (quận/huyện/xã/thị trấn)
+                                 const newMunicipality = data?.suburb || data?.city_district || data?.county || data?.town || data?.village || data?.hamlet || data?.state_district || "";
+                                 
+                                 // Build city/province (tỉnh/thành phố)
+                                 const newCity = data?.city || data?.province || data?.state || data?.region || (data as any)?.yes || "";
+
+                                 return {
+                                     ...prev,
+                                     latitude: lat,
+                                     longitude: lng,
+                                     firstLine: newFirstLine,
+                                     municipality: newMunicipality,
+                                     city: newCity,
+                                 };
+                             });
+                         }}
+                       />
+                    </div>
+                  </div>
                   <div className="sm:col-span-2 space-y-1.5">
-                    <Label htmlFor="firstLine">Địa chỉ *</Label>
+                    <Label htmlFor="firstLine">Địa chỉ (Số nhà, đường) *</Label>
                     <Input
                       id="firstLine"
                       placeholder="Số nhà, tên đường"

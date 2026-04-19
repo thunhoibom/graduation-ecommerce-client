@@ -93,6 +93,7 @@ export interface ReceiptItem {
   quantity: number;
   unitPrice: number;
   lineTotal: number;
+  imageUrl?: string;
 }
 
 // ─── Discount Validation ────────────────────────────────────────────────────────

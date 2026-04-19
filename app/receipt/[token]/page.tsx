@@ -157,8 +157,16 @@ function ReceiptContent() {
                   className="flex items-center justify-between gap-4 px-5 py-4"
                 >
                   <div className="flex min-w-0 flex-1 items-center gap-3">
-                    <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-none border border-neutral-100 bg-neutral-50 dark:border-neutral-800 dark:bg-neutral-900">
-                      <ShoppingBag className="size-4 text-neutral-300 dark:text-neutral-700" />
+                    <div className="flex h-12 w-12 shrink-0 items-center justify-center overflow-hidden rounded-none border border-neutral-100 bg-neutral-50 dark:border-neutral-800 dark:bg-neutral-900">
+                      {item.imageUrl ? (
+                        <img 
+                          src={item.imageUrl} 
+                          alt={item.productName} 
+                          className="h-full w-full object-cover"
+                        />
+                      ) : (
+                        <ShoppingBag className="size-4 text-neutral-300 dark:text-neutral-700" />
+                      )}
                     </div>
                     <div className="min-w-0 flex-1">
                       <p className="line-clamp-2 text-sm font-medium text-neutral-900 dark:text-white">

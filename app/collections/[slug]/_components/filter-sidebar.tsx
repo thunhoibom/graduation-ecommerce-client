@@ -78,27 +78,87 @@ function FilterContent({ onClose }: { onClose?: () => void }) {
           </label>
         </div>
 
+        {/* Color Filter */}
+        <div className="space-y-3">
+          <span className="text-xs font-semibold uppercase tracking-wide text-neutral-400 dark:text-neutral-500">
+            Màu sắc
+          </span>
+          <div className="flex flex-wrap gap-2 pt-1">
+            {[
+              { name: "Black", color: "#000000" },
+              { name: "White", color: "#ffffff" },
+              { name: "Navy", color: "#000080" },
+              { name: "Beige", color: "#f5f5dc" },
+              { name: "Grey", color: "#808080" },
+            ].map((c) => (
+              <button
+                key={c.name}
+                onClick={() => updateParam("color", searchParams.get("color") === c.name ? null : c.name)}
+                title={c.name}
+                className={`group relative flex size-7 items-center justify-center rounded-full border transition-all ${
+                  searchParams.get("color") === c.name
+                    ? "border-neutral-900 ring-1 ring-neutral-900 dark:border-white dark:ring-white"
+                    : "border-neutral-200 hover:border-neutral-400 dark:border-neutral-800"
+                }`}
+              >
+                <span
+                  className="size-5 rounded-full border border-neutral-100"
+                  style={{ backgroundColor: c.color }}
+                />
+              </button>
+            ))}
+          </div>
+        </div>
+
+        {/* Size Filter */}
+        <div className="space-y-3">
+          <span className="text-xs font-semibold uppercase tracking-wide text-neutral-400 dark:text-neutral-500">
+            Kích cỡ
+          </span>
+          <div className="grid grid-cols-4 gap-2">
+            {["S", "M", "L", "XL", "30", "31", "32"].map((s) => (
+              <button
+                key={s}
+                onClick={() => updateParam("size", searchParams.get("size") === s ? null : s)}
+                className={`flex h-9 items-center justify-center border text-xs transition-all ${
+                  searchParams.get("size") === s
+                    ? "border-neutral-900 bg-neutral-900 text-white dark:border-white dark:bg-white dark:text-black"
+                    : "border-neutral-200 hover:border-neutral-900 dark:border-neutral-800 dark:hover:border-white text-neutral-600 dark:text-neutral-400"
+                }`}
+              >
+                {s}
+              </button>
+            ))}
+          </div>
+        </div>
+
         {/* Price Range */}
         <div className="space-y-3">
           <span className="text-xs font-semibold uppercase tracking-wide text-neutral-400 dark:text-neutral-500">
             Khoảng giá
           </span>
           <div className="flex items-center gap-2">
-            <input
-              type="number"
-              placeholder="Từ"
-              value={minPrice ?? ""}
-              onChange={(e) => updateParam("minPrice", e.target.value || null)}
-              className="w-full rounded-none border border-neutral-200 bg-white px-2.5 py-2 text-sm dark:border-neutral-700 dark:bg-neutral-950 text-neutral-900 dark:text-white placeholder:text-neutral-400"
-            />
+            <div className="relative flex-1">
+              <span className="absolute left-2.5 top-1/2 -translate-y-1/2 text-[10px] text-neutral-400 group-focus-within:text-neutral-900">đ</span>
+              <input
+                type="number"
+                placeholder="Từ"
+                value={minPrice ?? ""}
+                onChange={(e) => updateParam("minPrice", e.target.value || null)}
+                className="w-full rounded-none border border-neutral-200 bg-white pl-6 pr-2 py-2 text-sm dark:border-neutral-700 dark:bg-neutral-950 text-neutral-900 dark:text-white placeholder:text-neutral-400 focus:border-neutral-900 focus:outline-none transition-colors"
+              />
+            </div>
             <span className="text-neutral-400 dark:text-neutral-600 shrink-0">—</span>
-            <input
-              type="number"
-              placeholder="Đến"
-              value={maxPrice ?? ""}
-              onChange={(e) => updateParam("maxPrice", e.target.value || null)}
-              className="w-full rounded-none border border-neutral-200 bg-white px-2.5 py-2 text-sm dark:border-neutral-700 dark:bg-neutral-950 text-neutral-900 dark:text-white placeholder:text-neutral-400"
-            />
+            <div className="relative flex-1">
+              <span className="absolute left-2.5 top-1/2 -translate-y-1/2 text-[10px] text-neutral-400">đ</span>
+              <input
+                type="number"
+                placeholder="Đến"
+                value={maxPrice ?? ""}
+                onChange={(e) => updateParam("maxPrice", e.target.value || null)}
+                className="w-full rounded-none border border-neutral-200 bg-white pl-6 pr-2 py-2 text-sm dark:border-neutral-700 dark:bg-neutral-950 text-neutral-900 dark:text-white placeholder:text-neutral-400 focus:border-neutral-900 focus:outline-none transition-colors"
+              />
+            </div>
           </div>
         </div>
       </div>

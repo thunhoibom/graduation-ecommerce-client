@@ -81,7 +81,7 @@ export default async function ProductPage({ params }: Props) {
         </div>
 
         {/* Below fold */}
-        <ProductReviews barcode={barcode} />
+        <ProductReviews barcode={barcode} productName={product.name} />
         <RelatedProducts
           categorySlug={product.category?.code}
           currentBarcode={product.barcode}

@@ -94,6 +94,14 @@ export function getDisplayPrice(product: ProductListItem | Product): string {
 
 // ─── Product Review ──────────────────────────────────────────────────────────
 
+export interface ProductReviewReplyPojo {
+  id?: number;
+  body: string;
+  authorName: string;
+  isStaff?: boolean;
+  createdAt?: string;
+}
+
 export interface ProductReviewPojo {
   id?: number;
   rating: number;       // 1–5
@@ -104,6 +112,9 @@ export interface ProductReviewPojo {
   productBarcode: string;
   productName?: string;
   reviewerName?: string;
+  imageUrls?: string[];
+  imageIds?: number[];
+  replies?: ProductReviewReplyPojo[];
   createdAt?: string;
   updatedAt?: string;
 }

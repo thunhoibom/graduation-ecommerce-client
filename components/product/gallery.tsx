@@ -36,69 +36,18 @@ export function Gallery({ images, productName }: GalleryProps) {
   const nextIndex = imageIndex + 1 < images.length ? imageIndex + 1 : 0;
 
   return (
-    <div className="space-y-4">
-      {/* Main image */}
-      <div className="relative aspect-square w-full overflow-hidden bg-neutral-100 dark:bg-neutral-900">
-        <Image
-          src={current.url}
-          alt={`${productName} - ảnh ${imageIndex + 1}`}
-          fill
-          priority={imageIndex === 0}
-          className="object-contain"
-          sizes="(min-width: 1024px) 60vw, 100vw"
-        />
-
-        {/* Navigation arrows */}
-        {images.length > 1 && (
-          <>
-            <button
-              onClick={() => goToImage(prevIndex)}
-              className="absolute left-3 top-1/2 -translate-y-1/2 flex h-9 w-9 items-center justify-center rounded-full bg-white/80 shadow-sm hover:bg-white dark:bg-black/60 dark:hover:bg-black"
-              aria-label="Ảnh trước"
-            >
-              <CaretLeft className="size-5" />
-            </button>
-            <button
-              onClick={() => goToImage(nextIndex)}
-              className="absolute right-3 top-1/2 -translate-y-1/2 flex h-9 w-9 items-center justify-center rounded-full bg-white/80 shadow-sm hover:bg-white dark:bg-black/60 dark:hover:bg-black"
-              aria-label="Ảnh sau"
-            >
-              <CaretRight className="size-5" />
-            </button>
-          </>
-        )}
-
-        {/* Dots indicator */}
-        {images.length > 1 && (
-          <div className="absolute bottom-4 left-1/2 flex -translate-x-1/2 gap-1.5">
-            {images.map((_, i) => (
-              <button
-                key={i}
-                onClick={() => goToImage(i)}
-                className={`h-1.5 rounded-full transition-all ${
-                  i === imageIndex
-                    ? "w-6 bg-black dark:bg-white"
-                    : "w-1.5 bg-black/30 dark:bg-white/30"
-                }`}
-                aria-label={`Đến ảnh ${i + 1}`}
-              />
-            ))}
-          </div>
-        )}
-      </div>
-
-      {/* Thumbnails */}
+    <div className="flex flex-col-reverse gap-4 lg:flex-row lg:gap-6">
+      {/* Thumbnails list (Desktop: Left/Vertical, Mobile: Bottom/Horizontal) */}
       {images.length > 1 && (
-        <div className="flex gap-2 overflow-x-auto pb-1">
+        <div className="flex gap-2 overflow-x-auto pb-1 lg:flex-col lg:overflow-y-auto lg:h-[600px] lg:w-20 lg:shrink-0 lg:pb-0 hide-scrollbar">
           {images.map((img, i) => (
             <button
               key={i}
               onClick={() => goToImage(i)}
-              className={`relative flex-shrink-0 h-16 w-16 overflow-hidden rounded border-2 transition-colors ${
-                i === imageIndex
-                  ? "border-black dark:border-white"
-                  : "border-transparent hover:border-neutral-300 dark:hover:border-neutral-600"
-              }`}
+              className={`relative flex-shrink-0 h-16 w-16 lg:h-24 lg:w-20 overflow-hidden transition-all ${i === imageIndex
+                ? "ring-1 ring-black ring-offset-2 dark:ring-white dark:ring-offset-black"
+                : "opacity-60 hover:opacity-100"
+                }`}
               aria-label={`Xem ảnh ${i + 1}`}
             >
               <Image
@@ -106,12 +55,66 @@ export function Gallery({ images, productName }: GalleryProps) {
                 alt={`${productName} thumbnail ${i + 1}`}
                 fill
                 className="object-cover"
-                sizes="64px"
+                sizes="(min-width: 1024px) 80px, 64px"
               />
             </button>
           ))}
         </div>
       )}
+
+      {/* Main Focus Area */}
+      <div className="group relative flex-1 aspect-[4/5] bg-neutral-50 dark:bg-neutral-900 overflow-hidden cursor-zoom-in">
+        <Image
+          src={current.url}
+          alt={`${productName} - ảnh ${imageIndex + 1}`}
+          fill
+          priority={imageIndex === 0}
+          className="object-cover transition-transform duration-500 will-change-transform group-hover:scale-110"
+          sizes="(min-width: 1024px) 40vw, 100vw"
+        />
+
+        {/* Floating Controls */}
+        <div className="absolute inset-0 flex items-center justify-between p-4 opacity-0 transition-opacity group-hover:opacity-100 hidden md:flex">
+          {images.length > 1 && (
+            <>
+              <button
+                onClick={(e) => { e.stopPropagation(); goToImage(prevIndex); }}
+                className="flex h-11 w-11 items-center justify-center rounded-full bg-white/90 shadow-xl backdrop-blur-sm transition-transform hover:scale-105 active:scale-95"
+                aria-label="Ảnh trước"
+              >
+                <CaretLeft className="size-6 text-black" weight="bold" />
+              </button>
+              <button
+                onClick={(e) => { e.stopPropagation(); goToImage(nextIndex); }}
+                className="flex h-11 w-11 items-center justify-center rounded-full bg-white/90 shadow-xl backdrop-blur-sm transition-transform hover:scale-105 active:scale-95"
+                aria-label="Ảnh sau"
+              >
+                <CaretRight className="size-6 text-black" weight="bold" />
+              </button>
+            </>
+          )}
+        </div>
+
+        {/* Mobile Indicator */}
+        {images.length > 1 && (
+          <div className="absolute bottom-6 left-1/2 flex -translate-x-1/2 gap-1.5 md:hidden">
+            {images.map((_, i) => (
+              <div
+                key={i}
+                className={`h-1 rounded-full transition-all ${i === imageIndex ? "w-6 bg-black" : "w-1.5 bg-black/20"
+                  }`}
+              />
+            ))}
+          </div>
+        )}
+
+        {/* Badge */}
+        <div className="absolute top-4 left-4">
+          <span className="bg-black/10 backdrop-blur-md px-2 py-1 text-[10px] font-bold uppercase tracking-widest text-black/60 dark:text-white/60">
+            Collection 2026
+          </span>
+        </div>
+      </div>
     </div>
   );
 }

@@ -134,3 +134,8 @@ export async function getProductReviewsPublic(
   );
   return data;
 }
+/** POST /api/account/reviews — submit a new review (authenticated) */
+export async function submitProductReview(review: ProductReviewPojo): Promise<ProductReviewPojo> {
+  const { data } = await api.post<ProductReviewPojo>("/api/account/reviews", review);
+  return data;
+}

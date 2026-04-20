@@ -8,7 +8,8 @@ import Link from "next/link";
 import { Suspense, useCallback, useEffect, useRef, useState } from "react";
 import { useAuth } from "@/hooks/use-auth";
 import { Button } from "@/components/ui/button";
-import { User, SignOut } from "@phosphor-icons/react";
+import { useWishlist } from "@/components/product/wishlist-context";
+import { User, SignOut, Heart } from "@phosphor-icons/react";
 import MobileMenu from "./mobile-menu";
 import Search, { SearchSkeleton } from "./search";
 import NavbarDropdown from "./navbar-dropdown";
@@ -19,6 +20,7 @@ const SITE_NAME = process.env.SITE_NAME ?? "Mono Studio";
 export default function Navbar() {
   const menu: MenuItem[] = HEADER_MENU;
   const { user, isAuthenticated, logout, isLoading } = useAuth();
+  const { items } = useWishlist();
 
   const [openDropdown, setOpenDropdown] = useState<number | null>(null);
   const [isScrolled, setIsScrolled] = useState(false);
@@ -148,6 +150,18 @@ export default function Navbar() {
 
         {/* Right: Actions (Cart + Auth) */}
         <div className="flex items-center justify-end gap-2 sm:gap-3 flex-none md:flex-initial">
+          <Link
+            href="/wishlist"
+            className="group relative flex h-10 w-10 items-center justify-center rounded-full border border-neutral-200/60 bg-neutral-50/50 transition-colors hover:border-neutral-300 hover:bg-white dark:border-neutral-800 dark:bg-neutral-900/50 dark:hover:bg-neutral-800"
+            aria-label="Xem danh sách yêu thích"
+          >
+            <Heart size={20} className="text-neutral-700 transition-colors group-hover:text-red-500 dark:text-neutral-300" />
+            {items.length > 0 && (
+              <span className="absolute -right-1 -top-1 flex h-4 w-4 items-center justify-center rounded-full bg-red-500 text-[10px] font-bold text-white shadow-sm ring-2 ring-white dark:ring-neutral-900">
+                {items.length}
+              </span>
+            )}
+          </Link>
           <CartModal />
 
           <Suspense fallback={<div className="w-8 h-8 rounded-full bg-neutral-100" />}>

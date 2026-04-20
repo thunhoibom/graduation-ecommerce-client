@@ -18,9 +18,10 @@ export interface ProductCategoryPojo {
   productCount?: number;
 }
 
-// ─── Collection (public-facing, mirrors backend ProductCategoryPojo) ──────────
+// ─── Collection (public-facing, mirrors backend CategoryTreePojo) ─────────────
 
 export interface Collection {
+  id?: number;
   code: string;
   name: string;
   description?: string;
@@ -36,6 +37,7 @@ export interface Collection {
 }
 
 export interface CollectionListItem {
+  id?: number;
   code: string;
   name: string;
   description?: string;

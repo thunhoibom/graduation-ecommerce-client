@@ -34,8 +34,8 @@ export interface CheckoutStartPayload {
   /** Customer info — firstName + lastName + email + phone */
   customer: PersonPojo;
   shippingAddress: AddressPojo;
-  /** Payment type: WEBPAY | COD */
-  paymentType: "WEBPAY" | "COD";
+  /** Payment type: VNPAY | COD */
+  paymentType: "VNPAY" | "COD";
   billingType: "individual" | "enterprise";
   billingCompany?: {
     companyName: string;

@@ -57,8 +57,10 @@ export default async function CollectionPage({ params, searchParams }: Props) {
 
   let collection;
   try {
+    console.log(`[DEBUG] CollectionPage rendered for slug: ${slug}`);
     collection = await getCollection(slug);
-  } catch {
+  } catch (error) {
+    console.error(`[DEBUG] CollectionPage ERROR for slug: ${slug}, triggering notFound()`);
     notFound();
   }
 

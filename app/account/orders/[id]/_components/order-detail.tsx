@@ -4,7 +4,7 @@ import { useState, useEffect } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { ArrowLeft, Package } from "@phosphor-icons/react";
-import { getOrder } from "@/services/rest-api/orders/orders";
+import { getMyOrder } from "@/services/rest-api/orders/orders";
 import { cancelOrder } from "@/services/rest-api/orders/orders";
 import type { OrderPojo } from "@/types/order";
 import { formatMoney } from "@/lib/utils";
@@ -44,7 +44,7 @@ export function OrderDetail({ buyOrder }: { buyOrder: number }) {
   const loadOrder = async () => {
     setLoading(true);
     try {
-      const data = await getOrder(buyOrder);
+      const data = await getMyOrder(buyOrder);
       setOrder(data);
     } catch {
       toast.error("Không thể tải thông tin đơn hàng");

@@ -327,7 +327,7 @@ function OrderSummarySidebar({
             <span>Tổng cộng</span>
             <span>{formatMoney(total)}</span>
           </div>
-          <p className="text-xs text-neutral-400">(Đã bao gồm VAT 10%)</p>
+          <p className="text-xs text-neutral-400">(Đã bao gồm VAT 19%)</p>
         </div>
       </div>
 

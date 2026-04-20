@@ -5,12 +5,14 @@ import LogoSquare from "components/logo-square";
 import { HEADER_MENU, SITE_NAV } from "config/navigation";
 import type { MenuItem } from "@/types/common";
 import Link from "next/link";
-import { Suspense } from "react";
+import { Suspense, useCallback, useEffect, useRef, useState } from "react";
 import { useAuth } from "@/hooks/use-auth";
 import { Button } from "@/components/ui/button";
-import { User, SignOut, ShoppingBag } from "@phosphor-icons/react";
+import { User, SignOut } from "@phosphor-icons/react";
 import MobileMenu from "./mobile-menu";
 import Search, { SearchSkeleton } from "./search";
+import NavbarDropdown from "./navbar-dropdown";
+import { CaretDownIcon } from "@phosphor-icons/react";
 
 const SITE_NAME = process.env.SITE_NAME ?? "Mono Studio";
 
@@ -18,82 +20,168 @@ export default function Navbar() {
   const menu: MenuItem[] = HEADER_MENU;
   const { user, isAuthenticated, logout, isLoading } = useAuth();
 
+  const [openDropdown, setOpenDropdown] = useState<number | null>(null);
+  const [isScrolled, setIsScrolled] = useState(false);
+  const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  // Close dropdown on scroll
+  useEffect(() => {
+    const handleScroll = () => setIsScrolled(window.scrollY > 10);
+    window.addEventListener("scroll", handleScroll, { passive: true });
+    return () => {
+      window.removeEventListener("scroll", handleScroll);
+      if (timeoutRef.current) clearTimeout(timeoutRef.current);
+    };
+  }, []);
+
+  // Close on route change
+  useEffect(() => {
+    setOpenDropdown(null);
+  }, []);
+
+  const openDropdownHandler = useCallback((id: number) => {
+    if (timeoutRef.current) clearTimeout(timeoutRef.current);
+    setOpenDropdown(id);
+  }, []);
+
+  const closeDropdownHandler = useCallback(() => {
+    if (timeoutRef.current) clearTimeout(timeoutRef.current);
+    timeoutRef.current = setTimeout(() => {
+      setOpenDropdown(null);
+    }, 150); // 150ms grace period
+  }, []);
+
   return (
-    <nav className="relative flex items-center justify-between p-4 lg:px-6">
-      <div className="block flex-none md:hidden">
-        <Suspense fallback={null}>
-          <MobileMenu menu={menu} />
-        </Suspense>
-      </div>
-      <div className="flex w-full items-center">
-        <div className="flex w-full md:w-1/3">
+    <header
+      className={`
+        sticky top-0 z-40 w-full transition-all duration-200
+        ${isScrolled
+          ? "bg-white/95 backdrop-blur-sm shadow-sm border-b border-neutral-200/50 dark:bg-neutral-900/95 dark:border-neutral-800/50"
+          : "bg-white dark:bg-neutral-900"
+        }
+      `}
+    >
+      <nav className="relative flex items-center gap-4 p-4 lg:px-6 mx-auto max-w-screen-2xl">
+        {/* Left: Mobile Menu + Logo + Desktop Nav */}
+        <div className="flex items-center gap-3 lg:gap-6 flex-1 md:flex-initial">
+          <div className="md:hidden">
+            <Suspense fallback={null}>
+              <MobileMenu menu={menu} />
+            </Suspense>
+          </div>
+
           <Link
             href="/"
             prefetch={true}
-            className="mr-2 flex w-full items-center justify-center md:w-auto lg:mr-6"
+            className="flex items-center gap-2 group shrink-0"
           >
             <LogoSquare />
-            <div className="ml-2 flex-none text-sm font-medium uppercase md:hidden lg:block">
+            <div className="hidden text-base font-bold uppercase tracking-tight md:block">
               {SITE_NAME}
             </div>
           </Link>
+
           {menu.length ? (
-            <ul className="hidden gap-6 text-sm md:flex md:items-center">
-              {menu.map((item: MenuItem) => (
-                <li key={item.id}>
-                  <Link
-                    href={item.path}
-                    prefetch={true}
-                    className="text-neutral-500 underline-offset-4 hover:text-black hover:underline dark:text-neutral-400 dark:hover:text-neutral-300"
+            <ul className="hidden md:flex items-center gap-1">
+              {menu.map((item: MenuItem) => {
+                const hasChildren = Boolean(item.children?.length);
+                const isOpen = openDropdown === item.id;
+
+                return (
+                  <li
+                    key={item.id}
+                    onMouseEnter={() => hasChildren && openDropdownHandler(item.id)}
+                    onMouseLeave={() => hasChildren && closeDropdownHandler()}
                   >
-                    {item.title}
-                  </Link>
-                </li>
-              ))}
+                    {hasChildren ? (
+                      <button
+                        type="button"
+                        onClick={() =>
+                          setOpenDropdown((prev) => (prev === item.id ? null : item.id))
+                        }
+                        className={`
+                          flex items-center gap-1 px-3 py-2 text-sm font-medium transition-all rounded-full
+                          ${isOpen
+                            ? "bg-neutral-100 text-neutral-900 dark:bg-neutral-800 dark:text-white"
+                            : "text-neutral-500 hover:text-neutral-900 dark:text-neutral-400 dark:hover:text-white"
+                          }
+                        `}
+                        aria-expanded={isOpen}
+                        aria-haspopup="true"
+                      >
+                        {item.title}
+                        <CaretDownIcon
+                          size={12}
+                          className={`transition-transform duration-200 ${isOpen ? "rotate-180" : ""}`}
+                        />
+                      </button>
+                    ) : (
+                      <Link
+                        href={item.path}
+                        prefetch={true}
+                        className="px-3 py-2 text-sm font-medium text-neutral-500 hover:text-neutral-900 transition-colors dark:text-neutral-400 dark:hover:text-white"
+                      >
+                        {item.title}
+                      </Link>
+                    )}
+
+                    {/* Dropdown panel */}
+                    {hasChildren && isOpen && (
+                      <NavbarDropdown
+                        item={item}
+                        onClose={closeDropdownHandler}
+                      />
+                    )}
+                  </li>
+                );
+              })}
             </ul>
           ) : null}
         </div>
-        <div className="hidden justify-center md:flex md:w-1/3">
+
+        {/* Center: Search (Visible on md+) */}
+        <div className="hidden md:flex flex-1 justify-center max-w-md">
           <Suspense fallback={<SearchSkeleton />}>
             <Search />
           </Suspense>
         </div>
-        <div className="flex justify-end md:w-1/3 items-center gap-2">
+
+        {/* Right: Actions (Cart + Auth) */}
+        <div className="flex items-center justify-end gap-2 sm:gap-3 flex-none md:flex-initial">
           <CartModal />
-          
-          {/* Auth buttons */}
-          <Suspense fallback={<div className="w-8 h-8" />}>
+
+          <Suspense fallback={<div className="w-8 h-8 rounded-full bg-neutral-100" />}>
             {isLoading ? (
-              <div className="w-8 h-8 animate-spin rounded-full border-2 border-neutral-300 border-t-neutral-900" />
+              <div className="h-8 w-8 animate-spin rounded-full border-2 border-neutral-300 border-t-neutral-900 dark:border-neutral-700 dark:border-t-white" />
             ) : isAuthenticated ? (
-              <div className="flex items-center gap-2">
+              <div className="flex items-center gap-1 px-1 py-1 rounded-full border border-neutral-200/60 bg-neutral-50/50 dark:border-neutral-800 dark:bg-neutral-900/50">
                 <Link href={SITE_NAV.account}>
-                  <Button variant="ghost" size="sm" className="gap-2">
-                    <User size={16} />
+                  <Button variant="ghost" size="sm" className="h-8 rounded-full px-3 gap-2 text-xs font-semibold hover:bg-white dark:hover:bg-neutral-800 shadow-sm transition-all">
+                    <User size={14} className="text-neutral-500" />
                     <span className="hidden sm:inline">
-                      {user?.firstName || user?.lastName ? `${user?.firstName} ${user?.lastName}` : "Tài khoản"}
+                      {user?.firstName || "Tài khoản"}
                     </span>
                   </Button>
                 </Link>
-                <Button 
-                  variant="ghost" 
-                  size="sm" 
+                <Button
+                  variant="ghost"
+                  size="icon"
                   onClick={logout}
-                  className="gap-2"
+                  className="h-8 w-8 rounded-full hover:bg-red-50 hover:text-red-600 dark:hover:bg-red-900/20 dark:hover:text-red-400"
+                  title="Đăng xuất"
                 >
-                  <SignOut size={16} />
-                  <span className="hidden sm:inline">Đăng xuất</span>
+                  <SignOut size={14} />
                 </Button>
               </div>
             ) : (
-              <div className="flex items-center gap-2">
-                <Link href={SITE_NAV.login}>
-                  <Button variant="ghost" size="sm">
+              <div className="flex items-center gap-1.5">
+                <Link href={SITE_NAV.login} className="hidden sm:block">
+                  <Button variant="ghost" size="sm" className="h-9 rounded-full px-5 text-sm font-medium hover:bg-neutral-100 dark:hover:bg-neutral-800">
                     Đăng nhập
                   </Button>
                 </Link>
                 <Link href={SITE_NAV.register}>
-                  <Button size="sm">
+                  <Button size="sm" className="h-9 rounded-full px-5 text-sm font-bold bg-neutral-900 text-white hover:bg-neutral-800 dark:bg-white dark:text-black dark:hover:bg-neutral-100 shadow-md transition-all active:scale-95">
                     Đăng ký
                   </Button>
                 </Link>
@@ -101,7 +189,7 @@ export default function Navbar() {
             )}
           </Suspense>
         </div>
-      </div>
-    </nav>
+      </nav>
+    </header>
   );
 }

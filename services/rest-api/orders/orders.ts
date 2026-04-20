@@ -3,43 +3,36 @@
  * Connects to Spring Boot backend at http://localhost:8080
  *
  * Admin endpoints (from apidocs.md):
- *   GET  /data/orders                    — list orders (paginated)
- *   GET  /data/orders/{buyOrder}        — order detail
+ *   GET  /data/orders                    — list orders (paginated, admin only)
+ *   GET  /data/orders/{buyOrder}        — order detail (admin only)
  *   POST /data/orders                    — create order (admin)
- *   POST /data/orders/cancellation        — cancel order
- *   POST /data/orders/completion          — mark completed
- *   POST /data/orders/confirmation        — confirm order
+ *   POST /data/orders/cancellation        — cancel order (admin)
+ *   POST /data/orders/completion          — mark completed (admin)
+ *   POST /data/orders/confirmation        — confirm order (admin)
  *
- * NOTE: No public customer order endpoints in current spec.
- * Customer order history may require a new backend endpoint.
+ * Customer endpoints (AccountOrdersController):
+ *   GET  /account/orders                 — list logged-in customer's orders
+ *   GET  /account/orders/{buyOrder}      — detail of logged-in customer's order
  */
 
 import { api } from "../app-api";
 import type { OrderPojo } from "@/types/order";
 import type { PaginatedResponse } from "@/types/api";
 
-/** GET /data/orders — list orders (admin, paginated) */
-export async function getOrders(
-  params: {
-    page?: number;
-    pageSize?: number;
-    status?: string;
-    allRequestParams?: Record<string, string>;
-  } = {}
-): Promise<PaginatedResponse<OrderPojo>> {
-  const { data } = await api.get<PaginatedResponse<OrderPojo>>("/api/data/orders", {
-    params: params.allRequestParams ?? {
-      page: params.page ?? 1,
-      pageSize: params.pageSize ?? 10,
-      ...(params.status ? { status: params.status } : {}),
+/** GET /account/orders — list logged-in customer's orders */
+export async function getMyOrders(params: { pageIndex?: number; pageSize?: number } = {}): Promise<PaginatedResponse<OrderPojo>> {
+  const { data } = await api.get<PaginatedResponse<OrderPojo>>("/api/account/orders", {
+    params: {
+      pageIndex: params.pageIndex ?? 0,
+      pageSize: params.pageSize ?? 20,
     },
   });
   return data;
 }
 
-/** GET /data/orders/{buyOrder} — order detail */
-export async function getOrder(buyOrder: number): Promise<OrderPojo> {
-  const { data } = await api.get<OrderPojo>(`/api/data/orders/${buyOrder}`);
+/** GET /account/orders/{buyOrder} — detail of logged-in customer's specific order */
+export async function getMyOrder(buyOrder: number): Promise<OrderPojo> {
+  const { data } = await api.get<OrderPojo>(`/api/account/orders/${buyOrder}`);
   return data;
 }
 

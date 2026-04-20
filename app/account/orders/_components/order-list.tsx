@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react";
 import Link from "next/link";
 import { Package, ArrowRight } from "@phosphor-icons/react";
-import { getOrders } from "@/services/rest-api/orders/orders";
+import { getMyOrders } from "@/services/rest-api/orders/orders";
 import type { OrderPojo } from "@/types/order";
 import { formatMoney } from "@/lib/utils";
 
@@ -42,7 +42,7 @@ export function OrderList() {
 
   const loadOrders = async (p: number) => {
     try {
-      const data = await getOrders({ page: p, pageSize: 10 });
+      const data = await getMyOrders({ pageIndex: p - 1, pageSize: 10 });
       const items = data.items ?? [];
       if (p === 1) {
         setOrders(items);

@@ -11,6 +11,7 @@ export interface MenuItem {
   title: string;
   path: string;
   children?: MenuItem[];
+  description?: string;
   external?: boolean;
 }
 

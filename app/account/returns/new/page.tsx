@@ -12,7 +12,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { cn } from "@/lib/utils";
 import { formatMoney } from "@/lib/utils";
-import { getOrders } from "@/services/rest-api/orders/orders";
+import { getMyOrders } from "@/services/rest-api/orders/orders";
 import { createReturnRequest } from "@/services/rest-api/returns/returns";
 import type { OrderPojo, OrderDetailPojo } from "@/types/order";
 
@@ -52,7 +52,7 @@ export default function NewReturnPage() {
 
   useEffect(() => {
     if (!isAuthenticated) return;
-    getOrders({ page: 1, pageSize: 20 })
+    getMyOrders({ pageIndex: 0, pageSize: 20 })
       .then((data) => {
         // Only show delivered/cancelled orders that can be returned
         const eligible = (data.items ?? []).filter(

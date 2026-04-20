@@ -31,8 +31,19 @@ export async function getCategoryTree(): Promise<Collection[]> {
  * Returns a CategoryTreePojo node: id, code, name, parent, children[], productCount.
  */
 export async function getCollection(code: string): Promise<Collection> {
-  const { data } = await api.get<Collection>(`/api/public/categories/${code}`);
-  return data;
+  try {
+    console.log(`[DEBUG] Fetching collection for code: ${code}`);
+    const { data } = await api.get<Collection>(`/api/public/categories/${code}`);
+    console.log(`[DEBUG] Collection fetched successfully:`, data.name);
+    return data;
+  } catch (error: any) {
+    console.error(`[DEBUG] Error fetching collection for code: ${code}`, {
+      status: error.response?.status,
+      message: error.message,
+      url: error.config?.url
+    });
+    throw error;
+  }
 }
 
 /** GET /api/data/product_categories — all categories (admin, auth required) */

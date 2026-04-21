@@ -22,8 +22,15 @@ import type { ProductListItem } from "@/types/product";
  * Powers the /collections browse page with one round-trip.
  */
 export async function getCategoryTree(): Promise<Collection[]> {
-  const { data } = await api.get<Collection[]>("/api/public/categories");
-  return data;
+  try {
+    console.log("[DEBUG] Fetching full category tree");
+    const { data } = await api.get<Collection[]>("/api/public/categories");
+    console.log(`[DEBUG] Category tree fetched: ${data.length} root nodes`);
+    return data;
+  } catch (error: any) {
+    console.error("[DEBUG] Error fetching category tree", error.message);
+    return [];
+  }
 }
 
 /**
@@ -48,11 +55,14 @@ export async function getCollection(code: string): Promise<Collection> {
 
 /** GET /api/data/product_categories — all categories (admin, auth required) */
 export async function getCollections(): Promise<CollectionListItem[]> {
-  const { data } = await api.get<CollectionListItem[]>("/api/data/product_categories");
-  return data;
+  // NOTE: This endpoint is paginated by default
+  const { data } = await api.get<PaginatedResponse<CollectionListItem>>("/api/data/product_categories");
+  return data.items || [];
 }
 
-/** GET /api/data/product_categories/{code}/products — products in a category */
+import { getProducts } from "../products/products";
+
+/** GET products in a category (public) */
 export async function getCollectionProducts(
   code: string,
   options: {
@@ -66,13 +76,9 @@ export async function getCollectionProducts(
     query?: string;
   } = {}
 ): Promise<PaginatedResponse<ProductListItem>> {
-  const params = new URLSearchParams(
-    Object.fromEntries(
-      Object.entries(options).filter(([, v]) => v !== undefined)
-    ) as Record<string, string>
-  );
-  const { data } = await api.get<PaginatedResponse<ProductListItem>>(
-    `/api/data/product_categories/${code}/products?${params.toString()}`
-  );
-  return data;
+  // Leverage the public getProducts service with the category filter
+  return getProducts({
+    ...options,
+    category: code
+  });
 }

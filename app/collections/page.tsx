@@ -1,9 +1,9 @@
 import type { Metadata } from "next";
 import Image from "next/image";
 import Link from "next/link";
-import { getCollections } from "@/services/rest-api/collections/collections";
+import { getCategoryTree } from "@/services/rest-api/collections/collections";
 import { Badge } from "@/components/ui/badge";
-import type { CollectionListItem } from "@/types/collection";
+import type { Collection } from "@/types/collection";
 
 export const metadata: Metadata = {
   title: "Bộ sưu tập — Mono Studio",
@@ -14,14 +14,14 @@ export const metadata: Metadata = {
 export const revalidate = 3600;
 
 export default async function CollectionsPage() {
-  let collections: CollectionListItem[] = [];
+  let collections: Collection[] = [];
   try {
-    collections = await getCollections();
+    collections = await getCategoryTree();
   } catch (error) {
     console.error("Failed to fetch collections:", error);
   }
 
-  const totalProducts = collections.reduce((sum, c) => sum + (c.productCount ?? 0), 0);
+  const totalProducts = (collections || []).reduce((sum, c) => sum + (c.productCount ?? 0), 0);
 
   return (
     <div className="mx-auto max-w-7xl px-4 pb-16 lg:px-6">
@@ -61,7 +61,7 @@ export default async function CollectionsPage() {
   );
 }
 
-function CollectionCard({ collection }: { collection: CollectionListItem }) {
+function CollectionCard({ collection }: { collection: Collection }) {
   return (
     <Link href={`/collections/${collection.code}`} className="group block">
       {/* Image */}

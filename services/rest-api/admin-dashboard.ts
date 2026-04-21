@@ -90,3 +90,9 @@ export async function getLowStockAlerts(): Promise<LowStockAlert[]> {
   const { data } = await api.get<LowStockAlert[]>("/api/admin/dashboard/stats/low-stock");
   return data ?? [];
 }
+
+/** POST /api/data/search/reindex-all — Re-synchronize Database with Elasticsearch */
+export async function reindexAll(): Promise<{ message: string; success: boolean }> {
+  const { data } = await api.post("/api/data/search/reindex-all");
+  return data;
+}

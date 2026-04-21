@@ -206,7 +206,7 @@ function ShippingCard({
 
 // ─── Payment type selector ──────────────────────────────────────────────────────
 
-type PaymentType = "WEBPAY" | "COD";
+type PaymentType = "VNPAY" | "COD";
 
 function PaymentOption({
   type,
@@ -217,7 +217,7 @@ function PaymentOption({
   selected: boolean;
   onSelect: () => void;
 }) {
-  const isWebpay = type === "WEBPAY";
+  const isVnpay = type === "VNPAY";
   return (
     <button
       type="button"
@@ -241,18 +241,18 @@ function PaymentOption({
           <div className="h-1.5 w-1.5 rounded-full bg-white dark:bg-black" />
         )}
       </div>
-      {isWebpay ? (
+      {isVnpay ? (
         <CreditCard className="size-5 text-neutral-500" />
       ) : (
         <HandCoins className="size-5 text-neutral-500" />
       )}
       <div>
         <p className="text-sm font-medium text-neutral-900 dark:text-white">
-          {isWebpay ? "Thanh toán trực tuyến (Webpay)" : "Thanh toán khi nhận hàng (COD)"}
+          {isVnpay ? "Thanh toán qua VNPAY" : "Thanh toán khi nhận hàng (COD)"}
         </p>
         <p className="text-xs text-neutral-500 dark:text-neutral-400">
-          {isWebpay
-            ? "Thẻ ATM / Visa / Mastercard qua Webpay Plus"
+          {isVnpay
+            ? "Thanh toán an toàn qua cổng VNPAY (ATM / QR Code / Visa / Mastercard)"
             : "Trả tiền mặt khi nhận được hàng"}
         </p>
       </div>
@@ -364,7 +364,7 @@ export function CheckoutForm() {
   const [shippingLoading, setShippingLoading] = useState(false);
 
   // Payment (Step 3)
-  const [paymentType, setPaymentType] = useState<PaymentType>("WEBPAY");
+  const [paymentType, setPaymentType] = useState<PaymentType>("VNPAY");
   const [discountCode, setDiscountCode] = useState("");
   const [discount, setDiscount] = useState<DiscountValidationResult | null>(null);
   const [discountLoading, setDiscountLoading] = useState(false);
@@ -877,9 +877,9 @@ export function CheckoutForm() {
               </p>
               <div className="space-y-2">
                 <PaymentOption
-                  type="WEBPAY"
-                  selected={paymentType === "WEBPAY"}
-                  onSelect={() => setPaymentType("WEBPAY")}
+                  type="VNPAY"
+                  selected={paymentType === "VNPAY"}
+                  onSelect={() => setPaymentType("VNPAY")}
                 />
                 <PaymentOption
                   type="COD"
@@ -1036,7 +1036,7 @@ export function CheckoutForm() {
                 </button>
               </div>
               <p className="text-sm font-medium text-neutral-900 dark:text-white">
-                {paymentType === "WEBPAY" ? "Thanh toán trực tuyến (Webpay)" : "Thanh toán khi nhận hàng (COD)"}
+                {paymentType === "VNPAY" ? "Thanh toán trực tuyến (VNPAY)" : "Thanh toán khi nhận hàng (COD)"}
               </p>
               {discount?.valid && (
                 <p className="text-sm text-green-600 dark:text-green-400">

@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
-import { getProducts } from "@/services/rest-api/products/products";
+import { getProducts, searchProducts } from "@/services/rest-api/products/products";
 import type { ProductFilters } from "@/services/rest-api/products/products";
+import type { ProductListItem, ProductSearchItem } from "@/types/product";
 import { SearchBox } from "./_components/search-box";
 import { SearchResults } from "./_components/search-results";
 import { SearchHeader } from "./_components/search-header";
@@ -41,7 +42,7 @@ export default async function SearchPage({ searchParams }: Props) {
   const page = pageStr ? parseInt(pageStr) : 1;
 
   // Only fetch products if there's a query
-  let items: Awaited<ReturnType<typeof getProducts>>["items"] = [];
+  let items: ProductListItem[] = [];
   let totalCount = 0;
   let pageIndex = 1;
   let totalPages = 1;
@@ -59,12 +60,31 @@ export default async function SearchPage({ searchParams }: Props) {
     };
 
     try {
-      const result = await getProducts(filters);
-      items = result.items ?? [];
+      // Use Elasticsearch-powered search endpoint
+      const result = await searchProducts(filters);
+
+      console.log(`>>> [DEBUG SSR SEARCH] Filters:`, JSON.stringify(filters));
+      console.log(`>>> [DEBUG SSR SEARCH] Found ${result.totalCount} items`);
+
+      // Map ProductSearchItem to ProductListItem for the UI components
+      items = (result.items ?? []).map((si: ProductSearchItem) => ({
+        id: si.id ? parseInt(si.id) : undefined,
+        name: si.name,
+        barcode: si.barcode,
+        price: si.price,
+        category: {
+          name: si.categoryName,
+          code: si.categoryCodes && si.categoryCodes.length > 0 ? si.categoryCodes[0] : undefined
+        },
+        images: si.primaryImageUrl ? [{ url: si.primaryImageUrl }] : [],
+        currentStock: 1, // Default to in stock for ES items
+      })) as ProductListItem[];
+
       totalCount = result.totalCount ?? 0;
       pageIndex = result.pageIndex ?? page;
       totalPages = Math.ceil((totalCount ?? 0) / 24);
-    } catch {
+    } catch (error) {
+      console.error("ES Search error:", error);
       // Return empty results on error
     }
   }

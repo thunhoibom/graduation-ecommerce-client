@@ -1,6 +1,6 @@
 "use client";
 
-import { Fragment } from "react";
+import React, { Fragment, memo } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { Dialog, Transition } from "@headlessui/react";
@@ -9,7 +9,7 @@ import { useCart } from "./cart-context";
 import { Button } from "@/components/ui/button";
 import { formatMoney } from "@/lib/utils";
 
-function CartItemRow({
+const CartItemRow = memo(function CartItemRow({
   item,
 }: {
   item: NonNullable<NonNullable<ReturnType<typeof useCart>["cart"]>["items"]>[number];
@@ -96,7 +96,7 @@ function CartItemRow({
       </div>
     </li>
   );
-}
+});
 
 export default function CartModal() {
   const { cart, isOpen, setIsOpen, isLoading } = useCart();
@@ -164,7 +164,7 @@ export default function CartModal() {
               </div>
 
               {/* Body */}
-              {isLoading ? (
+              {isLoading && !cart ? (
                 <div className="flex flex-1 items-center justify-center">
                   <div className="h-6 w-6 animate-spin rounded-full border-2 border-neutral-300 border-t-neutral-900 dark:border-neutral-700 dark:border-t-neutral-100" />
                 </div>
@@ -181,9 +181,9 @@ export default function CartModal() {
               ) : (
                 <>
                   <ul className="flex-1 overflow-y-auto px-5 py-4">
-                    {items.map((item, index) => {
-                      const itemSku = item.variantSku || (item as any).sku || (item as any).variantSkuResolved || index;
-                      return <CartItemRow key={item.id || itemSku} item={item} />;
+                    {items.map((item) => {
+                      const itemSku = item.variantSku || (item as any).sku || (item as any).variantSkuResolved;
+                      return <CartItemRow key={itemSku} item={item} />;
                     })}
                   </ul>
 

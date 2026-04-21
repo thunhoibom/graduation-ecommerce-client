@@ -87,6 +87,18 @@ export interface ProductListItem {
   totalReviews?: number;
 }
 
+export interface ProductSearchItem {
+  id: string;
+  name: string;
+  barcode: string;
+  description: string;
+  price: number;
+  categoryName: string;
+  categoryCodes?: string[];
+  status: string;
+  primaryImageUrl?: string;
+}
+
 /** Normalise product price to VND integer for display */
 export function getDisplayPrice(product: ProductListItem | Product): string {
   return String(product.price ?? 0);

@@ -7,6 +7,8 @@ import {
   useState,
   useEffect,
   useCallback,
+  useRef,
+  useTransition,
   type ReactNode,
 } from "react";
 import { getCart, addToCart, updateCartItem, removeFromCart } from "@/services/rest-api/cart/cart";
@@ -18,9 +20,9 @@ type CartContextType = {
   isOpen: boolean;
   setIsOpen: (open: boolean) => void;
   refreshCart: () => Promise<void>;
-  addItem: (variantSku: string, quantity?: number) => Promise<void>;
-  updateItem: (variantSku: string, quantity: number) => Promise<void>;
-  removeItem: (variantSku: string) => Promise<void>;
+  addItem: (variantSku: string, quantity?: number) => void;
+  updateItem: (variantSku: string, quantity: number) => void;
+  removeItem: (variantSku: string) => void;
 };
 
 const CartContext = createContext<CartContextType | undefined>(undefined);
@@ -75,13 +77,19 @@ function cartReducer(state: Cart | null, action: CartAction): Cart | null {
 }
 
 function recalc(cart: Cart, items: CartItem[]): Cart {
-  const itemCount = items.reduce((sum, i) => sum + i.quantity, 0);
+  const updatedItems = items.map((item) => ({
+    ...item,
+    lineTotal: item.unitPrice * item.quantity,
+  }));
+
+  const itemCount = updatedItems.reduce((sum, i) => sum + i.quantity, 0);
   const totalUnits = itemCount;
-  const subtotal = items.reduce((sum, i) => sum + i.lineTotal, 0);
+  const subtotal = updatedItems.reduce((sum, i) => sum + i.lineTotal, 0);
   const totalAfterDiscount = cart.discountAmount
     ? subtotal - cart.discountAmount
     : subtotal;
-  return { ...cart, items, itemCount, totalUnits, subtotal, totalAfterDiscount };
+
+  return { ...cart, items: updatedItems, itemCount, totalUnits, subtotal, totalAfterDiscount };
 }
 
 // ─── Provider ───────────────────────────────────────────────────────────────
@@ -91,16 +99,9 @@ export function CartProvider({ children }: { children: ReactNode }) {
   const [isLoading, setIsLoading] = useState(true);
   const [isOpen, setIsOpen] = useState(false);
   const [optimisticCart, dispatch] = useOptimistic(cart, cartReducer);
+  const [isPending, startTransition] = useTransition();
 
-  // Auto-open modal when cart gains items
-  const prevCount = (() => {
-    let prev = 0;
-    return (count: number) => {
-      const was = prev;
-      prev = count;
-      return was;
-    };
-  })();
+  const prevCountRef = useRef(0);
 
   useEffect(() => {
     getCart()
@@ -112,12 +113,12 @@ export function CartProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     if (!optimisticCart) return;
     const count = optimisticCart.itemCount ?? 0;
-    const prev = prevCount(count);
-    // Only auto-open if user hasn't manually closed it and cart was empty before
+    const prev = prevCountRef.current;
+    prevCountRef.current = count;
     if (prev === 0 && count > 0 && !isOpen) {
       setIsOpen(true);
     }
-  }, [optimisticCart?.itemCount]);
+  }, [optimisticCart?.itemCount, isOpen]);
 
   const refreshCart = useCallback(async () => {
     setIsLoading(true);
@@ -129,35 +130,50 @@ export function CartProvider({ children }: { children: ReactNode }) {
     }
   }, []);
 
-  const addItem = useCallback(async (variantSku: string, quantity = 1) => {
-    dispatch({ type: "OPTIMISTIC_ADD", payload: buildTempItem(variantSku, quantity) });
-    try {
-      const updated = await addToCart({ variantSku, quantity });
-      setCart(updated);
-    } catch {
-      await refreshCart();
-    }
-  }, [dispatch, refreshCart]);
+  const addItem = useCallback(
+    async (variantSku: string, quantity = 1) => {
+      startTransition(async () => {
+        dispatch({ type: "OPTIMISTIC_ADD", payload: buildTempItem(variantSku, quantity) });
+        try {
+          const updated = await addToCart({ variantSku, quantity });
+          setCart(updated);
+        } catch {
+          await refreshCart();
+        }
+      });
+    },
+    [dispatch, refreshCart],
+  );
 
-  const updateItem = useCallback(async (variantSku: string, quantity: number) => {
-    dispatch({ type: "OPTIMISTIC_UPDATE", payload: { variantSku, quantity } });
-    try {
-      const updated = await updateCartItem(variantSku, quantity);
-      setCart(updated);
-    } catch {
-      await refreshCart();
-    }
-  }, [dispatch, refreshCart]);
+  const updateItem = useCallback(
+    (variantSku: string, quantity: number) => {
+      startTransition(async () => {
+        dispatch({ type: "OPTIMISTIC_UPDATE", payload: { variantSku, quantity } });
+        try {
+          const updated = await updateCartItem(variantSku, quantity);
+          setCart(updated);
+        } catch {
+          await refreshCart();
+        }
+      });
+    },
+    [dispatch, refreshCart],
+  );
 
-  const removeItem = useCallback(async (variantSku: string) => {
-    dispatch({ type: "OPTIMISTIC_REMOVE", payload: { variantSku } });
-    try {
-      const updated = await removeFromCart(variantSku);
-      setCart(updated);
-    } catch {
-      await refreshCart();
-    }
-  }, [dispatch, refreshCart]);
+  const removeItem = useCallback(
+    async (variantSku: string) => {
+      startTransition(async () => {
+        dispatch({ type: "OPTIMISTIC_REMOVE", payload: { variantSku } });
+        try {
+          const updated = await removeFromCart(variantSku);
+          setCart(updated);
+        } catch {
+          await refreshCart();
+        }
+      });
+    },
+    [dispatch, refreshCart],
+  );
 
   return (
     <CartContext.Provider
@@ -189,7 +205,7 @@ export function useCart(): CartContextType {
 
 function buildTempItem(variantSku: string, quantity: number): CartItem {
   return {
-    id: Date.now(),
+    id: Math.random(),
     variantSku,
     quantity,
     productName: "",

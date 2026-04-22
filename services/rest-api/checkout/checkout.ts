@@ -35,13 +35,14 @@ export async function getShippingMethods(
 
 // ─── Discount Validation ──────────────────────────────────────────────────────
 
-/** GET /api/public/discount/validate?code=xxx */
+/** GET /api/public/discount/validate?code=xxx&subtotal=123000 */
 export async function validateDiscountCode(
-  code: string
+  code: string,
+  subtotal: number
 ): Promise<DiscountValidationResult> {
   const { data } = await api.get<DiscountValidationResult>(
     "/api/public/discount/validate",
-    { params: { code } }
+    { params: { code, subtotal } }
   );
   return data;
 }

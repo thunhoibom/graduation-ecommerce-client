@@ -1,6 +1,12 @@
 import type { Metadata } from "next";
-import Link from "next/link";
-import { CartView } from "./_components/cart-view";
+import dynamic from "next/dynamic";
+
+const CartView = dynamic(
+  () => import("./_components/cart-view").then((mod) => mod.CartView),
+  {
+    loading: () => <div className="text-sm text-neutral-500">Dang tai gio hang...</div>,
+  },
+);
 
 export const metadata: Metadata = {
   title: "Giỏ hàng",

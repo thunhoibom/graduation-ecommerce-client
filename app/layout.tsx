@@ -4,6 +4,7 @@ import { GeistSans } from "geist/font/sans";
 import { ReactNode } from "react";
 import { Toaster } from "sonner";
 import { JetBrains_Mono } from "next/font/google";
+import dynamic from "next/dynamic";
 import { cn } from "@/lib/utils";
 import { baseUrl } from "@/lib/utils";
 import { AuthProvider } from "@/hooks/use-auth";
@@ -13,6 +14,8 @@ import { WishlistProvider } from "components/product/wishlist-context";
 import "./globals.css";
 
 const jetbrainsMono = JetBrains_Mono({ subsets: ["latin"], variable: "--font-mono" });
+const MessengerChatButton = dynamic(() => import("components/layout/messenger-chat-button"), {
+});
 
 const SITE_NAME = "Mono Studio";
 
@@ -41,6 +44,7 @@ export default async function RootLayout({
             <CartProvider>
               <Navbar />
               <main>{children}</main>
+              <MessengerChatButton />
               <Toaster closeButton richColors position="bottom-right" />
             </CartProvider>
           </WishlistProvider>

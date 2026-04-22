@@ -8,6 +8,7 @@ import { X, Trash, Minus, Plus, ShoppingBag } from "@phosphor-icons/react";
 import { useCart } from "./cart-context";
 import { Button } from "@/components/ui/button";
 import { formatMoney } from "@/lib/utils";
+import { getPromotionReason, parseAppliedPromotions } from "@/lib/cart-promotions";
 
 const CartItemRow = memo(function CartItemRow({
   item,
@@ -106,6 +107,7 @@ export default function CartModal() {
   const subtotal = cart?.subtotal ?? 0;
   const discountAmount = cart?.discountAmount ?? 0;
   const total = cart?.totalAfterDiscount ?? subtotal;
+  const appliedPromotions = parseAppliedPromotions(cart?.appliedPromotionsJson);
 
   return (
     <>
@@ -189,6 +191,23 @@ export default function CartModal() {
 
                   {/* Summary */}
                   <div className="border-t border-neutral-100 px-5 py-4 dark:border-neutral-800">
+                    {appliedPromotions.length > 0 && (
+                      <div className="mb-3 rounded border border-neutral-200 bg-neutral-50 p-2.5 dark:border-neutral-800 dark:bg-neutral-900/40">
+                        <p className="mb-1.5 text-[11px] font-semibold uppercase tracking-wide text-neutral-500 dark:text-neutral-400">
+                          Ưu đãi áp dụng
+                        </p>
+                        <div className="space-y-1">
+                          {appliedPromotions.map((line, idx) => (
+                            <div key={`${line.promotionRuleId ?? line.couponCode ?? "promo"}-${idx}`} className="flex items-start justify-between gap-2 text-xs">
+                              <span className="text-neutral-600 dark:text-neutral-300">{getPromotionReason(line)}</span>
+                              <span className="font-medium text-green-600 dark:text-green-400">
+                                {line.freeShipping ? "Free ship" : `-${formatMoney(line.discountAmount ?? 0)}`}
+                              </span>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
                     {discountAmount > 0 && (
                       <div className="mb-2 flex justify-between text-sm">
                         <span className="text-neutral-500 dark:text-neutral-400">Giảm giá</span>

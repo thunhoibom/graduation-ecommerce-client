@@ -1,4 +1,5 @@
 import { HeroSection } from "@/components/home/sections/hero-section";
+import { WeatherHeroSection } from "@/components/home/sections/weather-hero-section";
 import { ThreeItemGrid } from "@/components/home/sections/three-item-grid";
 import { CollectionsGrid } from "@/components/home/sections/collections-grid";
 import { FeaturedCarousel } from "@/components/home/sections/featured-carousel";
@@ -18,6 +19,7 @@ export default async function HomePage() {
   return (
     <>
       <HeroSection />
+      <WeatherHeroSection />
       <ThreeItemGrid />
       <CollectionsGrid />
       <FeaturedCarousel />

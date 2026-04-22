@@ -11,7 +11,13 @@ import {
   useTransition,
   type ReactNode,
 } from "react";
-import { getCart, addToCart, updateCartItem, removeFromCart } from "@/services/rest-api/cart/cart";
+import {
+  getCart,
+  addToCart,
+  updateCartItem,
+  removeFromCart,
+  calculateCartPricing,
+} from "@/services/rest-api/cart/cart";
 import type { Cart, CartItem } from "@/types/cart";
 
 type CartContextType = {
@@ -130,19 +136,29 @@ export function CartProvider({ children }: { children: ReactNode }) {
     }
   }, []);
 
+  const recalculatePricingAndRefresh = useCallback(async (fallbackCart: Cart) => {
+    try {
+      await calculateCartPricing();
+      const refreshed = await getCart();
+      setCart(refreshed ?? fallbackCart);
+    } catch {
+      setCart(fallbackCart);
+    }
+  }, []);
+
   const addItem = useCallback(
     async (variantSku: string, quantity = 1) => {
       startTransition(async () => {
         dispatch({ type: "OPTIMISTIC_ADD", payload: buildTempItem(variantSku, quantity) });
         try {
           const updated = await addToCart({ variantSku, quantity });
-          setCart(updated);
+          await recalculatePricingAndRefresh(updated);
         } catch {
           await refreshCart();
         }
       });
     },
-    [dispatch, refreshCart],
+    [dispatch, recalculatePricingAndRefresh, refreshCart],
   );
 
   const updateItem = useCallback(
@@ -151,13 +167,13 @@ export function CartProvider({ children }: { children: ReactNode }) {
         dispatch({ type: "OPTIMISTIC_UPDATE", payload: { variantSku, quantity } });
         try {
           const updated = await updateCartItem(variantSku, quantity);
-          setCart(updated);
+          await recalculatePricingAndRefresh(updated);
         } catch {
           await refreshCart();
         }
       });
     },
-    [dispatch, refreshCart],
+    [dispatch, recalculatePricingAndRefresh, refreshCart],
   );
 
   const removeItem = useCallback(
@@ -166,13 +182,13 @@ export function CartProvider({ children }: { children: ReactNode }) {
         dispatch({ type: "OPTIMISTIC_REMOVE", payload: { variantSku } });
         try {
           const updated = await removeFromCart(variantSku);
-          setCart(updated);
+          await recalculatePricingAndRefresh(updated);
         } catch {
           await refreshCart();
         }
       });
     },
-    [dispatch, refreshCart],
+    [dispatch, recalculatePricingAndRefresh, refreshCart],
   );
 
   return (

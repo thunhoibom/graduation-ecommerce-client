@@ -5,8 +5,10 @@ import { Minus, Plus, Trash, ArrowLeft, ShoppingBag, Tag } from "@phosphor-icons
 import { useState } from "react";
 import { toast } from "sonner";
 import { useCart } from "@/components/cart/cart-context";
+import { calculateCartPricing } from "@/services/rest-api/cart/cart";
 import { Button } from "@/components/ui/button";
 import { formatMoney } from "@/lib/utils";
+import { getPromotionReason, parseAppliedPromotions } from "@/lib/cart-promotions";
 import type { CartItem } from "@/types/cart";
 
 interface CartItemRowProps {
@@ -136,7 +138,7 @@ interface DiscountFormProps {
 }
 
 function DiscountForm({ appliedCode, discountAmount }: DiscountFormProps) {
-  const { refreshCart } = useCart();
+  const { cart, refreshCart } = useCart();
   const [code, setCode] = useState(appliedCode ?? "");
   const [isValidating, setIsValidating] = useState(false);
   const [error, setError] = useState("");
@@ -146,11 +148,7 @@ function DiscountForm({ appliedCode, discountAmount }: DiscountFormProps) {
     setIsValidating(true);
     setError("");
     try {
-      // Call discount validate endpoint
-      const { validateDiscountCode } = await import(
-        "@/services/rest-api/checkout/checkout"
-      );
-      await validateDiscountCode(code.trim());
+      await calculateCartPricing(code.trim());
       await refreshCart();
       toast.success(`Áp dụng mã "${code.trim()}" thành công`);
       setCode("");
@@ -214,6 +212,7 @@ export function CartView() {
   const subtotal = cart?.subtotal ?? 0;
   const discountAmount = cart?.discountAmount ?? 0;
   const total = cart?.totalAfterDiscount ?? subtotal;
+  const appliedPromotions = parseAppliedPromotions(cart?.appliedPromotionsJson);
 
   const hasOutOfStock = items.some(
     (i) => i.availableStock === 0 || i.inStock === false
@@ -301,6 +300,24 @@ export function CartView() {
               discountAmount={discountAmount}
             />
           </div>
+
+          {appliedPromotions.length > 0 && (
+            <div className="mb-5 rounded-none border border-neutral-200 bg-neutral-50 p-3 dark:border-neutral-800 dark:bg-neutral-900/40">
+              <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-neutral-500 dark:text-neutral-400">
+                Ưu đãi đang áp dụng
+              </p>
+              <div className="space-y-1.5">
+                {appliedPromotions.map((line, idx) => (
+                  <div key={`${line.promotionRuleId ?? line.couponCode ?? "promo"}-${idx}`} className="flex items-start justify-between gap-3 text-xs">
+                    <span className="text-neutral-600 dark:text-neutral-300">{getPromotionReason(line)}</span>
+                    <span className="font-medium text-green-600 dark:text-green-400">
+                      {line.freeShipping ? "Miễn phí vận chuyển" : `−${formatMoney(line.discountAmount ?? 0)}`}
+                    </span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
 
           {/* Totals */}
           <div className="space-y-3 text-sm">

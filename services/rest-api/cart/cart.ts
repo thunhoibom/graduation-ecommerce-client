@@ -18,7 +18,7 @@
  */
 
 import { api } from "../app-api";
-import type { Cart } from "@/types/cart";
+import type { Cart, CartPricingResult } from "@/types/cart";
 
 // ─── Internal helpers ─────────────────────────────────────────────────────────
 
@@ -108,5 +108,16 @@ export async function removeFromCart(variantSku: string): Promise<Cart> {
   const { data } = await api.delete<Cart>(`/api/public/cart/items/${variantSku}`, {
     headers,
   });
+  return data;
+}
+
+/** POST /public/cart/calculate — run pricing engine + optional coupon */
+export async function calculateCartPricing(couponCode?: string): Promise<CartPricingResult> {
+  const token = getSessionToken();
+  const headers: Record<string, string> = {};
+  if (token) headers["X-Session-Token"] = token;
+
+  const payload = couponCode?.trim() ? { couponCode: couponCode.trim() } : {};
+  const { data } = await api.post<CartPricingResult>("/api/public/cart/calculate", payload, { headers });
   return data;
 }

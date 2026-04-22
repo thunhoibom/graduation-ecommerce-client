@@ -28,10 +28,10 @@ import type { CheckoutStartPayload } from "@/types/checkout";
 import { getAddressBook } from "@/services/rest-api/address-book";
 import {
   getShippingMethods,
-  validateDiscountCode,
   initiateCheckout,
 } from "@/services/rest-api/checkout/checkout";
-import type { DiscountValidationResult } from "@/types/common";
+import { calculateCartPricing } from "@/services/rest-api/cart/cart";
+import type { CartPricingResult } from "@/types/cart";
 
 // ─── Step type ─────────────────────────────────────────────────────────────────
 
@@ -206,7 +206,7 @@ function ShippingCard({
 
 // ─── Payment type selector ──────────────────────────────────────────────────────
 
-type PaymentType = "VNPAY" | "COD";
+type PaymentType = "VNPAY" | "MOMO" | "COD";
 
 function PaymentOption({
   type,
@@ -218,6 +218,17 @@ function PaymentOption({
   onSelect: () => void;
 }) {
   const isVnpay = type === "VNPAY";
+  const isMomo = type === "MOMO";
+  const title = isVnpay
+    ? "Thanh toán qua VNPAY"
+    : isMomo
+    ? "Thanh toán qua MOMO"
+    : "Thanh toán khi nhận hàng (COD)";
+  const description = isVnpay
+    ? "Thanh toán an toàn qua cổng VNPAY (ATM / QR Code / Visa / Mastercard)"
+    : isMomo
+    ? "Quét QR hoặc thanh toán bằng ví MOMO trên trang thanh toán bảo mật"
+    : "Trả tiền mặt khi nhận được hàng";
   return (
     <button
       type="button"
@@ -241,19 +252,17 @@ function PaymentOption({
           <div className="h-1.5 w-1.5 rounded-full bg-white dark:bg-black" />
         )}
       </div>
-      {isVnpay ? (
+      {isVnpay || isMomo ? (
         <CreditCard className="size-5 text-neutral-500" />
       ) : (
         <HandCoins className="size-5 text-neutral-500" />
       )}
       <div>
         <p className="text-sm font-medium text-neutral-900 dark:text-white">
-          {isVnpay ? "Thanh toán qua VNPAY" : "Thanh toán khi nhận hàng (COD)"}
+          {title}
         </p>
         <p className="text-xs text-neutral-500 dark:text-neutral-400">
-          {isVnpay
-            ? "Thanh toán an toàn qua cổng VNPAY (ATM / QR Code / Visa / Mastercard)"
-            : "Trả tiền mặt khi nhận được hàng"}
+          {description}
         </p>
       </div>
     </button>
@@ -344,7 +353,7 @@ function OrderSummarySidebar({
 
 export function CheckoutForm() {
   const router = useRouter();
-  const { cart } = useCart();
+  const { cart, refreshCart } = useCart();
 
   const [step, setStep] = useState<Step>("shipping");
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -366,7 +375,7 @@ export function CheckoutForm() {
   // Payment (Step 3)
   const [paymentType, setPaymentType] = useState<PaymentType>("VNPAY");
   const [discountCode, setDiscountCode] = useState("");
-  const [discount, setDiscount] = useState<DiscountValidationResult | null>(null);
+  const [pricingPreview, setPricingPreview] = useState<CartPricingResult | null>(null);
   const [discountLoading, setDiscountLoading] = useState(false);
   const [billingType, setBillingType] = useState<"individual" | "enterprise">("individual");
 
@@ -374,11 +383,7 @@ export function CheckoutForm() {
   const items = cart?.items ?? [];
   const subtotal = cart?.subtotal ?? 0;
   const cartDiscount = cart?.discountAmount ?? 0;
-  const extraDiscount =
-    discount?.valid && discount.discountAmount
-      ? Math.max(0, discount.discountAmount - cartDiscount)
-      : 0;
-  const totalDiscount = cartDiscount + extraDiscount;
+  const totalDiscount = pricingPreview?.discountAmount ?? cartDiscount;
   const selectedMethod = shippingMethods.find((m) => m.id === selectedShipping);
   const shippingFee = (selectedMethod as any)?.fee ?? selectedMethod?.baseFee ?? 0;
   const total = Math.max(subtotal + shippingFee - totalDiscount, 0);
@@ -474,16 +479,14 @@ export function CheckoutForm() {
     if (!discountCode.trim()) return;
     setDiscountLoading(true);
     try {
-      const result = await validateDiscountCode(discountCode.trim());
-      setDiscount(result);
-      if (!result.valid) {
-        toast.error(result.message ?? "Mã không hợp lệ");
-      } else {
-        toast.success(`Áp dụng mã "${discountCode}" thành công`);
-        setDiscountCode("");
-      }
-    } catch {
-      toast.error("Không thể xác thực mã giảm giá");
+      const result = await calculateCartPricing(discountCode.trim());
+      setPricingPreview(result);
+      await refreshCart();
+      toast.success(`Áp dụng mã "${discountCode.trim()}" thành công`);
+      setDiscountCode("");
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : "Không thể áp dụng mã giảm giá";
+      toast.error(msg);
     } finally {
       setDiscountLoading(false);
     }
@@ -502,7 +505,7 @@ export function CheckoutForm() {
 
     const payload: CheckoutStartPayload = {
       shippingMethodId: selectedShipping,
-      discountCode: discount?.valid ? discount.code : undefined,
+      discountCode: pricingPreview?.appliedDiscountCode ?? cart?.appliedDiscountCode,
       customer: {
         firstName: customerForm.firstName.trim(),
         lastName: customerForm.lastName.trim(),
@@ -882,6 +885,11 @@ export function CheckoutForm() {
                   onSelect={() => setPaymentType("VNPAY")}
                 />
                 <PaymentOption
+                  type="MOMO"
+                  selected={paymentType === "MOMO"}
+                  onSelect={() => setPaymentType("MOMO")}
+                />
+                <PaymentOption
                   type="COD"
                   selected={paymentType === "COD"}
                   onSelect={() => setPaymentType("COD")}
@@ -897,13 +905,13 @@ export function CheckoutForm() {
                   Mã giảm giá
                 </p>
               </div>
-              {discount?.valid && (
+              {(pricingPreview?.appliedDiscountCode || cart?.appliedDiscountCode) && (
                 <div className="flex items-center justify-between rounded-none border border-green-200 bg-green-50 px-3 py-2 dark:border-green-900 dark:bg-green-950/20">
                   <span className="text-sm font-medium text-green-700 dark:text-green-300">
-                    {discount.code}
+                    {pricingPreview?.appliedDiscountCode ?? cart?.appliedDiscountCode}
                   </span>
                   <span className="text-sm text-green-600 dark:text-green-400">
-                    −{formatMoney(discount.discountAmount ?? 0)}
+                    −{formatMoney(totalDiscount)}
                   </span>
                 </div>
               )}
@@ -913,7 +921,7 @@ export function CheckoutForm() {
                   value={discountCode}
                   onChange={(e) => {
                     setDiscountCode(e.target.value);
-                    if (discount) setDiscount(null);
+                    if (pricingPreview) setPricingPreview(null);
                   }}
                   className="flex-1 rounded-none"
                 />
@@ -1036,11 +1044,15 @@ export function CheckoutForm() {
                 </button>
               </div>
               <p className="text-sm font-medium text-neutral-900 dark:text-white">
-                {paymentType === "VNPAY" ? "Thanh toán trực tuyến (VNPAY)" : "Thanh toán khi nhận hàng (COD)"}
+                {paymentType === "VNPAY"
+                  ? "Thanh toán trực tuyến (VNPAY)"
+                  : paymentType === "MOMO"
+                  ? "Thanh toán trực tuyến (MOMO)"
+                  : "Thanh toán khi nhận hàng (COD)"}
               </p>
-              {discount?.valid && (
+              {(pricingPreview?.appliedDiscountCode || cart?.appliedDiscountCode) && totalDiscount > 0 && (
                 <p className="text-sm text-green-600 dark:text-green-400">
-                  Mã {discount.code}: −{formatMoney(discount.discountAmount ?? 0)}
+                  Mã {pricingPreview?.appliedDiscountCode ?? cart?.appliedDiscountCode}: −{formatMoney(totalDiscount)}
                 </p>
               )}
             </div>

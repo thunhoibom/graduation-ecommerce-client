@@ -99,6 +99,19 @@ export interface ProductSearchItem {
   primaryImageUrl?: string;
 }
 
+export interface WeatherContext {
+  temperature?: number;
+  condition?: string;
+  weatherTag?: string;
+}
+
+export interface WeatherCategoryRecommendation {
+  sectionTitle?: string;
+  category?: string;
+  weatherContext?: WeatherContext;
+  items?: ProductSearchItem[];
+}
+
 /** Normalise product price to VND integer for display */
 export function getDisplayPrice(product: ProductListItem | Product): string {
   return String(product.price ?? 0);

@@ -9,6 +9,7 @@ import type { ProductImage } from "./product";
 import type { SEO } from "./product";
 
 export interface ProductCategoryPojo {
+  id?: number;
   code: string;
   name: string;
   description?: string;

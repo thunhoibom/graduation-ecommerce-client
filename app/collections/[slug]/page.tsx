@@ -4,17 +4,42 @@ import {
   getCollection,
   getCollectionProducts,
 } from "@/services/rest-api/collections/collections";
-import { searchProducts } from "@/services/rest-api/products/products";
+import {
+  getWeatherCategoryRecommendations,
+  searchProducts,
+} from "@/services/rest-api/products/products";
 import type { ProductFilters } from "@/services/rest-api/products/products";
 import type { ProductSearchItem, ProductListItem } from "@/types/product";
 import type { ProductCategoryPojo } from "@/types/person";
 import { ProductGrid } from "./_components/product-grid";
+import { WeatherRecommendations } from "./_components/weather-recommendations";
 import { CollectionHeader } from "./_components/collection-header";
 import { FilterSidebar } from "./_components/filter-sidebar";
 import { ActiveFilters } from "./_components/active-filters";
 import { Breadcrumb } from "./_components/breadcrumb";
 import { Badge } from "@/components/ui/badge";
 import Link from "next/link";
+
+function mapSearchItemToListItem(
+  item: ProductSearchItem,
+  fallbackCategory: string
+): ProductListItem {
+  return {
+    id: item.id ? parseInt(item.id) : undefined,
+    name: item.name,
+    barcode: item.barcode,
+    price: item.price,
+    category: {
+      name: item.categoryName,
+      code:
+        item.categoryCodes && item.categoryCodes.length > 0
+          ? item.categoryCodes[0]
+          : fallbackCategory,
+    } as ProductCategoryPojo,
+    images: item.primaryImageUrl ? [{ url: item.primaryImageUrl }] : [],
+    currentStock: 1,
+  };
+}
 
 interface Props {
   params: Promise<{ slug: string }>;
@@ -80,24 +105,19 @@ export default async function CollectionPage({ params, searchParams }: Props) {
   let products: ProductListItem[] = [];
   let totalCount = 0;
   let pageIndex = 1;
+  let weatherSectionItems: ProductListItem[] = [];
+  let weatherContext:
+    | { temperature?: number; condition?: string; weatherTag?: string }
+    | undefined;
 
   if (query && query.trim().length > 0) {
     // If searching, use Elasticsearch
     console.log(`>>> [DEBUG SSR COLLECTION] Searching in '${slug}' with query: '${query}'`);
     const result = await searchProducts(filters);
     console.log(`>>> [DEBUG SSR COLLECTION] ES Hits: ${result.totalCount}`);
-    products = (result.items ?? []).map((si: ProductSearchItem) => ({
-      id: si.id ? parseInt(si.id) : undefined,
-      name: si.name,
-      barcode: si.barcode,
-      price: si.price,
-      category: { 
-        name: si.categoryName, 
-        code: (si.categoryCodes && si.categoryCodes.length > 0) ? si.categoryCodes[0] : slug 
-      } as ProductCategoryPojo,
-      images: si.primaryImageUrl ? [{ url: si.primaryImageUrl }] : [],
-      currentStock: 1,
-    }));
+    products = (result.items ?? []).map((si: ProductSearchItem) =>
+      mapSearchItemToListItem(si, slug)
+    );
     totalCount = result.totalCount ?? 0;
     pageIndex = result.pageIndex ?? page;
   } else {
@@ -108,6 +128,20 @@ export default async function CollectionPage({ params, searchParams }: Props) {
     products = response.items ?? [];
     totalCount = response.totalCount ?? 0;
     pageIndex = response.pageIndex ?? page;
+  }
+
+  try {
+    const weatherRecommendation = await getWeatherCategoryRecommendations({
+      category: slug,
+      limit: 8,
+    });
+    weatherSectionItems = (weatherRecommendation.items ?? []).map((item) =>
+      mapSearchItemToListItem(item, slug)
+    );
+    weatherContext = weatherRecommendation.weatherContext;
+  } catch {
+    weatherSectionItems = [];
+    weatherContext = undefined;
   }
   
   const totalPages = Math.ceil((totalCount ?? 0) / 24);
@@ -168,6 +202,11 @@ export default async function CollectionPage({ params, searchParams }: Props) {
       <div className="mt-4">
         <ActiveFilters />
       </div>
+
+      <WeatherRecommendations
+        items={weatherSectionItems}
+        weatherContext={weatherContext}
+      />
 
       <div className="mt-6 flex gap-8">
         <div className="hidden lg:block">

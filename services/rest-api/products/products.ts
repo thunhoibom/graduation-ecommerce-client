@@ -12,7 +12,15 @@
  */
 
 import { api } from "../app-api";
-import type { Product, ProductListItem, ProductVariantPojo, ProductReviewPojo, ReviewStats, ProductSearchItem } from "@/types/product";
+import type {
+  Product,
+  ProductListItem,
+  ProductVariantPojo,
+  ProductReviewPojo,
+  ReviewStats,
+  ProductSearchItem,
+  WeatherCategoryRecommendation,
+} from "@/types/product";
 import type { PaginatedResponse } from "@/types/api";
 
 // ─── List products ─────────────────────────────────────────────────────────────
@@ -77,6 +85,49 @@ export async function searchProducts(
     "/api/public/products/search",
     { params }
   );
+  return data;
+}
+
+/** GET /api/public/products/recommendations/weather-category */
+export async function getWeatherCategoryRecommendations(params: {
+  category: string;
+  lat?: number;
+  lon?: number;
+  limit?: number;
+}): Promise<WeatherCategoryRecommendation> {
+  const query: Record<string, string> = {
+    category: params.category,
+  };
+
+  if (params.lat != null) query["lat"] = String(params.lat);
+  if (params.lon != null) query["lon"] = String(params.lon);
+  if (params.limit != null) query["limit"] = String(params.limit);
+
+  const { data } = await api.get<WeatherCategoryRecommendation>(
+    "/api/public/products/recommendations/weather-category",
+    { params: query }
+  );
+
+  return data;
+}
+
+/** GET /api/public/products/recommendations/weather */
+export async function getWeatherRecommendations(params?: {
+  lat?: number;
+  lon?: number;
+  limit?: number;
+}): Promise<WeatherCategoryRecommendation> {
+  const query: Record<string, string> = {};
+
+  if (params?.lat != null) query["lat"] = String(params.lat);
+  if (params?.lon != null) query["lon"] = String(params.lon);
+  if (params?.limit != null) query["limit"] = String(params.limit);
+
+  const { data } = await api.get<WeatherCategoryRecommendation>(
+    "/api/public/products/recommendations/weather",
+    { params: query }
+  );
+
   return data;
 }
 

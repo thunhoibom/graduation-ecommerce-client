@@ -13,6 +13,7 @@ export interface MenuItem {
   children?: MenuItem[];
   description?: string;
   external?: boolean;
+  imageUrl?: string;
 }
 
 export interface Menu {

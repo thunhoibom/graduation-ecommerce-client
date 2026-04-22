@@ -17,10 +17,28 @@ export interface Cart {
   appliedDiscountCode?: string;
   discountAmount?: number;    // VND (integer)
   totalAfterDiscount?: number;
+  appliedPromotionsJson?: string;
   createdAt?: string;
   updatedAt?: string;
   expiresAt?: string;
   expired?: boolean;
+}
+
+export interface AppliedPromotionLine {
+  promotionRuleId?: number;
+  name?: string;
+  discountAmount?: number;
+  freeShipping?: boolean;
+  couponCode?: string;
+}
+
+export interface CartPricingResult {
+  subtotal: number;
+  discountAmount: number;
+  totalAfterDiscount: number;
+  freeShipping?: boolean;
+  appliedPromotions?: AppliedPromotionLine[];
+  appliedDiscountCode?: string;
 }
 
 // ─── Cart Item ────────────────────────────────────────────────────────────────

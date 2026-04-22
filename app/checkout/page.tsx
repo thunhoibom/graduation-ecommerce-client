@@ -1,5 +1,12 @@
 import type { Metadata } from "next";
-import { CheckoutForm } from "./_components/checkout-form";
+import dynamic from "next/dynamic";
+
+const CheckoutForm = dynamic(
+  () => import("./_components/checkout-form").then((mod) => mod.CheckoutForm),
+  {
+    loading: () => <div className="text-sm text-neutral-500">Dang tai thong tin thanh toan...</div>,
+  },
+);
 
 export const metadata: Metadata = {
   title: "Thanh toán",

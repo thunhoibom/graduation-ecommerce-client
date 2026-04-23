@@ -41,11 +41,20 @@ export interface Page {
 export interface ShippingMethod {
   id?: number;
   name: string;
-  baseFee: number;              // VND (integer)
+  baseFee: number; // VND (integer)
   freeShippingThreshold?: number; // VND
   estimatedDaysMin: number;
   estimatedDaysMax: number;
   active: boolean;
+  pricePerKm?: number;
+  carrierCode?: "LOCAL" | "GHN" | string;
+  rateMode?: "STATIC" | "DISTANCE" | "LIVE_API" | string;
+  carrierServiceCode?: string;
+  carrierShopId?: number;
+  fee?: number;
+  freeShipping?: boolean;
+  providerFeeSource?: string;
+  estimated?: boolean;
 }
 
 // ─── Discount Code — mirrors backend DiscountCodePojo ────────────────────────

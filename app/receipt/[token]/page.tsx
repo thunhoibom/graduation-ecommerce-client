@@ -19,13 +19,14 @@ import { getReceipt } from "@/services/rest-api/checkout/checkout";
 import type { Receipt } from "@/types/checkout";
 
 const STATUS_LABEL: Record<string, string> = {
-  PENDING: "Chờ xác nhận",
+  PENDING: "Chờ xử lý",
   CONFIRMED: "Đã xác nhận",
-  PROCESSING: "Đang xử lý",
-  SHIPPED: "Đã gửi đi",
-  OUT_FOR_DELIVERY: "Đang giao",
-  DELIVERED: "Đã giao",
-  CANCELLED: "Đã hủy",
+  DELIVERY_ON_ROUTE: "Đang giao",
+  DELIVERY_COMPLETE: "Đã giao",
+  DELIVERY_FAILED: "Giao thất bại",
+  DELIVERY_CANCELLED: "Đã thu hồi giao",
+  REJECTED: "Đơn bị từ chối",
+  RETURNED: "Đã hoàn hàng",
 };
 
 function ReceiptContent() {
@@ -108,9 +109,9 @@ function ReceiptContent() {
               <span className="font-mono text-sm font-semibold text-neutral-900 dark:text-white">
                 #{receipt.buyOrder}
               </span>
-              {receipt.status && (
+              {(receipt.fulfillmentStatus ?? receipt.status) && (
                 <span className="rounded bg-neutral-100 px-2 py-0.5 text-xs font-medium text-neutral-600 dark:bg-neutral-800 dark:text-neutral-400">
-                  {STATUS_LABEL[receipt.status] ?? receipt.status}
+                  {STATUS_LABEL[receipt.fulfillmentStatus ?? receipt.status ?? ""] ?? (receipt.fulfillmentStatus ?? receipt.status)}
                 </span>
               )}
             </div>

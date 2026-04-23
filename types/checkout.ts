@@ -22,6 +22,8 @@ export interface AddressPojo {
   notes?: string;
   latitude?: number;
   longitude?: number;
+  districtId?: number;
+  wardCode?: string;
 }
 
 // ─── Checkout Start Request ────────────────────────────────────────────────────
@@ -60,6 +62,8 @@ export interface Receipt {
   buyOrder: number;
   date?: string;
   status?: string;
+  fulfillmentStatus?: string;
+  paymentStatus?: string;
   totalValue?: number;
   taxValue?: number;
   transportValue?: number;

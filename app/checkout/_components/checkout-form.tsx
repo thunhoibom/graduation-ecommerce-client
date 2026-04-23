@@ -27,8 +27,14 @@ import type { ShippingMethod } from "@/types/common";
 import type { CheckoutStartPayload } from "@/types/checkout";
 import { getAddressBook } from "@/services/rest-api/address-book";
 import {
+  getGhnDistricts,
+  getGhnProvinces,
+  getGhnWards,
   getShippingMethods,
   initiateCheckout,
+  type GhnDistrict,
+  type GhnProvince,
+  type GhnWard,
 } from "@/services/rest-api/checkout/checkout";
 import { calculateCartPricing } from "@/services/rest-api/cart/cart";
 import type { CartPricingResult } from "@/types/cart";
@@ -52,8 +58,11 @@ interface AddressFormData {
   city: string;
   postalCode: string;
   notes: string;
+  provinceId?: number;
   latitude?: number;
   longitude?: number;
+  districtId?: number;
+  wardCode?: string;
 }
 
 function emptyCustomer(): CustomerFormData {
@@ -61,7 +70,18 @@ function emptyCustomer(): CustomerFormData {
 }
 
 function emptyAddress(): AddressFormData {
-  return { firstLine: "", municipality: "", city: "", postalCode: "", notes: "", latitude: undefined, longitude: undefined };
+  return {
+    firstLine: "",
+    municipality: "",
+    city: "",
+    postalCode: "",
+    notes: "",
+    provinceId: undefined,
+    latitude: undefined,
+    longitude: undefined,
+    districtId: undefined,
+    wardCode: "",
+  };
 }
 
 // ─── Step indicator ─────────────────────────────────────────────────────────────
@@ -366,6 +386,10 @@ export function CheckoutForm() {
   const [selectedAddressId, setSelectedAddressId] = useState<number | null>(null);
   const [useNewAddress, setUseNewAddress] = useState(false);
   const [addressForm, setAddressForm] = useState<AddressFormData>(emptyAddress());
+  const [ghnProvinces, setGhnProvinces] = useState<GhnProvince[]>([]);
+  const [ghnDistricts, setGhnDistricts] = useState<GhnDistrict[]>([]);
+  const [ghnWards, setGhnWards] = useState<GhnWard[]>([]);
+  const [ghnLoading, setGhnLoading] = useState(false);
 
   // Shipping method (Step 2)
   const [shippingMethods, setShippingMethods] = useState<ShippingMethod[]>([]);
@@ -395,6 +419,14 @@ export function CheckoutForm() {
       .catch(() => {/* non-authenticated guest — silently skip */});
   }, []);
 
+  useEffect(() => {
+    setGhnLoading(true);
+    getGhnProvinces()
+      .then(setGhnProvinces)
+      .catch(() => toast.error("Không tải được danh sách tỉnh/thành GHN"))
+      .finally(() => setGhnLoading(false));
+  }, []);
+
   // ── Fill address form from saved address ───────────────────────────────────
   const selectedSavedAddress = savedAddresses.find((a) => a.id === selectedAddressId);
 
@@ -407,12 +439,14 @@ export function CheckoutForm() {
     const isUsingMap = useNewAddress || savedAddresses.length === 0;
     const lat = isUsingMap ? addressForm.latitude : selectedSavedAddress?.address?.latitude;
     const lng = isUsingMap ? addressForm.longitude : selectedSavedAddress?.address?.longitude;
-    const fetchKey = `${subtotal}-${lat}-${lng}`;
+    const districtId = isUsingMap ? addressForm.districtId : selectedSavedAddress?.address?.districtId;
+    const wardCode = isUsingMap ? addressForm.wardCode : selectedSavedAddress?.address?.wardCode;
+    const fetchKey = `${subtotal}-${lat}-${lng}-${districtId}-${wardCode}`;
 
     if (shippingMethods.length > 0 && lastFetchKey.current === fetchKey) return; // already loaded with same inputs
 
     setShippingLoading(true);
-    getShippingMethods(subtotal, lat, lng)
+    getShippingMethods(subtotal, lat, lng, districtId, wardCode)
       .then((methods) => {
         lastFetchKey.current = fetchKey;
         setShippingMethods(methods);
@@ -423,7 +457,7 @@ export function CheckoutForm() {
       })
       .catch(() => toast.error("Không thể tải phương thức vận chuyển"))
       .finally(() => setShippingLoading(false));
-  }, [step, subtotal, addressForm.latitude, addressForm.longitude, selectedSavedAddress, useNewAddress, shippingMethods.length]);
+  }, [step, subtotal, addressForm.latitude, addressForm.longitude, addressForm.districtId, addressForm.wardCode, selectedSavedAddress, useNewAddress, shippingMethods.length]);
 
   useEffect(() => {
     if (selectedSavedAddress && !useNewAddress) {
@@ -434,13 +468,56 @@ export function CheckoutForm() {
         city: addr?.city ?? "",
         postalCode: addr?.postalCode ?? "",
         notes: addr?.notes ?? "",
+        provinceId: undefined,
         latitude: addr?.latitude,
         longitude: addr?.longitude,
+        districtId: addr?.districtId,
+        wardCode: addr?.wardCode ?? "",
       });
     }
   }, [selectedAddressId, useNewAddress, selectedSavedAddress]);
 
+  useEffect(() => {
+    if (!useNewAddress && savedAddresses.length > 0) {
+      return;
+    }
+    if (!addressForm.provinceId) {
+      setGhnDistricts([]);
+      setGhnWards([]);
+      if (addressForm.districtId !== undefined || (addressForm.wardCode ?? "") !== "") {
+        setAddressForm((a) => ({ ...a, districtId: undefined, wardCode: "" }));
+      }
+      return;
+    }
+    getGhnDistricts(addressForm.provinceId)
+      .then(setGhnDistricts)
+      .catch(() => toast.error("Không tải được quận/huyện GHN"));
+  }, [addressForm.provinceId, useNewAddress, savedAddresses.length, addressForm.districtId, addressForm.wardCode]);
+
+  useEffect(() => {
+    if (!useNewAddress && savedAddresses.length > 0) {
+      return;
+    }
+    if (!addressForm.districtId) {
+      setGhnWards([]);
+      if ((addressForm.wardCode ?? "") !== "") {
+        setAddressForm((a) => ({ ...a, wardCode: "" }));
+      }
+      return;
+    }
+    getGhnWards(addressForm.districtId)
+      .then(setGhnWards)
+      .catch(() => toast.error("Không tải được phường/xã GHN"));
+  }, [addressForm.districtId, useNewAddress, savedAddresses.length, addressForm.wardCode]);
+
   // ── Validation helpers ───────────────────────────────────────────────────
+  const selectedProvince = addressForm.provinceId
+    ? ghnProvinces.find((p) => p.provinceId === addressForm.provinceId)
+    : undefined;
+  const selectedDistrict = addressForm.districtId
+    ? ghnDistricts.find((d) => d.districtId === addressForm.districtId)
+    : undefined;
+
   const hasValidCustomer =
     customerForm.firstName.trim().length > 0 &&
     customerForm.lastName.trim().length > 0 &&
@@ -462,6 +539,10 @@ export function CheckoutForm() {
     }
     if (!hasValidAddress) {
       toast.error("Vui lòng điền đầy đủ địa chỉ giao hàng");
+      return;
+    }
+    if (!addressForm.districtId || !addressForm.wardCode) {
+      toast.error("Vui lòng chọn Quận/Huyện và Phường/Xã từ danh mục GHN");
       return;
     }
     goTo("shipping_method");
@@ -514,12 +595,14 @@ export function CheckoutForm() {
       },
       shippingAddress: {
         firstLine: addressForm.firstLine.trim(),
-        municipality: addressForm.municipality.trim(),
-        city: addressForm.city.trim(),
+        municipality: (selectedDistrict?.districtName ?? addressForm.municipality).trim(),
+        city: (selectedProvince?.provinceName ?? addressForm.city).trim(),
         postalCode: addressForm.postalCode.trim() || undefined,
         notes: addressForm.notes.trim() || undefined,
         latitude: addressForm.latitude,
         longitude: addressForm.longitude,
+        districtId: addressForm.districtId,
+        wardCode: addressForm.wardCode?.trim() || undefined,
       },
       paymentType,
       billingType,
@@ -784,6 +867,79 @@ export function CheckoutForm() {
                         setAddressForm((a) => ({ ...a, notes: e.target.value }))
                       }
                     />
+                  </div>
+                  <div className="space-y-1.5">
+                    <Label htmlFor="provinceId">Tỉnh/Thành (GHN) *</Label>
+                    <select
+                      id="provinceId"
+                      className="flex h-10 w-full rounded-none border border-input bg-transparent px-3 py-2 text-sm"
+                      value={addressForm.provinceId ?? ""}
+                      onChange={(e) => {
+                        const provinceId = e.target.value ? Number(e.target.value) : undefined;
+                        const provinceName = provinceId
+                          ? ghnProvinces.find((p) => p.provinceId === provinceId)?.provinceName ?? ""
+                          : "";
+                        setAddressForm((a) => ({
+                          ...a,
+                          provinceId,
+                          city: provinceName || a.city,
+                        }));
+                      }}
+                      disabled={ghnLoading}
+                    >
+                      <option value="">Chọn tỉnh/thành</option>
+                      {ghnProvinces.map((p) => (
+                        <option key={p.provinceId} value={p.provinceId}>
+                          {p.provinceName}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                  <div className="space-y-1.5">
+                    <Label htmlFor="districtId">Quận/Huyện (GHN) *</Label>
+                    <select
+                      id="districtId"
+                      className="flex h-10 w-full rounded-none border border-input bg-transparent px-3 py-2 text-sm"
+                      value={addressForm.districtId ?? ""}
+                      onChange={(e) => {
+                        const districtId = e.target.value ? Number(e.target.value) : undefined;
+                        const districtName = districtId
+                          ? ghnDistricts.find((d) => d.districtId === districtId)?.districtName ?? ""
+                          : "";
+                        setAddressForm((a) => ({
+                          ...a,
+                          districtId,
+                          municipality: districtName || a.municipality,
+                        }));
+                      }}
+                      disabled={!addressForm.provinceId}
+                    >
+                      <option value="">Chọn quận/huyện</option>
+                      {ghnDistricts.map((d) => (
+                        <option key={d.districtId} value={d.districtId}>
+                          {d.districtName}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                  <div className="space-y-1.5">
+                    <Label htmlFor="wardCode">Phường/Xã (GHN) *</Label>
+                    <select
+                      id="wardCode"
+                      className="flex h-10 w-full rounded-none border border-input bg-transparent px-3 py-2 text-sm"
+                      value={addressForm.wardCode ?? ""}
+                      onChange={(e) =>
+                        setAddressForm((a) => ({ ...a, wardCode: e.target.value }))
+                      }
+                      disabled={!addressForm.districtId}
+                    >
+                      <option value="">Chọn phường/xã</option>
+                      {ghnWards.map((w) => (
+                        <option key={w.wardCode} value={w.wardCode}>
+                          {w.wardName}
+                        </option>
+                      ))}
+                    </select>
                   </div>
                 </div>
               </div>

@@ -25,6 +25,8 @@ export interface OrderPojo {
   discountCode?: string;
   discountValue?: number;      // VND
   status?: string;
+  fulfillmentStatus?: string;
+  paymentStatus?: string;
   billingType?: string;
   paymentType: string;
   customer?: PersonPojo;
@@ -58,14 +60,12 @@ export interface BillingCompanyPojo {
 export type OrderStatusCode =
   | "PENDING"
   | "CONFIRMED"
-  | "PROCESSING"
-  | "SHIPPED"
-  | "OUT_FOR_DELIVERY"
-  | "DELIVERED"
-  | "CANCELLED"
-  | "RETURN_REQUESTED"
-  | "RETURN_APPROVED"
-  | "REFUNDED";
+  | "DELIVERY_ON_ROUTE"
+  | "DELIVERY_COMPLETE"
+  | "DELIVERY_FAILED"
+  | "DELIVERY_CANCELLED"
+  | "REJECTED"
+  | "RETURNED";
 
 export interface OrderStatusPojo {
   code: number;

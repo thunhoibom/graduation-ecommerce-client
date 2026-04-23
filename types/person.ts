@@ -24,6 +24,8 @@ export interface AddressPojo {
   notes?: string;
   latitude?: number;
   longitude?: number;
+  districtId?: number;
+  wardCode?: string;
 }
 
 /**

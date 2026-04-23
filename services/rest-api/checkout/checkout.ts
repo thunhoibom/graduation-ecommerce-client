@@ -19,16 +19,54 @@ import type {
   PaymentRedirectionDetails,
 } from "@/types/checkout";
 
+export interface GhnProvince {
+  provinceId: number;
+  provinceName: string;
+}
+
+export interface GhnDistrict {
+  districtId: number;
+  provinceId: number;
+  districtName: string;
+}
+
+export interface GhnWard {
+  wardCode: string;
+  districtId: number;
+  wardName: string;
+}
+
 // ─── Shipping Methods ─────────────────────────────────────────────────────────
 
 /** GET /api/public/shipping/methods — active shipping methods */
 export async function getShippingMethods(
   subtotal?: number,
   latitude?: number,
-  longitude?: number
+  longitude?: number,
+  toDistrictId?: number,
+  toWardCode?: string
 ): Promise<ShippingMethod[]> {
   const { data } = await api.get<ShippingMethod[]>("/api/public/shipping/methods", {
-    params: { subtotal, latitude, longitude }
+    params: { subtotal, latitude, longitude, toDistrictId, toWardCode }
+  });
+  return data ?? [];
+}
+
+export async function getGhnProvinces(): Promise<GhnProvince[]> {
+  const { data } = await api.get<GhnProvince[]>("/api/public/shipping/ghn/provinces");
+  return data ?? [];
+}
+
+export async function getGhnDistricts(provinceId: number): Promise<GhnDistrict[]> {
+  const { data } = await api.get<GhnDistrict[]>("/api/public/shipping/ghn/districts", {
+    params: { provinceId },
+  });
+  return data ?? [];
+}
+
+export async function getGhnWards(districtId: number): Promise<GhnWard[]> {
+  const { data } = await api.get<GhnWard[]>("/api/public/shipping/ghn/wards", {
+    params: { districtId },
   });
   return data ?? [];
 }

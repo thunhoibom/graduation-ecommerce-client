@@ -8,16 +8,24 @@ import type { OrderPojo } from "@/types/order";
 import { formatMoney } from "@/lib/utils";
 
 const STATUS_LABELS: Record<string, { label: string; color: string }> = {
-  PENDING:          { label: "Chờ xác nhận",  color: "bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-400" },
-  CONFIRMED:        { label: "Đã xác nhận",   color: "bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-400" },
-  PROCESSING:       { label: "Đang xử lý",    color: "bg-indigo-100 text-indigo-800 dark:bg-indigo-900/30 dark:text-indigo-400" },
-  SHIPPED:          { label: "Đã gửi",         color: "bg-purple-100 text-purple-800 dark:bg-purple-900/30 dark:text-purple-400" },
-  OUT_FOR_DELIVERY: { label: "Đang giao",      color: "bg-purple-100 text-purple-800 dark:bg-purple-900/30 dark:text-purple-400" },
-  DELIVERED:        { label: "Đã giao",        color: "bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400" },
-  CANCELLED:        { label: "Đã hủy",         color: "bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400" },
-  RETURN_REQUESTED: { label: "Yêu cầu đổi/trả", color: "bg-orange-100 text-orange-800 dark:bg-orange-900/30 dark:text-orange-400" },
-  RETURN_APPROVED:  { label: "Đã duyệt đổi/trả", color: "bg-orange-100 text-orange-800 dark:bg-orange-900/30 dark:text-orange-400" },
-  REFUNDED:         { label: "Đã hoàn tiền",   color: "bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400" },
+  PENDING:            { label: "Chờ xử lý", color: "bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-400" },
+  CONFIRMED:          { label: "Đã xác nhận", color: "bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-400" },
+  DELIVERY_ON_ROUTE:  { label: "Đang giao", color: "bg-purple-100 text-purple-800 dark:bg-purple-900/30 dark:text-purple-400" },
+  DELIVERY_COMPLETE:  { label: "Đã giao", color: "bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400" },
+  DELIVERY_FAILED:    { label: "Giao thất bại", color: "bg-orange-100 text-orange-800 dark:bg-orange-900/30 dark:text-orange-400" },
+  DELIVERY_CANCELLED: { label: "Đã thu hồi giao", color: "bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400" },
+  REJECTED:           { label: "Đơn bị từ chối", color: "bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400" },
+  RETURNED:           { label: "Đã hoàn hàng", color: "bg-pink-100 text-pink-800 dark:bg-pink-900/30 dark:text-pink-400" },
+};
+
+const PAYMENT_LABELS: Record<string, { label: string; color: string }> = {
+  UNPAID: { label: "Chưa thanh toán", color: "text-neutral-500" },
+  PAYMENT_STARTED: { label: "Đang thanh toán", color: "text-amber-600 dark:text-amber-400" },
+  PAID: { label: "Đã thanh toán", color: "text-green-600 dark:text-green-400" },
+  PAYMENT_FAILED: { label: "Thanh toán thất bại", color: "text-red-500 dark:text-red-400" },
+  PAYMENT_CANCELLED: { label: "Đã hủy thanh toán", color: "text-red-500 dark:text-red-400" },
+  REFUNDED: { label: "Đã hoàn tiền", color: "text-fuchsia-600 dark:text-fuchsia-400" },
+  PARTIALLY_REFUNDED: { label: "Hoàn tiền một phần", color: "text-fuchsia-600 dark:text-fuchsia-400" },
 };
 
 function formatDate(dateStr?: string) {
@@ -100,9 +108,15 @@ export function OrderList() {
 
       <div className="space-y-3">
         {orders.map((order) => {
-          const statusInfo = STATUS_LABELS[order.status ?? ""] ?? {
-            label: order.status ?? "—",
+          const fulfillment = order.fulfillmentStatus ?? order.status;
+          const payment = order.paymentStatus;
+          const statusInfo = STATUS_LABELS[fulfillment ?? ""] ?? {
+            label: fulfillment ?? "—",
             color: "bg-neutral-100 text-neutral-600 dark:bg-neutral-800 dark:text-neutral-400",
+          };
+          const paymentInfo = PAYMENT_LABELS[payment ?? ""] ?? {
+            label: payment ?? "",
+            color: "text-neutral-500",
           };
 
           return (
@@ -124,6 +138,9 @@ export function OrderList() {
                   <p className="text-xs text-neutral-500">
                     {formatDate(order.date)} · {order.details?.length ?? 0} sản phẩm
                   </p>
+                  {paymentInfo.label && (
+                    <p className={`text-[11px] ${paymentInfo.color}`}>{paymentInfo.label}</p>
+                  )}
                 </div>
 
                 <div className="flex items-center gap-3">
@@ -131,10 +148,10 @@ export function OrderList() {
                     <p className="text-sm font-semibold text-neutral-900 dark:text-white">
                       {formatMoney(order.totalValue ?? order.netValue ?? 0)}
                     </p>
-                    {order.status === "DELIVERED" && (
+                    {fulfillment === "DELIVERY_COMPLETE" && (
                       <p className="text-[11px] text-green-600 dark:text-green-400">Đã giao</p>
                     )}
-                    {order.status === "CANCELLED" && order.totalRefundedAmount ? (
+                    {order.paymentStatus === "REFUNDED" && order.totalRefundedAmount ? (
                       <p className="text-[11px] text-red-500">Đã hoàn {formatMoney(order.totalRefundedAmount)}</p>
                     ) : null}
                   </div>

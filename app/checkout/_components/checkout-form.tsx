@@ -19,6 +19,13 @@ import { useCart } from "@/components/cart/cart-context";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { Separator } from "@/components/ui/separator";
 import { formatMoney } from "@/lib/utils";
 import { LocationPicker } from "@/components/ui/location-picker";
@@ -825,28 +832,6 @@ export function CheckoutForm() {
                     />
                   </div>
                   <div className="space-y-1.5">
-                    <Label htmlFor="municipality">Quận / Huyện *</Label>
-                    <Input
-                      id="municipality"
-                      placeholder="Quận 1"
-                      value={addressForm.municipality}
-                      onChange={(e) =>
-                        setAddressForm((a) => ({ ...a, municipality: e.target.value }))
-                      }
-                    />
-                  </div>
-                  <div className="space-y-1.5">
-                    <Label htmlFor="city">Tỉnh / Thành phố *</Label>
-                    <Input
-                      id="city"
-                      placeholder="TP. Hồ Chí Minh"
-                      value={addressForm.city}
-                      onChange={(e) =>
-                        setAddressForm((a) => ({ ...a, city: e.target.value }))
-                      }
-                    />
-                  </div>
-                  <div className="space-y-1.5">
                     <Label htmlFor="postalCode">Mã bưu điện</Label>
                     <Input
                       id="postalCode"
@@ -869,16 +854,13 @@ export function CheckoutForm() {
                     />
                   </div>
                   <div className="space-y-1.5">
-                    <Label htmlFor="provinceId">Tỉnh/Thành (GHN) *</Label>
-                    <select
-                      id="provinceId"
-                      className="flex h-10 w-full rounded-none border border-input bg-transparent px-3 py-2 text-sm"
-                      value={addressForm.provinceId ?? ""}
-                      onChange={(e) => {
-                        const provinceId = e.target.value ? Number(e.target.value) : undefined;
-                        const provinceName = provinceId
-                          ? ghnProvinces.find((p) => p.provinceId === provinceId)?.provinceName ?? ""
-                          : "";
+                    <Label htmlFor="provinceId">Tỉnh / Thành phố *</Label>
+                    <Select
+                      value={addressForm.provinceId ? String(addressForm.provinceId) : undefined}
+                      onValueChange={(value) => {
+                        const provinceId = Number(value);
+                        const provinceName =
+                          ghnProvinces.find((p) => p.provinceId === provinceId)?.provinceName ?? "";
                         setAddressForm((a) => ({
                           ...a,
                           provinceId,
@@ -887,25 +869,26 @@ export function CheckoutForm() {
                       }}
                       disabled={ghnLoading}
                     >
-                      <option value="">Chọn tỉnh/thành</option>
-                      {ghnProvinces.map((p) => (
-                        <option key={p.provinceId} value={p.provinceId}>
-                          {p.provinceName}
-                        </option>
-                      ))}
-                    </select>
+                      <SelectTrigger id="provinceId" className="h-10 w-full rounded-none px-3 text-sm">
+                        <SelectValue placeholder="Chọn tỉnh/thành" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {ghnProvinces.map((p) => (
+                          <SelectItem key={p.provinceId} value={String(p.provinceId)}>
+                            {p.provinceName}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
                   </div>
                   <div className="space-y-1.5">
-                    <Label htmlFor="districtId">Quận/Huyện (GHN) *</Label>
-                    <select
-                      id="districtId"
-                      className="flex h-10 w-full rounded-none border border-input bg-transparent px-3 py-2 text-sm"
-                      value={addressForm.districtId ?? ""}
-                      onChange={(e) => {
-                        const districtId = e.target.value ? Number(e.target.value) : undefined;
-                        const districtName = districtId
-                          ? ghnDistricts.find((d) => d.districtId === districtId)?.districtName ?? ""
-                          : "";
+                    <Label htmlFor="districtId">Quận / Huyện *</Label>
+                    <Select
+                      value={addressForm.districtId ? String(addressForm.districtId) : undefined}
+                      onValueChange={(value) => {
+                        const districtId = Number(value);
+                        const districtName =
+                          ghnDistricts.find((d) => d.districtId === districtId)?.districtName ?? "";
                         setAddressForm((a) => ({
                           ...a,
                           districtId,
@@ -914,32 +897,38 @@ export function CheckoutForm() {
                       }}
                       disabled={!addressForm.provinceId}
                     >
-                      <option value="">Chọn quận/huyện</option>
-                      {ghnDistricts.map((d) => (
-                        <option key={d.districtId} value={d.districtId}>
-                          {d.districtName}
-                        </option>
-                      ))}
-                    </select>
+                      <SelectTrigger id="districtId" className="h-10 w-full rounded-none px-3 text-sm">
+                        <SelectValue placeholder="Chọn quận/huyện" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {ghnDistricts.map((d) => (
+                          <SelectItem key={d.districtId} value={String(d.districtId)}>
+                            {d.districtName}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
                   </div>
                   <div className="space-y-1.5">
                     <Label htmlFor="wardCode">Phường/Xã (GHN) *</Label>
-                    <select
-                      id="wardCode"
-                      className="flex h-10 w-full rounded-none border border-input bg-transparent px-3 py-2 text-sm"
-                      value={addressForm.wardCode ?? ""}
-                      onChange={(e) =>
-                        setAddressForm((a) => ({ ...a, wardCode: e.target.value }))
+                    <Select
+                      value={addressForm.wardCode || undefined}
+                      onValueChange={(value) =>
+                        setAddressForm((a) => ({ ...a, wardCode: value }))
                       }
                       disabled={!addressForm.districtId}
                     >
-                      <option value="">Chọn phường/xã</option>
-                      {ghnWards.map((w) => (
-                        <option key={w.wardCode} value={w.wardCode}>
-                          {w.wardName}
-                        </option>
-                      ))}
-                    </select>
+                      <SelectTrigger id="wardCode" className="h-10 w-full rounded-none px-3 text-sm">
+                        <SelectValue placeholder="Chọn phường/xã" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {ghnWards.map((w) => (
+                          <SelectItem key={w.wardCode} value={w.wardCode}>
+                            {w.wardName}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
                   </div>
                 </div>
               </div>

@@ -12,7 +12,14 @@ export interface Product {
   name: string;
   barcode: string;
   description?: string;
-  price: number;               // VND (integer, maps to backend price field)
+  /** @deprecated legacy alias; use currentPrice */
+  price?: number;
+  originalPrice?: number;
+  currentPrice: number;
+  discountPercent?: number;
+  hasDiscount?: boolean;
+  discountActiveFrom?: string;
+  discountActiveUntil?: string;
   currentStock?: number;
   criticalStock?: number;
   category?: ProductCategoryPojo;
@@ -41,6 +48,8 @@ export interface ProductVariantPojo {
   productBasePrice?: number;   // VND
   finalPrice?: number;         // VND
   createdAt?: string;
+  images?: ProductImage[];
+  primaryImageUrl?: string;
 }
 
 // ─── Product Image ────────────────────────────────────────────────────────────
@@ -79,7 +88,14 @@ export interface ProductListItem {
   id?: number;
   name: string;
   barcode: string;
-  price: number;                // VND
+  /** @deprecated legacy alias; use currentPrice */
+  price?: number;
+  originalPrice?: number;
+  currentPrice: number;
+  discountPercent?: number;
+  hasDiscount?: boolean;
+  discountActiveFrom?: string;
+  discountActiveUntil?: string;
   currentStock?: number;
   category?: ProductCategoryPojo;
   images?: ProductImage[];
@@ -114,7 +130,7 @@ export interface WeatherCategoryRecommendation {
 
 /** Normalise product price to VND integer for display */
 export function getDisplayPrice(product: ProductListItem | Product): string {
-  return String(product.price ?? 0);
+  return String(product.currentPrice ?? 0);
 }
 
 // ─── Product Review ──────────────────────────────────────────────────────────

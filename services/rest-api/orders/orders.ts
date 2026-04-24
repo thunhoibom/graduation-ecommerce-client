@@ -36,13 +36,11 @@ export async function getMyOrder(buyOrder: number): Promise<OrderPojo> {
   return data;
 }
 
-/** POST /data/orders/cancellation — cancel order */
-export async function cancelOrder(
+/** POST /account/orders/{buyOrder}/cancel — cancel or request cancel by customer policy */
+export async function cancelMyOrder(
   buyOrder: number
 ): Promise<OrderPojo> {
-  const { data } = await api.post<OrderPojo>(`/api/data/orders/cancellation`, {
-    buyOrder,
-  });
+  const { data } = await api.post<OrderPojo>(`/api/account/orders/${buyOrder}/cancel`);
   return data;
 }
 

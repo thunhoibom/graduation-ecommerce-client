@@ -64,7 +64,7 @@ export async function RelatedProducts({ categorySlug, currentBarcode }: RelatedP
                 {item.name}
               </p>
               <p className="text-sm font-semibold text-neutral-900 dark:text-white">
-                {formatMoney(item.price)}
+                {formatMoney(item.currentPrice)}
               </p>
             </div>
           </Link>

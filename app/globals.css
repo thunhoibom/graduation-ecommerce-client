@@ -22,11 +22,11 @@
   }
 
   body {
-    @apply bg-background text-foreground;
+    @apply bg-background text-foreground antialiased;
   }
 
   html {
-    @apply font-mono;
+    @apply font-sans scroll-smooth;
   }
 }
 
@@ -124,6 +124,8 @@ button {
   --sidebar-accent-foreground: oklch(0.205 0 0);
   --sidebar-border: oklch(0.922 0 0);
   --sidebar-ring: oklch(0.708 0 0);
+  --surface-soft: oklch(0.985 0 0);
+  --surface-strong: oklch(0.97 0 0);
 }
 
 .dark {
@@ -158,4 +160,28 @@ button {
   --sidebar-accent-foreground: oklch(0.985 0 0);
   --sidebar-border: oklch(1 0 0 / 10%);
   --sidebar-ring: oklch(0.556 0 0);
+  --surface-soft: oklch(0.205 0 0);
+  --surface-strong: oklch(0.245 0 0);
+}
+
+@layer base {
+  body {
+    background-image:
+      radial-gradient(circle at top, color-mix(in oklch, var(--surface-strong) 30%, transparent) 0%, transparent 55%);
+    background-attachment: fixed;
+  }
+}
+
+@layer utilities {
+  .section-shell {
+    @apply mx-auto w-full max-w-7xl px-4 md:px-6 lg:px-8;
+  }
+
+  .section-title {
+    @apply text-2xl font-semibold tracking-tight text-neutral-900 md:text-3xl dark:text-white;
+  }
+
+  .section-subtitle {
+    @apply text-sm uppercase tracking-[0.16em] text-neutral-500 dark:text-neutral-400;
+  }
 }

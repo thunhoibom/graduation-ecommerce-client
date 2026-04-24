@@ -49,7 +49,7 @@ export function WishlistProvider({ children }: { children: ReactNode }) {
       productId: product.id,
       productName: product.name,
       slug: product.barcode, // using barcode as slug for now
-      price: product.price,
+      price: product.currentPrice,
       featuredImage: product.images?.[0],
       addedAt: new Date().toISOString(),
     };

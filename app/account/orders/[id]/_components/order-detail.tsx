@@ -5,7 +5,7 @@ import Link from "next/link";
 import Image from "next/image";
 import { ArrowLeft, Package } from "@phosphor-icons/react";
 import { getMyOrder } from "@/services/rest-api/orders/orders";
-import { cancelOrder } from "@/services/rest-api/orders/orders";
+import { cancelMyOrder } from "@/services/rest-api/orders/orders";
 import type { OrderPojo } from "@/types/order";
 import { formatMoney } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
@@ -14,6 +14,14 @@ import { toast } from "sonner";
 const STATUS_LABELS: Record<string, { label: string; color: string }> = {
   PENDING:            { label: "Chờ xử lý", color: "bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-400" },
   CONFIRMED:          { label: "Đã xác nhận", color: "bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-400" },
+  PROCESSING:         { label: "Đang chuẩn bị hàng", color: "bg-cyan-100 text-cyan-800 dark:bg-cyan-900/30 dark:text-cyan-400" },
+  READY_TO_PICK:      { label: "Chờ shipper lấy hàng", color: "bg-indigo-100 text-indigo-800 dark:bg-indigo-900/30 dark:text-indigo-400" },
+  PICKED_UP:          { label: "Shipper đã lấy hàng", color: "bg-purple-100 text-purple-800 dark:bg-purple-900/30 dark:text-purple-400" },
+  DELIVERING:         { label: "Đang giao", color: "bg-purple-100 text-purple-800 dark:bg-purple-900/30 dark:text-purple-400" },
+  DELIVERED:          { label: "Đã giao", color: "bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400" },
+  COMPLETED:          { label: "Hoàn tất", color: "bg-lime-100 text-lime-800 dark:bg-lime-900/30 dark:text-lime-400" },
+  CANCELLED:          { label: "Đã hủy", color: "bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400" },
+  CANCELLATION_REQUESTED: { label: "Yêu cầu hủy", color: "bg-orange-100 text-orange-800 dark:bg-orange-900/30 dark:text-orange-400" },
   DELIVERY_ON_ROUTE:  { label: "Đang giao", color: "bg-purple-100 text-purple-800 dark:bg-purple-900/30 dark:text-purple-400" },
   DELIVERY_COMPLETE:  { label: "Đã giao", color: "bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400" },
   DELIVERY_FAILED:    { label: "Giao thất bại", color: "bg-orange-100 text-orange-800 dark:bg-orange-900/30 dark:text-orange-400" },
@@ -57,9 +65,13 @@ export function OrderDetail({ buyOrder }: { buyOrder: number }) {
     if (!confirm("Bạn có chắc muốn hủy đơn hàng này?")) return;
     setCancelling(true);
     try {
-      const updated = await cancelOrder(buyOrder);
+      const updated = await cancelMyOrder(buyOrder);
       setOrder(updated);
-      toast.success("Đơn hàng đã được hủy");
+      if (updated.fulfillmentStatus === "CANCELLATION_REQUESTED") {
+        toast.success("Yêu cầu hủy đã được gửi, vui lòng chờ shop phê duyệt");
+      } else {
+        toast.success("Đơn hàng đã được hủy");
+      }
     } catch {
       toast.error("Không thể hủy đơn hàng");
     } finally {
@@ -93,9 +105,11 @@ export function OrderDetail({ buyOrder }: { buyOrder: number }) {
     color: "bg-neutral-100 text-neutral-600 dark:bg-neutral-800 dark:text-neutral-400",
   };
 
-  const canCancel =
-    (fulfillment === "PENDING" || fulfillment === "CONFIRMED")
-    && order.paymentStatus !== "PAID";
+  const canCancelNow =
+    (fulfillment === "PENDING" || fulfillment === "CONFIRMED") &&
+    (order.paymentStatus === "UNPAID" || order.paymentStatus === "EXPIRED" || order.paymentStatus === "PAYMENT_CANCELLED");
+  const canRequestCancel = fulfillment === "PROCESSING" || fulfillment === "READY_TO_PICK";
+  const canCancel = canCancelNow || canRequestCancel;
 
   return (
     <div className="space-y-6">
@@ -127,7 +141,9 @@ export function OrderDetail({ buyOrder }: { buyOrder: number }) {
       {canCancel && (
         <div className="rounded-none border border-red-200 bg-red-50 p-4 dark:border-red-900 dark:bg-red-950/20">
           <p className="text-sm text-red-700 dark:text-red-300">
-            Bạn có thể hủy đơn hàng này trước khi nó được xử lý.
+            {canCancelNow
+              ? "Bạn có thể hủy đơn hàng này ngay lập tức."
+              : "Đơn đã vào quy trình kho. Bạn có thể gửi yêu cầu hủy để shop phê duyệt."}
           </p>
           <Button
             variant="outline"
@@ -136,7 +152,7 @@ export function OrderDetail({ buyOrder }: { buyOrder: number }) {
             disabled={cancelling}
             className="mt-3 rounded-none border-red-300 text-red-600 hover:bg-red-100 dark:border-red-800 dark:text-red-400"
           >
-            {cancelling ? "Đang hủy…" : "Hủy đơn hàng"}
+            {cancelling ? "Đang xử lý…" : canCancelNow ? "Hủy đơn hàng" : "Gửi yêu cầu hủy"}
           </Button>
         </div>
       )}

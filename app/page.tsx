@@ -17,13 +17,13 @@ export const revalidate = 300;
 
 export default async function HomePage() {
   return (
-    <>
+    <div className="space-y-6 pb-6 md:space-y-8 md:pb-8">
       <HeroSection />
       <WeatherHeroSection />
       <ThreeItemGrid />
       <CollectionsGrid />
       <FeaturedCarousel />
       <Footer />
-    </>
+    </div>
   );
 }

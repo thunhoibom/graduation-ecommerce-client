@@ -85,7 +85,7 @@ export function SearchResults({
                 {product.name}
               </h3>
               <p className="text-sm font-semibold text-neutral-900 dark:text-white">
-                {formatMoney(product.price)}
+                {formatMoney(product.currentPrice)}
               </p>
             </div>
           </Link>

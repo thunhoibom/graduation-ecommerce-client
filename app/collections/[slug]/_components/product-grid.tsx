@@ -51,6 +51,13 @@ export function ProductGrid({
             href={`/product/${product.barcode}`}
             className="group block"
           >
+            {(() => {
+              const currentPrice = product.currentPrice;
+              const originalPrice = product.originalPrice ?? product.currentPrice;
+              const hasDiscount = Boolean(product.hasDiscount && currentPrice < originalPrice);
+              const discountPercent = Math.max(0, Math.min(100, product.discountPercent ?? 0));
+              return (
+                <>
             {/* Image */}
             <div className="relative aspect-[3/4] overflow-hidden bg-neutral-100 dark:bg-neutral-900">
               {product.images?.[0]?.url ? (
@@ -75,6 +82,11 @@ export function ProductGrid({
                   </span>
                 </div>
               )}
+              {hasDiscount && (
+                <span className="absolute left-2 top-2 rounded-none bg-red-600 px-2 py-1 text-xs font-semibold text-white">
+                  -{discountPercent}%
+                </span>
+              )}
             </div>
 
             {/* Info */}
@@ -85,10 +97,18 @@ export function ProductGrid({
               <h3 className="line-clamp-2 text-sm font-medium leading-tight">
                 {product.name}
               </h3>
-              <p className="text-sm font-semibold">
-                {formatMoney(product.price)}
-              </p>
+              <div className="flex items-center gap-2">
+                <p className="text-sm font-semibold">{formatMoney(currentPrice)}</p>
+                {hasDiscount && (
+                  <p className="text-xs text-neutral-500 line-through">
+                    {formatMoney(originalPrice)}
+                  </p>
+                )}
+              </div>
             </div>
+                </>
+              );
+            })()}
           </Link>
         ))}
       </div>

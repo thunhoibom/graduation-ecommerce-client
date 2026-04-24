@@ -10,6 +10,14 @@ import { formatMoney } from "@/lib/utils";
 const STATUS_LABELS: Record<string, { label: string; color: string }> = {
   PENDING:            { label: "Chờ xử lý", color: "bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-400" },
   CONFIRMED:          { label: "Đã xác nhận", color: "bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-400" },
+  PROCESSING:         { label: "Đang chuẩn bị hàng", color: "bg-cyan-100 text-cyan-800 dark:bg-cyan-900/30 dark:text-cyan-400" },
+  READY_TO_PICK:      { label: "Chờ shipper lấy hàng", color: "bg-indigo-100 text-indigo-800 dark:bg-indigo-900/30 dark:text-indigo-400" },
+  PICKED_UP:          { label: "Shipper đã lấy hàng", color: "bg-purple-100 text-purple-800 dark:bg-purple-900/30 dark:text-purple-400" },
+  DELIVERING:         { label: "Đang giao", color: "bg-purple-100 text-purple-800 dark:bg-purple-900/30 dark:text-purple-400" },
+  DELIVERED:          { label: "Đã giao", color: "bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400" },
+  COMPLETED:          { label: "Hoàn tất", color: "bg-lime-100 text-lime-800 dark:bg-lime-900/30 dark:text-lime-400" },
+  CANCELLED:          { label: "Đã hủy", color: "bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400" },
+  CANCELLATION_REQUESTED: { label: "Yêu cầu hủy", color: "bg-orange-100 text-orange-800 dark:bg-orange-900/30 dark:text-orange-400" },
   DELIVERY_ON_ROUTE:  { label: "Đang giao", color: "bg-purple-100 text-purple-800 dark:bg-purple-900/30 dark:text-purple-400" },
   DELIVERY_COMPLETE:  { label: "Đã giao", color: "bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400" },
   DELIVERY_FAILED:    { label: "Giao thất bại", color: "bg-orange-100 text-orange-800 dark:bg-orange-900/30 dark:text-orange-400" },
@@ -24,6 +32,7 @@ const PAYMENT_LABELS: Record<string, { label: string; color: string }> = {
   PAID: { label: "Đã thanh toán", color: "text-green-600 dark:text-green-400" },
   PAYMENT_FAILED: { label: "Thanh toán thất bại", color: "text-red-500 dark:text-red-400" },
   PAYMENT_CANCELLED: { label: "Đã hủy thanh toán", color: "text-red-500 dark:text-red-400" },
+  EXPIRED: { label: "Hết hạn thanh toán", color: "text-red-500 dark:text-red-400" },
   REFUNDED: { label: "Đã hoàn tiền", color: "text-fuchsia-600 dark:text-fuchsia-400" },
   PARTIALLY_REFUNDED: { label: "Hoàn tiền một phần", color: "text-fuchsia-600 dark:text-fuchsia-400" },
 };
@@ -148,7 +157,7 @@ export function OrderList() {
                     <p className="text-sm font-semibold text-neutral-900 dark:text-white">
                       {formatMoney(order.totalValue ?? order.netValue ?? 0)}
                     </p>
-                    {fulfillment === "DELIVERY_COMPLETE" && (
+                    {(fulfillment === "DELIVERY_COMPLETE" || fulfillment === "DELIVERED" || fulfillment === "COMPLETED") && (
                       <p className="text-[11px] text-green-600 dark:text-green-400">Đã giao</p>
                     )}
                     {order.paymentStatus === "REFUNDED" && order.totalRefundedAmount ? (

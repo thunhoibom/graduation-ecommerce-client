@@ -6,6 +6,7 @@ import { ProductDescription } from "@/components/product/product-description";
 import { Breadcrumb } from "./_components/breadcrumb";
 import { ProductReviews } from "./_components/product-reviews";
 import { RelatedProducts } from "./_components/related-products";
+import type { ProductVariantPojo } from "@/types/product";
 
 interface Props {
   params: Promise<{ barcode: string }>;
@@ -41,14 +42,17 @@ export default async function ProductPage({ params }: Props) {
 
   if (!product) notFound();
 
+  let variants: ProductVariantPojo[] = [];
+
   // Attach variants onto product so ProductDescription can read them
   try {
     const variantResult = await getProductVariants({
       productBarcode: barcode,
       pageSize: 100,
     });
+    variants = variantResult.items ?? [];
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    (product as any).variants = variantResult.items;
+    (product as any).variants = variants;
   } catch {
     // variants are optional
   }
@@ -71,7 +75,7 @@ export default async function ProductPage({ params }: Props) {
         <div className="grid grid-cols-1 gap-8 lg:grid-cols-2 lg:gap-16">
           {/* Left: sticky gallery */}
           <div className="lg:sticky lg:top-4 lg:h-fit">
-            <Gallery images={images} productName={product.name} />
+            <Gallery images={images} productName={product.name} variants={variants} />
           </div>
 
           {/* Right: info + add to cart */}

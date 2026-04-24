@@ -105,7 +105,7 @@ export function FeaturedCarouselClient({ products }: Props) {
                   {product.name}
                 </h3>
                 <span className="text-sm font-semibold text-neutral-900 dark:text-white">
-                  {formatMoney(product.price)}
+                  {formatMoney(product.currentPrice)}
                 </span>
               </div>
             </Link>

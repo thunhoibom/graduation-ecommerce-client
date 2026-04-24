@@ -3,16 +3,34 @@
 import Image from "next/image";
 import { useRouter, useSearchParams } from "next/navigation";
 import { CaretLeft, CaretRight } from "@phosphor-icons/react";
-import type { ProductImage } from "@/types/product";
+import type { ProductImage, ProductVariantPojo } from "@/types/product";
 
 interface GalleryProps {
   images: ProductImage[];
   productName: string;
+  variants?: ProductVariantPojo[];
 }
 
-export function Gallery({ images, productName }: GalleryProps) {
+export function Gallery({ images, productName, variants = [] }: GalleryProps) {
   const router = useRouter();
   const searchParams = useSearchParams();
+  const sizeParam = searchParams.get("size");
+  const colorParam = searchParams.get("color");
+
+  const selectedVariant = variants.find(
+    (variant) =>
+      (sizeParam == null || variant.size === sizeParam) &&
+      (colorParam == null || variant.color === colorParam)
+  );
+
+  const variantImages = selectedVariant?.images?.length
+    ? selectedVariant.images
+    : selectedVariant?.primaryImageUrl
+      ? [{ url: selectedVariant.primaryImageUrl }]
+      : [];
+
+  const displayImages = variantImages.length ? variantImages : images;
+
   const imageIndex = searchParams.has("image")
     ? parseInt(searchParams.get("image")!)
     : 0;
@@ -23,7 +41,7 @@ export function Gallery({ images, productName }: GalleryProps) {
     router.replace(`?${params.toString()}`, { scroll: false });
   };
 
-  if (!images.length) {
+  if (!displayImages.length) {
     return (
       <div className="relative aspect-square w-full bg-neutral-100 dark:bg-neutral-900 flex items-center justify-center">
         <span className="text-neutral-400">{productName}</span>
@@ -31,16 +49,17 @@ export function Gallery({ images, productName }: GalleryProps) {
     );
   }
 
-  const current = imageIndex < images.length ? images[imageIndex]! : images[0]!;
-  const prevIndex = imageIndex === 0 ? images.length - 1 : imageIndex - 1;
-  const nextIndex = imageIndex + 1 < images.length ? imageIndex + 1 : 0;
+  const current =
+    imageIndex < displayImages.length ? displayImages[imageIndex]! : displayImages[0]!;
+  const prevIndex = imageIndex === 0 ? displayImages.length - 1 : imageIndex - 1;
+  const nextIndex = imageIndex + 1 < displayImages.length ? imageIndex + 1 : 0;
 
   return (
     <div className="flex flex-col-reverse gap-4 lg:flex-row lg:gap-6">
       {/* Thumbnails list (Desktop: Left/Vertical, Mobile: Bottom/Horizontal) */}
-      {images.length > 1 && (
+      {displayImages.length > 1 && (
         <div className="flex gap-2 overflow-x-auto pb-1 lg:flex-col lg:overflow-y-auto lg:h-[600px] lg:w-20 lg:shrink-0 lg:pb-0 hide-scrollbar">
-          {images.map((img, i) => (
+          {displayImages.map((img, i) => (
             <button
               key={i}
               onClick={() => goToImage(i)}
@@ -75,7 +94,7 @@ export function Gallery({ images, productName }: GalleryProps) {
 
         {/* Floating Controls */}
         <div className="absolute inset-0 flex items-center justify-between p-4 opacity-0 transition-opacity group-hover:opacity-100 hidden md:flex">
-          {images.length > 1 && (
+          {displayImages.length > 1 && (
             <>
               <button
                 onClick={(e) => { e.stopPropagation(); goToImage(prevIndex); }}
@@ -96,9 +115,9 @@ export function Gallery({ images, productName }: GalleryProps) {
         </div>
 
         {/* Mobile Indicator */}
-        {images.length > 1 && (
+        {displayImages.length > 1 && (
           <div className="absolute bottom-6 left-1/2 flex -translate-x-1/2 gap-1.5 md:hidden">
-            {images.map((_, i) => (
+            {displayImages.map((_, i) => (
               <div
                 key={i}
                 className={`h-1 rounded-full transition-all ${i === imageIndex ? "w-6 bg-black" : "w-1.5 bg-black/20"

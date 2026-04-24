@@ -62,7 +62,7 @@ export function ProductDescription({ product }: ProductDescriptionProps) {
   const displayPrice =
     selectedVariant?.finalPrice ??
     selectedVariant?.productBasePrice ??
-    product.price;
+    product.currentPrice;
 
   const rawStock = selectedVariant?.availableStock ?? product.currentStock ?? 0;
   const inStock = rawStock > 0;

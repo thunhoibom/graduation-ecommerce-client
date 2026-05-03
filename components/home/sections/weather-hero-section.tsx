@@ -43,9 +43,6 @@ export async function WeatherHeroSection() {
       <div className="mx-auto max-w-7xl px-4">
         <div className="mb-6 flex flex-wrap items-end justify-between gap-3">
           <div>
-            <p className="text-xs uppercase tracking-[0.16em] text-neutral-500 dark:text-neutral-400">
-              Theo thời tiết
-            </p>
             <h2 className="mt-1 text-2xl font-semibold tracking-tight text-neutral-900 dark:text-white md:text-3xl">
               {title}
             </h2>
@@ -108,13 +105,12 @@ export async function WeatherHeroSection() {
 
         <div className="mt-5 flex items-center justify-between gap-3">
           <p className="text-xs text-neutral-500 dark:text-neutral-400">
-            Dữ liệu được cập nhật theo thời tiết hiện tại.
           </p>
           <Link
             href="/collections/all"
             className="text-sm font-medium text-neutral-600 underline-offset-4 transition-colors hover:text-neutral-900 hover:underline dark:text-neutral-300 dark:hover:text-white"
           >
-            Xem them goi y
+            Xem thêm
           </Link>
         </div>
       </div>

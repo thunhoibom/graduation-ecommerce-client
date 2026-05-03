@@ -5,14 +5,12 @@ import {
   getCollectionProducts,
 } from "@/services/rest-api/collections/collections";
 import {
-  getWeatherCategoryRecommendations,
   searchProducts,
 } from "@/services/rest-api/products/products";
 import type { ProductFilters } from "@/services/rest-api/products/products";
 import type { ProductSearchItem, ProductListItem } from "@/types/product";
 import type { ProductCategoryPojo } from "@/types/person";
 import { ProductGrid } from "./_components/product-grid";
-import { WeatherRecommendations } from "./_components/weather-recommendations";
 import { CollectionHeader } from "./_components/collection-header";
 import { FilterSidebar } from "./_components/filter-sidebar";
 import { ActiveFilters } from "./_components/active-filters";
@@ -105,10 +103,6 @@ export default async function CollectionPage({ params, searchParams }: Props) {
   let products: ProductListItem[] = [];
   let totalCount = 0;
   let pageIndex = 1;
-  let weatherSectionItems: ProductListItem[] = [];
-  let weatherContext:
-    | { temperature?: number; condition?: string; weatherTag?: string }
-    | undefined;
 
   if (query && query.trim().length > 0) {
     // If searching, use Elasticsearch
@@ -130,20 +124,6 @@ export default async function CollectionPage({ params, searchParams }: Props) {
     pageIndex = response.pageIndex ?? page;
   }
 
-  try {
-    const weatherRecommendation = await getWeatherCategoryRecommendations({
-      category: slug,
-      limit: 8,
-    });
-    weatherSectionItems = (weatherRecommendation.items ?? []).map((item) =>
-      mapSearchItemToListItem(item, slug)
-    );
-    weatherContext = weatherRecommendation.weatherContext;
-  } catch {
-    weatherSectionItems = [];
-    weatherContext = undefined;
-  }
-  
   const totalPages = Math.ceil((totalCount ?? 0) / 24);
   const hasChildren = collection.children && collection.children.length > 0;
 
@@ -202,11 +182,6 @@ export default async function CollectionPage({ params, searchParams }: Props) {
       <div className="mt-4">
         <ActiveFilters />
       </div>
-
-      <WeatherRecommendations
-        items={weatherSectionItems}
-        weatherContext={weatherContext}
-      />
 
       <div className="mt-6 flex gap-8">
         <div className="hidden lg:block">

@@ -16,8 +16,8 @@ export function WeatherRecommendations({
   if (!items.length) return null;
 
   const title = weatherContext?.temperature != null
-    ? `Goi y theo thoi tiet hom nay (${Math.round(weatherContext.temperature)} do C)`
-    : "Goi y theo thoi tiet hom nay";
+    ? `Gợi ý theo thời tiết hôm nay (${Math.round(weatherContext.temperature)} độ C)`
+    : "Gợi ý theo thời tiết hôm nay";
 
   return (
     <section className="mt-8 border border-neutral-200 bg-neutral-50 p-4 dark:border-neutral-800 dark:bg-neutral-900/40 md:p-6">

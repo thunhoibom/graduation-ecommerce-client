@@ -12,7 +12,7 @@ import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import Link from "next/link";
 import { useAuth } from "@/hooks/use-auth";
-import { login } from "@/services/rest-api/auth/auth";
+import { getGoogleLoginUrl, login } from "@/services/rest-api/auth/auth";
 
 const loginSchema = z.object({
   name: z.string().min(1, "Tên đăng nhập không được để trống"),
@@ -25,6 +25,7 @@ export function LoginForm() {
   const { refreshUser } = useAuth();
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+  const [isGoogleLoading, setIsGoogleLoading] = useState(false);
 
   const {
     register,
@@ -60,6 +61,13 @@ export function LoginForm() {
     } finally {
       setIsLoading(false);
     }
+  }
+
+  function onGoogleSignIn() {
+    setIsGoogleLoading(true);
+    const currentUrl = new URL(window.location.href);
+    const redirectTarget = currentUrl.searchParams.get("redirect") || "/account";
+    window.location.href = getGoogleLoginUrl(redirectTarget);
   }
 
   return (
@@ -136,6 +144,23 @@ export function LoginForm() {
           </>
         ) : (
           "Đăng nhập"
+        )}
+      </Button>
+
+      <Button
+        type="button"
+        variant="outline"
+        className="w-full"
+        onClick={onGoogleSignIn}
+        disabled={isGoogleLoading}
+      >
+        {isGoogleLoading ? (
+          <>
+            <SpinnerGap className="size-4 animate-spin" />
+            <span>Đang chuyển đến Google...</span>
+          </>
+        ) : (
+          "Tiếp tục với Google"
         )}
       </Button>
 

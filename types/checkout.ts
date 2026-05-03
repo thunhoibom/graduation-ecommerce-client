@@ -36,8 +36,8 @@ export interface CheckoutStartPayload {
   /** Customer info — firstName + lastName + email + phone */
   customer: PersonPojo;
   shippingAddress: AddressPojo;
-  /** Payment type: VNPAY | MOMO | COD */
-  paymentType: "VNPAY" | "MOMO" | "COD";
+  /** Payment type: VNPAY | MOMO | PAYOS | COD */
+  paymentType: "VNPAY" | "MOMO" | "PAYOS" | "COD";
   billingType: "individual" | "enterprise";
   billingCompany?: {
     companyName: string;

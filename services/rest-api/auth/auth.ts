@@ -19,6 +19,7 @@ import type { PersonPojo } from "@/types/person";
 const AUTH_LOGIN_PATH = "/api/public/auth/login";
 const AUTH_REGISTER_PATH = "/api/public/auth/register";
 const AUTH_PROFILE_PATH = "/api/account/profile";
+const AUTH_GOOGLE_START_PATH = "/api/public/auth/google/start";
 
 // ─── Login ─────────────────────────────────────────────────────────────────────
 
@@ -84,4 +85,11 @@ export { getAuthToken, setAuthToken, clearAuthToken };
 
 export function isAuthenticated(): boolean {
   return !!getAuthToken();
+}
+
+export function getGoogleLoginUrl(redirectPath = "/account"): string {
+  const baseUrl =
+    process.env.NEXT_PUBLIC_API_URL?.replace(/\/$/, "") ?? "http://localhost:8081";
+  const redirect = encodeURIComponent(redirectPath);
+  return `${baseUrl}${AUTH_GOOGLE_START_PATH}?redirect=${redirect}`;
 }

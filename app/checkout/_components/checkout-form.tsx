@@ -233,7 +233,7 @@ function ShippingCard({
 
 // ─── Payment type selector ──────────────────────────────────────────────────────
 
-type PaymentType = "VNPAY" | "MOMO" | "COD";
+type PaymentType = "VNPAY" | "MOMO" | "PAYOS" | "COD";
 
 function PaymentOption({
   type,
@@ -246,15 +246,20 @@ function PaymentOption({
 }) {
   const isVnpay = type === "VNPAY";
   const isMomo = type === "MOMO";
+  const isPayos = type === "PAYOS";
   const title = isVnpay
     ? "Thanh toán qua VNPAY"
     : isMomo
     ? "Thanh toán qua MOMO"
+    : isPayos
+    ? "Thanh toán qua PayOS"
     : "Thanh toán khi nhận hàng (COD)";
   const description = isVnpay
     ? "Thanh toán an toàn qua cổng VNPAY (ATM / QR Code / Visa / Mastercard)"
     : isMomo
     ? "Quét QR hoặc thanh toán bằng ví MOMO trên trang thanh toán bảo mật"
+    : isPayos
+    ? "Thanh toán chuyển khoản/QR qua PayOS với trang thanh toán bảo mật"
     : "Trả tiền mặt khi nhận được hàng";
   return (
     <button
@@ -279,7 +284,7 @@ function PaymentOption({
           <div className="h-1.5 w-1.5 rounded-full bg-white dark:bg-black" />
         )}
       </div>
-      {isVnpay || isMomo ? (
+      {isVnpay || isMomo || isPayos ? (
         <CreditCard className="size-5 text-neutral-500" />
       ) : (
         <HandCoins className="size-5 text-neutral-500" />
@@ -1035,6 +1040,11 @@ export function CheckoutForm() {
                   onSelect={() => setPaymentType("MOMO")}
                 />
                 <PaymentOption
+                  type="PAYOS"
+                  selected={paymentType === "PAYOS"}
+                  onSelect={() => setPaymentType("PAYOS")}
+                />
+                <PaymentOption
                   type="COD"
                   selected={paymentType === "COD"}
                   onSelect={() => setPaymentType("COD")}
@@ -1193,6 +1203,8 @@ export function CheckoutForm() {
                   ? "Thanh toán trực tuyến (VNPAY)"
                   : paymentType === "MOMO"
                   ? "Thanh toán trực tuyến (MOMO)"
+                  : paymentType === "PAYOS"
+                  ? "Thanh toán trực tuyến (PayOS)"
                   : "Thanh toán khi nhận hàng (COD)"}
               </p>
               {(pricingPreview?.appliedDiscountCode || cart?.appliedDiscountCode) && totalDiscount > 0 && (

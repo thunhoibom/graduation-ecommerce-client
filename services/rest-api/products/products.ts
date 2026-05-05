@@ -37,6 +37,8 @@ export interface ProductFilters {
   pageSize?: number;
   sortBy?: string;
   sortDir?: "asc" | "desc";
+  /** Comma-separated product ids (Elasticsearch document ids) to exclude from hits */
+  excludeIds?: string[];
 }
 
 /** GET /api/public/products — list published products (paginated) */
@@ -80,9 +82,40 @@ export async function searchProducts(
   if (filters.minPrice != null) params["minPrice"] = String(filters.minPrice);
   if (filters.maxPrice != null) params["maxPrice"] = String(filters.maxPrice);
   if (filters.category) params["category"] = filters.category;
+  if (filters.excludeIds?.length) {
+    params["excludeIds"] = filters.excludeIds.join(",");
+  }
 
   const { data } = await api.get<PaginatedResponse<ProductSearchItem>>(
     "/api/public/products/search",
+    { params }
+  );
+  return data;
+}
+
+/** GET /api/public/products/recommendations/for-you — keyword + history boost + excludeIds */
+export async function getForYouRecommendations(opts: {
+  query: string;
+  excludeIds?: string[];
+  deviceId?: string;
+  pageSize?: number;
+}): Promise<PaginatedResponse<ProductSearchItem>> {
+  const params: Record<string, string> = {
+    q: opts.query.trim(),
+    pageIndex: "0",
+    pageSize: String(opts.pageSize ?? 12),
+    sortBy: "price",
+    order: "desc",
+  };
+  if (opts.excludeIds?.length) {
+    params["excludeIds"] = opts.excludeIds.join(",");
+  }
+  if (opts.deviceId) {
+    params["deviceId"] = opts.deviceId;
+  }
+
+  const { data } = await api.get<PaginatedResponse<ProductSearchItem>>(
+    "/api/public/products/recommendations/for-you",
     { params }
   );
   return data;

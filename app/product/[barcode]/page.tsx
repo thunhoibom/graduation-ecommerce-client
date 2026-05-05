@@ -6,6 +6,7 @@ import { ProductDescription } from "@/components/product/product-description";
 import { Breadcrumb } from "./_components/breadcrumb";
 import { ProductReviews } from "./_components/product-reviews";
 import { RelatedProducts } from "./_components/related-products";
+import { ProductViewBehavior } from "./_components/product-view-behavior";
 import type { ProductVariantPojo } from "@/types/product";
 
 interface Props {
@@ -61,6 +62,11 @@ export default async function ProductPage({ params }: Props) {
 
   return (
     <>
+      <ProductViewBehavior
+        productId={product.id}
+        barcode={product.barcode}
+        categoryCode={product.category?.code}
+      />
       {/* Breadcrumb */}
       <div className="mx-auto max-w-7xl px-4 pt-6 pb-2 lg:px-6">
         <Breadcrumb

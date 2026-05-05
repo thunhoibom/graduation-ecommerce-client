@@ -15,6 +15,9 @@ interface ProductGridProps {
   sortBy: string;
   sortDir: string;
   collectionSlug: string;
+  /** Overrides default empty-state copy (e.g. search page) */
+  emptyTitle?: string;
+  emptySubtitle?: string;
 }
 
 export function ProductGrid({
@@ -24,14 +27,21 @@ export function ProductGrid({
   sortBy,
   sortDir,
   collectionSlug,
+  emptyTitle,
+  emptySubtitle,
 }: ProductGridProps) {
   const searchParams = useSearchParams();
 
   if (!products.length) {
     return (
-      <div className="py-16 text-center text-neutral-500">
-        <ShoppingBag className="mx-auto mb-4 size-12 text-neutral-300" />
-        <p>Không có sản phẩm nào.</p>
+      <div className="py-16 text-center">
+        <ShoppingBag className="mx-auto mb-4 size-12 text-neutral-300 dark:text-neutral-800" />
+        <p className="text-base font-medium text-neutral-500">
+          {emptyTitle ?? "Không có sản phẩm nào."}
+        </p>
+        {emptySubtitle ? (
+          <p className="mt-1 text-sm text-neutral-400">{emptySubtitle}</p>
+        ) : null}
       </div>
     );
   }

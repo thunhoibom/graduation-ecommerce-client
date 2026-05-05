@@ -36,8 +36,10 @@ function FilterContent({ onClose }: { onClose?: () => void }) {
   };
 
   const clearAll = () => {
-    const params = new URLSearchParams();
-    params.set("page", "1");
+    const params = new URLSearchParams(searchParams.toString());
+    ["minPrice", "maxPrice", "inStock", "color", "size", "page"].forEach((k) =>
+      params.delete(k)
+    );
     router.replace(`?${params.toString()}`);
     onClose?.();
   };

@@ -5,9 +5,11 @@ import {
   getCollectionProducts,
 } from "@/services/rest-api/collections/collections";
 import {
+  parseIntSearchParam,
+  parseOptionalTrimmed,
   searchProducts,
+  type ProductFilters,
 } from "@/services/rest-api/products/products";
-import type { ProductFilters } from "@/services/rest-api/products/products";
 import type { ProductSearchItem, ProductListItem } from "@/types/product";
 import type { ProductCategoryPojo } from "@/types/person";
 import { ProductGrid } from "./_components/product-grid";
@@ -27,6 +29,7 @@ function mapSearchItemToListItem(
     name: item.name,
     barcode: item.barcode,
     price: item.price,
+    currentPrice: item.price ?? 0,
     category: {
       name: item.categoryName,
       code:
@@ -49,6 +52,8 @@ interface Props {
     maxPrice?: string;
     inStock?: string;
     query?: string;
+    color?: string;
+    size?: string;
   }>;
 }
 
@@ -77,6 +82,8 @@ export default async function CollectionPage({ params, searchParams }: Props) {
     maxPrice,
     inStock,
     query,
+    color,
+    size,
   } = await searchParams;
 
   const page = pageStr ? parseInt(pageStr) : 1;
@@ -88,40 +95,43 @@ export default async function CollectionPage({ params, searchParams }: Props) {
     notFound();
   }
 
+  const colorTrimmed = parseOptionalTrimmed(color);
+  const sizeTrimmed = parseOptionalTrimmed(size);
   const filters: ProductFilters = {
     category: slug,
     page,
     pageSize: 24,
     sortBy: sortBy ?? "name",
     sortDir: (sortDir as "asc" | "desc") ?? "asc",
-    ...(minPrice !== undefined && { minPrice: parseInt(minPrice) }),
-    ...(maxPrice !== undefined && { maxPrice: parseInt(maxPrice) }),
+    minPrice: parseIntSearchParam(minPrice),
+    maxPrice: parseIntSearchParam(maxPrice),
     ...(inStock === "true" && { inStock: true }),
-    ...(query !== undefined && { query: query.trim() }),
+    ...(colorTrimmed ? { color: colorTrimmed } : {}),
+    ...(sizeTrimmed ? { size: sizeTrimmed } : {}),
+    ...(query !== undefined && query.trim() !== "" ? { query: query.trim() } : {}),
   };
 
   let products: ProductListItem[] = [];
   let totalCount = 0;
-  let pageIndex = 1;
+  /** 1-based page for pagination UI (API returns 0-based pageIndex) */
+  let gridPage = page;
 
   if (query && query.trim().length > 0) {
-    // If searching, use Elasticsearch
-    console.log(`>>> [DEBUG SSR COLLECTION] Searching in '${slug}' with query: '${query}'`);
     const result = await searchProducts(filters);
-    console.log(`>>> [DEBUG SSR COLLECTION] ES Hits: ${result.totalCount}`);
     products = (result.items ?? []).map((si: ProductSearchItem) =>
       mapSearchItemToListItem(si, slug)
     );
     totalCount = result.totalCount ?? 0;
-    pageIndex = result.pageIndex ?? page;
+    const apiIdx = result.pageIndex;
+    gridPage =
+      typeof apiIdx === "number" && Number.isFinite(apiIdx) ? apiIdx + 1 : page;
   } else {
-    // Traditional category browsing
-    console.log(`>>> [DEBUG SSR COLLECTION] Browsing collection: '${slug}'`);
     const response = await getCollectionProducts(slug, filters);
-    console.log(`>>> [DEBUG SSR COLLECTION] JPA Hits: ${response.totalCount}`);
     products = response.items ?? [];
     totalCount = response.totalCount ?? 0;
-    pageIndex = response.pageIndex ?? page;
+    const apiIdx = response.pageIndex;
+    gridPage =
+      typeof apiIdx === "number" && Number.isFinite(apiIdx) ? apiIdx + 1 : page;
   }
 
   const totalPages = Math.ceil((totalCount ?? 0) / 24);
@@ -191,7 +201,7 @@ export default async function CollectionPage({ params, searchParams }: Props) {
         <div className="min-w-0 flex-1">
           <ProductGrid
             products={products}
-            page={pageIndex ?? page}
+            page={gridPage}
             totalPages={totalPages}
             sortBy={sortBy ?? "name"}
             sortDir={sortDir ?? "asc"}

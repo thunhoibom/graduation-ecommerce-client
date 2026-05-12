@@ -23,7 +23,7 @@ export default function MessengerChatButton() {
       rel="noopener noreferrer"
       aria-label="Chat qua Facebook Messenger"
       title={!messengerPageId ? "Thiếu NEXT_PUBLIC_MESSENGER_PAGE_ID" : "Chat qua Facebook Messenger"}
-      className="fixed bottom-24 right-6 z-50 inline-flex h-14 w-14 items-center justify-center rounded-full bg-[#0084FF] shadow-lg transition hover:scale-105 hover:bg-[#0078E7]"
+      className="fixed bottom-24 right-0 z-50 inline-flex h-14 w-14 items-center justify-center rounded-none bg-black shadow-lg transition hover:bg-neutral-900 hover:scale-105"
     >
       <MessengerIcon />
     </a>

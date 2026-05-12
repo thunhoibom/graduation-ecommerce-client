@@ -33,12 +33,28 @@ export interface ProductFilters {
   minPrice?: number;
   maxPrice?: number;
   inStock?: boolean;
+  /** Matches backend / JPA predicate (case-insensitive); storefront sends canonical labels e.g. Black, M */
+  color?: string;
+  size?: string;
   page?: number;
   pageSize?: number;
   sortBy?: string;
   sortDir?: "asc" | "desc";
   /** Comma-separated product ids (Elasticsearch document ids) to exclude from hits */
   excludeIds?: string[];
+}
+
+/** Safe parse for URL search params — empty string and NaN yield undefined */
+export function parseIntSearchParam(raw: string | undefined): number | undefined {
+  if (raw == null || raw === "") return undefined;
+  const n = Number.parseInt(raw, 10);
+  return Number.isFinite(n) ? n : undefined;
+}
+
+export function parseOptionalTrimmed(raw: string | undefined): string | undefined {
+  if (raw == null) return undefined;
+  const t = raw.trim();
+  return t === "" ? undefined : t;
 }
 
 /** GET /api/public/products — list published products (paginated) */
@@ -53,6 +69,8 @@ export async function getProducts(
   if (filters.minPrice != null) params["minPrice"] = String(filters.minPrice);
   if (filters.maxPrice != null) params["maxPrice"] = String(filters.maxPrice);
   if (filters.inStock !== undefined) params["inStock"] = String(filters.inStock);
+  if (filters.color) params["color"] = filters.color;
+  if (filters.size) params["size"] = filters.size;
 
   // Backend PaginationService expects pageIndex (0-based)
   if (filters.page != null) params["pageIndex"] = String(filters.page - 1);
@@ -82,6 +100,9 @@ export async function searchProducts(
   if (filters.minPrice != null) params["minPrice"] = String(filters.minPrice);
   if (filters.maxPrice != null) params["maxPrice"] = String(filters.maxPrice);
   if (filters.category) params["category"] = filters.category;
+  if (filters.inStock !== undefined) params["inStock"] = String(filters.inStock);
+  if (filters.color) params["color"] = filters.color;
+  if (filters.size) params["size"] = filters.size;
   if (filters.excludeIds?.length) {
     params["excludeIds"] = filters.excludeIds.join(",");
   }
@@ -93,19 +114,21 @@ export async function searchProducts(
   return data;
 }
 
-/** GET /api/public/products/recommendations/for-you — keyword + history boost + excludeIds */
+/** GET /api/public/products/recommendations/for-you — optional keyword + history boost + excludeIds */
 export async function getForYouRecommendations(opts: {
-  query: string;
+  query?: string;
   excludeIds?: string[];
   deviceId?: string;
   pageSize?: number;
+  placement?: "home" | "search" | "pdp" | "cart" | "checkout_success";
 }): Promise<PaginatedResponse<ProductSearchItem>> {
   const params: Record<string, string> = {
-    q: opts.query.trim(),
+    q: (opts.query ?? "").trim(),
     pageIndex: "0",
     pageSize: String(opts.pageSize ?? 12),
     sortBy: "price",
     order: "desc",
+    placement: opts.placement ?? "home",
   };
   if (opts.excludeIds?.length) {
     params["excludeIds"] = opts.excludeIds.join(",");
@@ -174,7 +197,7 @@ export async function getProduct(barcode: string): Promise<Product> {
 
 // ─── Product variants ─────────────────────────────────────────────────────────
 
-/** GET /api/data/product-variants — list variants (admin) */
+/** Prefer GET /api/public/products/{barcode}/variants; falls back to admin list when no barcode. */
 export async function getProductVariants(
   params: {
     productBarcode?: string;
@@ -183,16 +206,49 @@ export async function getProductVariants(
     allRequestParams?: Record<string, string>;
   } = {}
 ): Promise<PaginatedResponse<ProductVariantPojo>> {
-  const { data } = await api.get<PaginatedResponse<ProductVariantPojo>>(
-    "/api/data/product-variants",
-    {
-      params: params.allRequestParams ?? {
-        ...(params.productBarcode ? { productBarcode: params.productBarcode } : {}),
-        page: String(params.page ?? 1),
-        pageSize: String(params.pageSize ?? 50),
-      }
+  if (params.allRequestParams) {
+    const { data } = await api.get<PaginatedResponse<ProductVariantPojo>>(
+      "/api/data/product-variants",
+      { params: params.allRequestParams }
+    );
+    return data;
+  }
+
+  const barcode = params.productBarcode?.trim();
+  if (barcode) {
+    try {
+      const { data } = await api.get<PaginatedResponse<ProductVariantPojo>>(
+        `/api/public/products/${encodeURIComponent(barcode)}/variants`,
+        {
+          params: {
+            pageIndex: String(Math.max(0, (params.page ?? 1) - 1)),
+            pageSize: String(params.pageSize ?? 100),
+          },
+        }
+      );
+      return data;
+    } catch {
+      // Older backends without the public variants route — same data as before
+      const { data } = await api.get<PaginatedResponse<ProductVariantPojo>>(
+        "/api/data/product-variants",
+        {
+          params: {
+            productBarcode: barcode,
+            page: String(params.page ?? 1),
+            pageSize: String(params.pageSize ?? 100),
+          },
+        }
+      );
+      return data;
     }
-  );
+  }
+
+  const { data } = await api.get<PaginatedResponse<ProductVariantPojo>>("/api/data/product-variants", {
+    params: {
+      page: String(params.page ?? 1),
+      pageSize: String(params.pageSize ?? 50),
+    },
+  });
   return data;
 }
 

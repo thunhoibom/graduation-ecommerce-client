@@ -1,7 +1,10 @@
 import type { Metadata } from "next";
-import { getProducts } from "@/services/rest-api/products/products";
+import {
+  getProducts,
+  parseIntSearchParam,
+  type ProductFilters,
+} from "@/services/rest-api/products/products";
 import type { ProductListItem } from "@/types/product";
-import type { ProductFilters } from "@/services/rest-api/products/products";
 import { ProductGrid } from "../[slug]/_components/product-grid";
 import { FilterSidebar } from "../[slug]/_components/filter-sidebar";
 import { AllProductsHeader } from "./_components/all-products-header";
@@ -15,6 +18,8 @@ interface Props {
     minPrice?: string;
     maxPrice?: string;
     inStock?: string;
+    color?: string;
+    size?: string;
   }>;
 }
 
@@ -33,31 +38,39 @@ export default async function AllProductsPage({ searchParams }: Props) {
     minPrice,
     maxPrice,
     inStock,
+    color,
+    size,
   } = await searchParams;
 
   const page = pageStr ? parseInt(pageStr) : 1;
   const sort = sortBy ?? "name";
   const dir = (sortDir as "asc" | "desc") ?? "asc";
 
+  const colorTrimmed = color?.trim();
+  const sizeTrimmed = size?.trim();
   const filters: ProductFilters = {
     page,
     pageSize: 24,
     sortBy: sort,
     sortDir: dir,
-    ...(minPrice !== undefined && { minPrice: parseInt(minPrice) }),
-    ...(maxPrice !== undefined && { maxPrice: parseInt(maxPrice) }),
+    minPrice: parseIntSearchParam(minPrice),
+    maxPrice: parseIntSearchParam(maxPrice),
     ...(inStock === "true" && { inStock: true }),
+    ...(colorTrimmed ? { color: colorTrimmed } : {}),
+    ...(sizeTrimmed ? { size: sizeTrimmed } : {}),
   };
 
   let items: ProductListItem[] = [];
   let totalCount = 0;
-  let pageIndex = 1;
+  let gridPage = page;
 
   try {
     const result = await getProducts(filters);
     items = result.items ?? [];
     totalCount = result.totalCount ?? 0;
-    pageIndex = result.pageIndex ?? page;
+    const apiIdx = result.pageIndex;
+    gridPage =
+      typeof apiIdx === "number" && Number.isFinite(apiIdx) ? apiIdx + 1 : page;
   } catch {
     // Return empty grid on error
   }
@@ -83,7 +96,7 @@ export default async function AllProductsPage({ searchParams }: Props) {
         <div className="min-w-0 flex-1">
           <ProductGrid
             products={items}
-            page={pageIndex}
+            page={gridPage}
             totalPages={totalPages}
             sortBy={sort}
             sortDir={dir}

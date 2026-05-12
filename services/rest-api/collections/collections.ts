@@ -73,6 +73,8 @@ export async function getCollectionProducts(
     minPrice?: number;
     maxPrice?: number;
     inStock?: boolean;
+    color?: string;
+    size?: string;
     query?: string;
   } = {}
 ): Promise<PaginatedResponse<ProductListItem>> {

@@ -16,15 +16,16 @@ export async function ThreeItemGrid() {
   if (!items.length) return null;
 
   return (
-    <section className="py-12">
-      <div className="mx-auto max-w-7xl px-4">
-        <div className="mb-8 flex items-center justify-between">
-          <h2 className="text-xl font-semibold tracking-tight text-neutral-900 dark:text-white">
-            Sản phẩm mới
-          </h2>
+    <section className="border-y border-neutral-200/80 bg-white/70 py-12 md:py-14 dark:border-neutral-800 dark:bg-neutral-950/40">
+      <div className="section-shell">
+        <div className="mb-8 flex flex-wrap items-end justify-between gap-4">
+          <div>
+            <p className="section-subtitle">Mới cập nhật</p>
+            <h2 className="section-title mt-1">Sản phẩm mới</h2>
+          </div>
           <Link
             href="/collections/all"
-            className="text-sm font-medium text-neutral-500 hover:text-neutral-900 dark:text-neutral-400 dark:hover:text-white underline-offset-4 hover:underline transition-colors"
+            className="text-sm font-medium text-neutral-500 underline-offset-4 transition-colors hover:text-neutral-900 hover:underline dark:text-neutral-400 dark:hover:text-white"
           >
             Xem tất cả
           </Link>

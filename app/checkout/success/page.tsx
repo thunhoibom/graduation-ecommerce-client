@@ -18,6 +18,9 @@ import { getReceipt } from "@/services/rest-api/checkout/checkout";
 import { clearCart } from "@/services/rest-api/cart/cart";
 import type { Receipt } from "@/types/checkout";
 import { useCart } from "@/components/cart/cart-context";
+import { postBehaviorEvent } from "@/services/rest-api/behavior";
+import { getOrCreateDeviceId } from "@/lib/device-id";
+import { ForYouRail } from "@/components/product/for-you-rail";
 
 const STATUS_LABEL: Record<string, string> = {
   PENDING: "Chờ xác nhận",
@@ -50,10 +53,22 @@ function CheckoutSuccessContent() {
       return;
     }
     getReceipt(token)
-      .then(setReceipt)
+      .then((data) => {
+        setReceipt(data);
+        const deviceId = getOrCreateDeviceId();
+        if (!deviceId) return;
+        postBehaviorEvent({
+          deviceId,
+          eventType: "PURCHASE",
+          payload: {
+            orderId: buyOrder ?? undefined,
+            total: data.totalValue ?? data.total ?? undefined,
+          },
+        }).catch(() => undefined);
+      })
       .catch(() => setError("Không thể tải thông tin đơn hàng."))
       .finally(() => setLoading(false));
-  }, [token]);
+  }, [buyOrder, refreshCart, token]);
 
   return (
     <div className="mx-auto max-w-2xl px-4 py-12 lg:py-20">
@@ -314,6 +329,10 @@ function CheckoutSuccessContent() {
             <p className="text-sm text-blue-700 dark:text-blue-300">
               <strong>Bước tiếp theo:</strong> Bạn sẽ nhận email xác nhận trong giây lát. Khi đơn hàng được giao, chúng tôi sẽ thông báo đến bạn qua SMS hoặc email.
             </p>
+          </div>
+
+          <div className="mt-8">
+            <ForYouRail variant="checkout_success" />
           </div>
         </>
       )}

@@ -23,6 +23,14 @@ export function ActiveFilters() {
       label: `Giá đến ${Number(searchParams.get("maxPrice")).toLocaleString("vi-VN")}đ`,
     });
   }
+  const color = searchParams.get("color");
+  if (color) {
+    filters.push({ key: "color", label: `Màu: ${color}` });
+  }
+  const size = searchParams.get("size");
+  if (size) {
+    filters.push({ key: "size", label: `Size: ${size}` });
+  }
   if (searchParams.get("query")) {
     filters.push({ key: "query", label: `"${searchParams.get("query")}"` });
   }

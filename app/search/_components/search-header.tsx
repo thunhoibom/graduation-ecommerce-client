@@ -23,7 +23,7 @@ interface SearchHeaderProps {
 export function SearchHeader({ totalCount, sortBy, sortDir, hasQuery }: SearchHeaderProps) {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const query = searchParams.get("query") ?? "";
+  const query = searchParams.get("query") ?? searchParams.get("q") ?? "";
 
   const currentSort = `${sortBy},${sortDir}`;
 

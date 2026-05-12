@@ -10,6 +10,7 @@ import { Button } from "@/components/ui/button";
 import { formatMoney } from "@/lib/utils";
 import { getPromotionReason, parseAppliedPromotions } from "@/lib/cart-promotions";
 import type { CartItem } from "@/types/cart";
+import { ForYouRail } from "@/components/product/for-you-rail";
 
 interface CartItemRowProps {
   item: CartItem;
@@ -217,6 +218,10 @@ export function CartView() {
   const hasOutOfStock = items.some(
     (i) => i.availableStock === 0 || i.inStock === false
   );
+  const cartQuery = items.slice(0, 2).map((i) => i.productName).join(" ");
+  const excludeIds = items
+    .map((i) => (i.productId != null ? String(i.productId) : ""))
+    .filter((id) => id.length > 0);
 
   if (isLoading) {
     return (
@@ -250,9 +255,10 @@ export function CartView() {
   }
 
   return (
-    <div className="grid grid-cols-1 gap-8 lg:grid-cols-3">
-      {/* ── Items list ──────────────────────────────────────── */}
-      <div className="lg:col-span-2">
+    <div className="space-y-10">
+      <div className="grid grid-cols-1 gap-8 lg:grid-cols-3">
+        {/* ── Items list ──────────────────────────────────────── */}
+        <div className="lg:col-span-2">
         <div className="flex items-center justify-between border-b border-neutral-200 pb-4 dark:border-neutral-800">
           <span className="text-sm font-medium text-neutral-500 dark:text-neutral-400">
             {cart?.itemCount ?? 0} sản phẩm
@@ -284,11 +290,11 @@ export function CartView() {
             <CartItemRow key={item.variantSku} item={item} />
           ))}
         </div>
-      </div>
+        </div>
 
-      {/* ── Order summary ───────────────────────────────────── */}
-      <div>
-        <div className="rounded-none border border-neutral-200 p-6 dark:border-neutral-800">
+        {/* ── Order summary ───────────────────────────────────── */}
+        <div>
+          <div className="rounded-none border border-neutral-200 p-6 dark:border-neutral-800">
           <h2 className="mb-5 text-base font-semibold text-neutral-900 dark:text-white">
             Tóm tắt đơn hàng
           </h2>
@@ -368,8 +374,11 @@ export function CartView() {
               </div>
             ))}
           </div>
+          </div>
         </div>
       </div>
+
+      <ForYouRail variant="cart" query={cartQuery} excludeIds={excludeIds} />
     </div>
   );
 }

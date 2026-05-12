@@ -165,13 +165,19 @@ export const HEADER_MENU: MenuItem[] = [
     ],
   },
   {
+    id: 7,
+    title: "Blog",
+    path: "/blog",
+    description: "Câu chuyện, phong cách và tin tức từ Mono Studio",
+    menuPanel: "blog",
+  },
+  {
     id: 5,
     title: "About",
     path: "/about",
     children: [
       { id: 51, title: "Về Mono Studio", path: "/about" },
       { id: 52, title: "Tầm nhìn & Giá trị", path: "/about#vision" },
-      { id: 53, title: "Blog", path: "/blog" },
       { id: 54, title: "Tuyển dụng", path: "/careers" },
     ],
   },
@@ -236,6 +242,7 @@ export const SITE_NAV = {
   newArrivals: "/new-arrivals",
   sale: "/sale",
   about: "/about",
+  blog: "/blog",
   contact: "/contact",
   // Sale sub-routes
   saleMen: "/sale/men",

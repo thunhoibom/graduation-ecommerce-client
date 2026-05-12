@@ -1,12 +1,22 @@
 import { api } from "./app-api";
 
-export type BehaviorEventType = "SEARCH_SUBMIT" | "PRODUCT_VIEW";
+export type BehaviorEventType =
+  | "SEARCH_SUBMIT"
+  | "PRODUCT_VIEW"
+  | "ADD_TO_CART"
+  | "BEGIN_CHECKOUT"
+  | "PURCHASE";
 
 export interface BehaviorEventPayload {
   query?: string;
   productId?: number;
   barcode?: string;
   categoryCode?: string;
+  categoryCodes?: string[];
+  orderId?: string;
+  total?: number;
+  quantity?: number;
+  placement?: string;
 }
 
 /** POST /api/public/behavior/events */

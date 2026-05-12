@@ -1,22 +1,84 @@
 "use client";
 
-import { useState } from "react";
-import { useRouter } from "next/navigation";
+import { useCallback, useEffect, useMemo, useState } from "react";
+import Link from "next/link";
+import { useRouter, useSearchParams } from "next/navigation";
 import { toast } from "sonner";
 import { formatMoney } from "@/lib/utils";
-import { Minus, Plus } from "@phosphor-icons/react";
+import {
+  Minus,
+  Plus,
+  Heart,
+  ShieldCheck,
+  ArrowsClockwise,
+  Truck,
+} from "@phosphor-icons/react";
 import { useCart } from "@/components/cart/cart-context";
 import { VariantSelector } from "@/components/product/variant-selector";
 import { useWishlist } from "@/components/product/wishlist-context";
 import type { Product, ProductVariantPojo } from "@/types/product";
-import { Heart } from "@phosphor-icons/react";
+import { getOrCreateDeviceId } from "@/lib/device-id";
+import { postBehaviorEvent } from "@/services/rest-api/behavior";
 
 interface ProductDescriptionProps {
   product: Product;
 }
 
+function variantOnHand(v: ProductVariantPojo): number {
+  return v.availableStock ?? v.currentStock ?? 0;
+}
+
+function pickSkuFromVariants(
+  variants: ProductVariantPojo[],
+  sizeParam: string | null,
+  colorParam: string | null
+): string | null {
+  if (!variants.length) return null;
+  const hasOpts = variants.some((v) => v.size || v.color);
+  if (!hasOpts) return null;
+
+  const inStock = (v: ProductVariantPojo) => variantOnHand(v) > 0;
+
+  const candidates = variants.filter((v) => {
+    const sz = sizeParam == null || v.size === sizeParam;
+    const cl = colorParam == null || v.color === colorParam;
+    return sz && cl && inStock(v);
+  });
+
+  if (candidates.length === 1) return candidates[0]!.sku;
+
+  if (sizeParam && colorParam) {
+    const exact = variants.find(
+      (v) => v.size === sizeParam && v.color === colorParam && inStock(v)
+    );
+    return exact?.sku ?? null;
+  }
+  if (sizeParam) {
+    return variants.find((v) => v.size === sizeParam && inStock(v))?.sku ?? null;
+  }
+  if (colorParam) {
+    return variants.find((v) => v.color === colorParam && inStock(v))?.sku ?? null;
+  }
+  return null;
+}
+
+function pickOnlyInStockSku(variants: ProductVariantPojo[]): string | null {
+  const hasOpts = variants.some((v) => v.size || v.color);
+  if (!hasOpts) return null;
+  const stocked = variants.filter((v) => variantOnHand(v) > 0);
+  return stocked.length === 1 ? stocked[0]!.sku : null;
+}
+
+function formatPromoEnd(iso?: string): string | null {
+  if (!iso) return null;
+  const d = new Date(iso);
+  if (Number.isNaN(d.getTime())) return null;
+  return d.toLocaleDateString("vi-VN", { day: "numeric", month: "short", year: "numeric" });
+}
+
 export function ProductDescription({ product }: ProductDescriptionProps) {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const { addItem } = useCart();
   const { toggleWishlist, isInWishlist } = useWishlist();
   const [selectedSku, setSelectedSku] = useState<string | null>(null);
@@ -26,14 +88,39 @@ export function ProductDescription({ product }: ProductDescriptionProps) {
   const isFavorite = product.id ? isInWishlist(product.id) : false;
 
   const variants = (product as unknown as { variants?: ProductVariantPojo[] }).variants ?? [];
+
+  const variantKey = useMemo(
+    () =>
+      variants
+        .map((v) => `${v.sku}:${v.availableStock ?? 0}:${v.size ?? ""}:${v.color ?? ""}`)
+        .join("|"),
+    [variants]
+  );
+
+  useEffect(() => {
+    const sizeParam = searchParams.get("size");
+    const colorParam = searchParams.get("color");
+    const fromUrl = pickSkuFromVariants(variants, sizeParam, colorParam);
+    if (fromUrl) {
+      setSelectedSku(fromUrl);
+      return;
+    }
+    const only = pickOnlyInStockSku(variants);
+    if (only) {
+      setSelectedSku(only);
+      return;
+    }
+    setSelectedSku(null);
+  }, [searchParams, variantKey, variants]);
+
   const selectedVariant = variants.find((v) => v.sku === selectedSku) || null;
   const hasOptions = variants.some((v) => v.size || v.color);
 
-  const handleVariantChange = (sku: string | null) => {
+  const handleVariantChange = useCallback((sku: string | null) => {
     setSelectedSku(sku);
-  };
+  }, []);
 
-  const handleAddToCart = async () => {
+  const handleAddToCart = async (opts?: { thenGoToCart?: boolean }) => {
     if (hasOptions && !selectedVariant) {
       toast.error("Vui lòng chọn phân loại sản phẩm");
       return;
@@ -43,7 +130,25 @@ export function ProductDescription({ product }: ProductDescriptionProps) {
     try {
       await addItem(sku, quantity);
       toast.success("Đã thêm vào giỏ hàng");
+      const deviceId = getOrCreateDeviceId();
+      if (deviceId) {
+        postBehaviorEvent({
+          deviceId,
+          eventType: "ADD_TO_CART",
+          payload: {
+            productId: product.id,
+            barcode: product.barcode,
+            categoryCode: product.category?.code,
+            quantity,
+            placement: "pdp",
+          },
+        }).catch(() => undefined);
+      }
       setQuantity(1);
+      if (opts?.thenGoToCart) {
+        router.push("/cart");
+        return;
+      }
       router.refresh();
     } catch {
       toast.error("Không thể thêm sản phẩm. Vui lòng thử lại.");
@@ -64,43 +169,65 @@ export function ProductDescription({ product }: ProductDescriptionProps) {
     selectedVariant?.productBasePrice ??
     product.currentPrice;
 
-  const rawStock = selectedVariant?.availableStock ?? product.currentStock ?? 0;
+  const salePrice = displayPrice;
+  let listPrice: number | null = null;
+  if (selectedVariant) {
+    const base = selectedVariant.productBasePrice;
+    const fin = selectedVariant.finalPrice ?? salePrice;
+    if (base != null && base > fin) listPrice = base;
+  } else if (product.hasDiscount && product.originalPrice != null && product.originalPrice > salePrice) {
+    listPrice = product.originalPrice;
+  }
+
+  const showDiscountPercent =
+    !selectedVariant && product.hasDiscount && (product.discountPercent ?? 0) > 0;
+
+  const rawStock = selectedVariant
+    ? variantOnHand(selectedVariant)
+    : (product.currentStock ?? 0);
   const inStock = rawStock > 0;
   const isLowStock = inStock && rawStock <= 5;
   const canAddToCart = inStock && (!hasOptions || !!selectedVariant);
 
-  const buttonLabel = () => {
-    if (isPending) return "Đang thêm…";
-    if (!inStock) return "Hết hàng";
-    if (hasOptions && !selectedVariant) return "Chọn phân loại";
-    return "Thêm vào giỏ";
-  };
+  const promoEndLabel = formatPromoEnd(product.discountActiveUntil);
+
+  const attributesText = selectedVariant?.attributes?.trim();
 
   return (
     <div className="space-y-6">
-      {/* ── Header ─────────────────────────────────────────── */}
-      <div className="border-b border-neutral-200 pb-6 dark:border-neutral-800 space-y-3">
+      <div className="space-y-3 border-b border-neutral-200 pb-6 dark:border-neutral-800">
         <div className="flex items-start justify-between gap-4">
-          <h1 className="text-3xl md:text-4xl font-medium tracking-tight leading-tight text-neutral-900 dark:text-white">
+          <h1 className="text-3xl font-medium leading-tight tracking-tight text-neutral-900 dark:text-white md:text-4xl">
             {product.name}
           </h1>
           <button
             aria-label={isFavorite ? "Bỏ yêu thích" : "Yêu thích"}
             onClick={handleToggleWishlist}
             className={`shrink-0 p-2 -m-2 transition-colors ${
-              isFavorite ? "text-red-500" : "text-neutral-400 hover:text-red-500 dark:hover:text-red-400"
+              isFavorite
+                ? "text-red-500"
+                : "text-neutral-400 hover:text-red-500 dark:hover:text-red-400"
             }`}
           >
             <Heart size={24} weight={isFavorite ? "fill" : "regular"} />
           </button>
         </div>
 
-        {/* Price row */}
         <div className="flex flex-col gap-1.5 sm:flex-row sm:items-baseline sm:gap-4">
-          <div className="flex items-baseline gap-1">
+          <div className="flex flex-wrap items-baseline gap-2">
+            {listPrice != null && listPrice > salePrice && (
+              <span className="text-base text-neutral-400 line-through dark:text-neutral-500">
+                {formatMoney(listPrice)}
+              </span>
+            )}
             <span className="text-2xl font-semibold text-neutral-900 dark:text-white">
-              {formatMoney(displayPrice)}
+              {formatMoney(salePrice)}
             </span>
+            {showDiscountPercent && (
+              <span className="rounded-none bg-neutral-900 px-2 py-0.5 text-xs font-semibold text-white dark:bg-white dark:text-black">
+                -{product.discountPercent}%
+              </span>
+            )}
           </div>
 
           {product.averageRating != null && product.averageRating > 0 && (
@@ -118,12 +245,14 @@ export function ProductDescription({ product }: ProductDescriptionProps) {
                   </svg>
                 ))}
               </div>
-              <span className="text-xs text-neutral-500">
-                ({product.totalReviews ?? 0} đánh giá)
-              </span>
+              <span className="text-xs text-neutral-500">({product.totalReviews ?? 0} đánh giá)</span>
             </div>
           )}
         </div>
+
+        {promoEndLabel && product.hasDiscount && (
+          <p className="text-xs text-neutral-500">Ưu đãi đến hết {promoEndLabel}</p>
+        )}
 
         {isLowStock && (
           <p className="text-xs font-medium text-orange-600 dark:text-orange-400">
@@ -132,7 +261,6 @@ export function ProductDescription({ product }: ProductDescriptionProps) {
         )}
       </div>
 
-      {/* ── Variant selector ────────────────────────────────── */}
       <VariantSelector
         variants={variants}
         sizeKey="size"
@@ -140,65 +268,64 @@ export function ProductDescription({ product }: ProductDescriptionProps) {
         onVariantChange={handleVariantChange}
       />
 
-      {/* ── Description ────────────────────────────────────── */}
-      {product.description && (
-        <div className="space-y-2">
+      {attributesText ? (
+        <div className="space-y-2 border-t border-neutral-100 pt-4 dark:border-neutral-900">
           <p className="text-xs font-semibold uppercase tracking-wide text-neutral-400 dark:text-neutral-500">
-            Mô tả sản phẩm
+            Thuộc tính phân loại
           </p>
-          <p className="text-sm leading-relaxed text-neutral-600 dark:text-neutral-400">
-            {product.description}
+          <p className="whitespace-pre-wrap text-sm leading-relaxed text-neutral-600 dark:text-neutral-400">
+            {attributesText}
           </p>
         </div>
-      )}
+      ) : null}
 
-      {/* ── Tabs/Info Hierarchy ───────────────────────────── */}
-      <div className="space-y-4 pt-4 border-t border-neutral-100 dark:border-neutral-900">
-        {[
-          {
-            id: "desc",
-            title: "Chi tiết sản phẩm",
-            content: product.description || "Đang cập nhật...",
-          },
-          {
-            id: "size",
-            title: "Bảng size & Thông số",
-            content: (
-              <div className="space-y-3">
-                <p>Mẫu cao 1m85, nặng 75kg đang mặc size L.</p>
-                <div className="grid grid-cols-3 gap-2 text-[11px] uppercase tracking-wider text-neutral-500">
-                  <div className="border border-neutral-100 p-2 text-center">Size S: 50-60kg</div>
-                  <div className="border border-neutral-100 p-2 text-center">Size M: 60-70kg</div>
-                  <div className="border border-neutral-100 p-2 text-center">Size L: 70-85kg</div>
-                </div>
-                <button className="text-xs font-semibold text-neutral-900 underline underline-offset-4 dark:text-white">
-                  Xem bảng quy đổi chi tiết
-                </button>
-              </div>
-            ),
-          },
-          {
-            id: "care",
-            title: "Hướng dẫn bảo quản",
-            content: "Giặt máy ở nhiệt độ thường. Không sử dụng thuốc tẩy. Phơi trong bóng râm. Ủi ở nhiệt độ thấp.",
-          },
-        ].map((item) => (
-          <details key={item.id} className="group border-b border-neutral-100 pb-4 dark:border-neutral-900" open={item.id === "desc"}>
-            <summary className="flex cursor-pointer items-center justify-between list-none text-sm font-medium text-neutral-900 dark:text-white">
-              {item.title}
-              <span className="transition-transform group-open:rotate-180">
-                <Plus size={14} className="group-open:hidden" />
-                <Minus size={14} className="hidden group-open:block" />
-              </span>
-            </summary>
-            <div className="mt-3 text-sm leading-relaxed text-neutral-600 dark:text-neutral-400">
-              {item.content}
-            </div>
-          </details>
-        ))}
-      </div>
+      {product.description ? (
+        <details
+          className="group border-b border-neutral-100 pb-4 dark:border-neutral-900"
+          open
+        >
+          <summary className="flex cursor-pointer list-none items-center justify-between text-sm font-medium text-neutral-900 dark:text-white">
+            Chi tiết sản phẩm
+            <span className="transition-transform group-open:rotate-180">
+              <Plus size={14} className="group-open:hidden" />
+              <Minus size={14} className="hidden group-open:block" />
+            </span>
+          </summary>
+          <div className="mt-3 text-sm leading-relaxed text-neutral-600 dark:text-neutral-400">
+            <p className="whitespace-pre-wrap">{product.description}</p>
+          </div>
+        </details>
+      ) : null}
 
-      {/* ── Quantity Selector ───────────────────────────────── */}
+      <details className="group border-b border-neutral-100 pb-4 dark:border-neutral-900">
+        <summary className="flex cursor-pointer list-none items-center justify-between text-sm font-medium text-neutral-900 dark:text-white">
+          Chính sách mua hàng
+          <span className="transition-transform group-open:rotate-180">
+            <Plus size={14} className="group-open:hidden" />
+            <Minus size={14} className="hidden group-open:block" />
+          </span>
+        </summary>
+        <div className="mt-3 space-y-3 text-sm leading-relaxed text-neutral-600 dark:text-neutral-400">
+          <p>
+            Đổi trả và vận chuyển theo{" "}
+            <Link
+              href="/help/return-policy"
+              className="font-medium text-neutral-900 underline underline-offset-2 dark:text-white"
+            >
+              chính sách đổi trả
+            </Link>{" "}
+            và{" "}
+            <Link
+              href="/help/shipping"
+              className="font-medium text-neutral-900 underline underline-offset-2 dark:text-white"
+            >
+              chính sách vận chuyển
+            </Link>
+            .
+          </p>
+        </div>
+      </details>
+
       <div className="space-y-4 pt-2">
         <div className="flex items-center justify-between">
           <p className="text-xs font-semibold uppercase tracking-wide text-neutral-400 dark:text-neutral-500">
@@ -206,10 +333,10 @@ export function ProductDescription({ product }: ProductDescriptionProps) {
           </p>
           {rawStock > 0 && (
             <div className="flex items-center gap-1.5">
-               <span className={`size-1.5 rounded-full ${inStock ? "bg-emerald-500" : "bg-red-500"}`} />
-               <span className="text-[11px] font-medium text-neutral-500 uppercase tracking-tight">
-                 {isLowStock ? "Sắp hết hàng" : inStock ? "Sẵn sàng giao ngay" : "Hết hàng"}
-               </span>
+              <span className={`size-1.5 rounded-full ${inStock ? "bg-emerald-500" : "bg-red-500"}`} />
+              <span className="text-[11px] font-medium uppercase tracking-tight text-neutral-500">
+                {isLowStock ? "Sắp hết hàng" : inStock ? "Sẵn sàng giao ngay" : "Hết hàng"}
+              </span>
             </div>
           )}
         </div>
@@ -224,9 +351,7 @@ export function ProductDescription({ product }: ProductDescriptionProps) {
             >
               <Minus size={16} />
             </button>
-            <span className="w-8 text-center text-base font-medium tabular-nums">
-              {quantity}
-            </span>
+            <span className="w-8 text-center text-base font-medium tabular-nums">{quantity}</span>
             <button
               type="button"
               onClick={() => setQuantity(Math.min(rawStock || 99, quantity + 1))}
@@ -237,28 +362,22 @@ export function ProductDescription({ product }: ProductDescriptionProps) {
               <Plus size={16} />
             </button>
           </div>
-          <span className="text-xs text-neutral-400">
-            {rawStock} sản phẩm tại kho
-          </span>
+          <span className="text-xs text-neutral-400">{rawStock} sản phẩm tại kho</span>
         </div>
       </div>
 
-      {/* ── Add to cart — desktop ────────────────────────────── */}
-      <div className="hidden md:grid grid-cols-2 gap-3 pt-2">
+      <div className="hidden grid-cols-2 gap-3 pt-2 md:grid">
         <button
           type="button"
           onClick={handleAddToCart}
           disabled={!canAddToCart || isPending}
-          className="w-full border border-black bg-white py-4 text-sm font-medium text-black transition-all hover:bg-neutral-50 disabled:cursor-not-allowed disabled:opacity-40 dark:bg-black dark:text-white dark:border-white"
+          className="w-full border border-black bg-white py-4 text-sm font-medium text-black transition-all hover:bg-neutral-50 disabled:cursor-not-allowed disabled:opacity-40 dark:border-white dark:bg-black dark:text-white"
         >
           {isPending ? "Đang xử lý…" : "Thêm vào giỏ"}
         </button>
         <button
           type="button"
-          onClick={() => {
-            handleAddToCart();
-            router.push("/cart");
-          }}
+          onClick={() => void handleAddToCart({ thenGoToCart: true })}
           disabled={!canAddToCart || isPending}
           className="w-full bg-black py-4 text-sm font-medium text-white transition-opacity hover:opacity-85 disabled:cursor-not-allowed disabled:opacity-40 dark:bg-white dark:text-black"
         >
@@ -266,33 +385,48 @@ export function ProductDescription({ product }: ProductDescriptionProps) {
         </button>
       </div>
 
-      {/* ── Trust Badges ────────────────────────────────────── */}
       <div className="grid grid-cols-3 gap-2 pt-2">
-        {[
-          { icon: "🛡️", label: "Chính hãng 100%" },
-          { icon: "🔄", label: "15 ngày đổi trả" },
-          { icon: "🚚", label: "Freeship từ 500k" },
-        ].map((badge, i) => (
-          <div
-            key={i}
-            className="flex flex-col items-center gap-1.5 p-3 bg-neutral-50 dark:bg-neutral-900/50"
-          >
-            <span className="text-xl">{badge.icon}</span>
-            <span className="text-[10px] font-medium text-neutral-500 text-center leading-tight uppercase tracking-wider">
-              {badge.label}
-            </span>
-          </div>
-        ))}
+        <Link
+          href="/help/return-policy"
+          className="flex flex-col items-center gap-1.5 bg-neutral-50 p-3 transition-colors hover:bg-neutral-100 dark:bg-neutral-900/50 dark:hover:bg-neutral-900"
+        >
+          <ShieldCheck className="size-6 text-neutral-600 dark:text-neutral-300" aria-hidden />
+          <span className="text-center text-[10px] font-medium uppercase leading-tight tracking-wider text-neutral-500">
+            Chính hãng
+          </span>
+        </Link>
+        <Link
+          href="/help/return-policy"
+          className="flex flex-col items-center gap-1.5 bg-neutral-50 p-3 transition-colors hover:bg-neutral-100 dark:bg-neutral-900/50 dark:hover:bg-neutral-900"
+        >
+          <ArrowsClockwise className="size-6 text-neutral-600 dark:text-neutral-300" aria-hidden />
+          <span className="text-center text-[10px] font-medium uppercase leading-tight tracking-wider text-neutral-500">
+            Đổi trả 15 ngày
+          </span>
+        </Link>
+        <Link
+          href="/help/shipping"
+          className="flex flex-col items-center gap-1.5 bg-neutral-50 p-3 transition-colors hover:bg-neutral-100 dark:bg-neutral-900/50 dark:hover:bg-neutral-900"
+        >
+          <Truck className="size-6 text-neutral-600 dark:text-neutral-300" aria-hidden />
+          <span className="text-center text-[10px] font-medium uppercase leading-tight tracking-wider text-neutral-500">
+            Freeship từ 500k
+          </span>
+        </Link>
       </div>
 
-      {/* ── Sticky mobile bar ─────────────────────────────────── */}
-      <div className="fixed bottom-0 left-0 right-0 z-40 border-t border-neutral-200 bg-white/80 backdrop-blur-md px-4 py-3 md:hidden dark:bg-neutral-950/80 dark:border-neutral-800">
+      <div className="fixed bottom-0 left-0 right-0 z-40 border-t border-neutral-200 bg-white/80 px-4 py-3 backdrop-blur-md md:hidden dark:border-neutral-800 dark:bg-neutral-950/80">
         <div className="mx-auto flex max-w-7xl items-center gap-3">
           <div className="min-w-0 flex-1">
-            <p className="text-sm font-bold text-neutral-900 dark:text-white truncate">
-              {formatMoney(displayPrice)}đ
+            <p className="truncate text-sm font-bold text-neutral-900 dark:text-white">
+              {formatMoney(displayPrice)}
             </p>
-            <p className="text-[10px] text-neutral-500 font-medium">Free Shipping</p>
+            <p className="text-[10px] font-medium text-neutral-500">
+              Miễn phí ship đơn từ 500k ·{" "}
+              <Link href="/help/shipping" className="underline underline-offset-2">
+                Điều kiện
+              </Link>
+            </p>
           </div>
           <button
             type="button"

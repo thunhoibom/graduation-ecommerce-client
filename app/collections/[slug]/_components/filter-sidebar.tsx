@@ -22,7 +22,9 @@ function FilterContent({ onClose }: { onClose?: () => void }) {
   const minPrice = searchParams.get("minPrice");
   const maxPrice = searchParams.get("maxPrice");
   const inStock = searchParams.get("inStock");
-  const hasFilters = !!(minPrice || maxPrice || inStock);
+  const color = searchParams.get("color");
+  const size = searchParams.get("size");
+  const hasFilters = !!(minPrice || maxPrice || inStock || color || size);
 
   const updateParam = (key: string, value: string | null) => {
     const params = new URLSearchParams(searchParams.toString());
@@ -186,7 +188,9 @@ export function FilterSidebar({ isMobile }: FilterSidebarProps) {
   const minPrice = searchParams.get("minPrice");
   const maxPrice = searchParams.get("maxPrice");
   const inStock = searchParams.get("inStock");
-  const hasFilters = !!(minPrice || maxPrice || inStock);
+  const color = searchParams.get("color");
+  const size = searchParams.get("size");
+  const hasFilters = !!(minPrice || maxPrice || inStock || color || size);
 
   // Desktop: inline sidebar
   if (!isMobile) {

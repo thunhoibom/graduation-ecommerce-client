@@ -1,14 +1,12 @@
 import Link from "next/link";
-import Image from "next/image";
-import { Card, CardContent } from "@/components/ui/card";
 import { getCollections } from "@/services/rest-api/collections/collections";
-import type { CollectionListItem } from "@/types/collection";
+import { CollectionsShowcaseClient } from "@/components/home/sections/collections-showcase-client";
 
-// ISR — stale-while-revalidate: revalidate categories every hour
+// ISR — requested hourly refresh; effective segment revalidate follows the minimum in the route (see app/page.tsx revalidate = 300).
 export const revalidate = 3600;
 
 export async function CollectionsGrid() {
-  let collections: CollectionListItem[] = [];
+  let collections: Awaited<ReturnType<typeof getCollections>> = [];
   try {
     collections = await getCollections();
   } catch {
@@ -18,67 +16,28 @@ export async function CollectionsGrid() {
   if (!collections?.length) return null;
 
   return (
-    <section className="py-12">
-      <div className="mx-auto max-w-7xl px-4">
-        <div className="mb-8 flex items-center justify-between">
-          <h2 className="text-xl font-semibold tracking-tight text-neutral-900 dark:text-white">
-            Bộ sưu tập
-          </h2>
+    <section className="bg-neutral-100/60 py-12 md:py-16 dark:bg-neutral-900/35">
+      <div className="section-shell">
+        <div className="mb-8 flex flex-wrap items-end justify-between gap-4 md:mb-10">
+          <div className="max-w-xl">
+            <p className="section-subtitle">Danh mục</p>
+            <h2 className="section-title mt-1">Bộ sưu tập</h2>
+            <p className="mt-2 text-sm leading-relaxed text-neutral-600 dark:text-neutral-400">
+              Chọn dòng sản phẩm phù hợp — mỗi bộ sưu tập được tuyển theo phom dáng và ngữ cảnh mặc khác nhau.
+            </p>
+          </div>
           <Link
             href="/collections"
-            className="text-sm font-medium text-neutral-500 hover:text-neutral-900 dark:text-neutral-400 dark:hover:text-white underline-offset-4 hover:underline transition-colors"
+            className="inline-flex items-center gap-1.5 rounded-full border border-neutral-300 bg-white px-4 py-2 text-sm font-medium text-neutral-800 transition hover:border-neutral-900 hover:bg-neutral-50 dark:border-neutral-600 dark:bg-neutral-950 dark:text-neutral-100 dark:hover:border-neutral-400 dark:hover:bg-neutral-900"
           >
-            Xem tất cả
+            Tất cả bộ sưu tập
+            <svg className="size-3.5" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5" aria-hidden>
+              <path d="M3 8h10M9 4l4 4-4 4" strokeLinecap="round" strokeLinejoin="round" />
+            </svg>
           </Link>
         </div>
 
-        <div className="grid grid-cols-2 gap-4 md:grid-cols-3 lg:grid-cols-4">
-          {collections.map((col) => {
-            const imageUrl = col.imageUrl ?? col.image?.url;
-
-            return (
-              <Link
-                key={col.code}
-                href={`/collections/${col.code}`}
-                className="group"
-              >
-                <Card className="overflow-hidden border-neutral-200 dark:border-neutral-800 hover:shadow-md transition-shadow">
-                  <CardContent className="p-0 aspect-square relative bg-neutral-100 dark:bg-neutral-900">
-                    {imageUrl ? (
-                      <Image
-                        src={imageUrl}
-                        alt={col.name}
-                        fill
-                        className="object-cover transition duration-300 group-hover:scale-105"
-                        sizes="(max-width: 768px) 50vw, 25vw"
-                      />
-                    ) : (
-                      <div className="absolute inset-0 flex flex-col items-center justify-center gap-2">
-                        <span className="text-3xl font-bold tracking-tight text-neutral-300 dark:text-neutral-700">
-                          {col.name.charAt(0)}
-                        </span>
-                        <span className="text-xs text-neutral-400 dark:text-neutral-600">
-                          {col.name}
-                        </span>
-                      </div>
-                    )}
-                  </CardContent>
-
-                  <div className="border-t border-neutral-100 bg-white px-3 py-2 dark:border-neutral-800 dark:bg-neutral-950">
-                    <p className="truncate text-sm font-medium text-neutral-900 dark:text-white">
-                      {col.name}
-                    </p>
-                    {col.productCount !== undefined && (
-                      <p className="text-xs text-neutral-500 dark:text-neutral-400">
-                        {col.productCount} sản phẩm
-                      </p>
-                    )}
-                  </div>
-                </Card>
-              </Link>
-            );
-          })}
-        </div>
+        <CollectionsShowcaseClient collections={collections} />
       </div>
     </section>
   );

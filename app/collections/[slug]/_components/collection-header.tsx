@@ -31,19 +31,32 @@ export function CollectionHeader({
 }: CollectionHeaderProps) {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const [searchValue, setSearchValue] = useState(searchParams.get("query") || "");
+  const [searchValue, setSearchValue] = useState(
+    () => searchParams.get("query")?.trim() || searchParams.get("q")?.trim() || ""
+  );
   const debouncedSearch = useDebounce(searchValue, 500);
 
   useEffect(() => {
+    const nextQuery = debouncedSearch.trim();
     const params = new URLSearchParams(searchParams.toString());
-    if (debouncedSearch) {
-      params.set("query", debouncedSearch);
+    const currentQuery = (params.get("query") ?? params.get("q") ?? "").trim();
+    if (nextQuery === currentQuery) {
+      return;
+    }
+    if (nextQuery) {
+      params.set("query", nextQuery);
+      params.delete("q");
     } else {
       params.delete("query");
+      params.delete("q");
     }
     params.delete("page");
-    router.replace(`?${params.toString()}`, { scroll: false });
-  }, [debouncedSearch]);
+    const nextUrl = `?${params.toString()}`;
+    if (nextUrl === `?${searchParams.toString()}`) {
+      return;
+    }
+    router.replace(nextUrl, { scroll: false });
+  }, [debouncedSearch, router, searchParams]);
 
   const currentSort = `${sortBy},${sortDir}`;
   const activeOption = SORT_OPTIONS.find((o) => o.value === currentSort);

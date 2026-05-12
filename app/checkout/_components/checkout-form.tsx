@@ -45,6 +45,8 @@ import {
 } from "@/services/rest-api/checkout/checkout";
 import { calculateCartPricing } from "@/services/rest-api/cart/cart";
 import type { CartPricingResult } from "@/types/cart";
+import { getOrCreateDeviceId } from "@/lib/device-id";
+import { postBehaviorEvent } from "@/services/rest-api/behavior";
 
 // ─── Step type ─────────────────────────────────────────────────────────────────
 
@@ -621,6 +623,18 @@ export function CheckoutForm() {
     };
 
     try {
+      const deviceId = getOrCreateDeviceId();
+      if (deviceId) {
+        postBehaviorEvent({
+          deviceId,
+          eventType: "BEGIN_CHECKOUT",
+          payload: {
+            total,
+            quantity: items.reduce((sum, item) => sum + item.quantity, 0),
+            placement: "checkout",
+          },
+        }).catch(() => undefined);
+      }
       const result = await initiateCheckout(payload);
 
       // COD → no redirect, go straight to success page

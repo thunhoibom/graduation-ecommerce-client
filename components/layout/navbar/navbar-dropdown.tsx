@@ -1,8 +1,11 @@
-import { useCallback, useEffect, useRef, useState } from "react";
+"use client";
+
+import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import type { MenuItem } from "@/types/common";
-import { ArrowRightIcon } from "@phosphor-icons/react";
+import { ArrowRightIcon, CaretRightIcon } from "@phosphor-icons/react";
+import { cn } from "@/lib/utils";
 
 interface NavbarDropdownProps {
   item: MenuItem;
@@ -13,7 +16,6 @@ export default function NavbarDropdown({ item, onClose }: NavbarDropdownProps) {
   const [activeGroup, setActiveGroup] = useState<number | null>(null);
   const panelRef = useRef<HTMLDivElement>(null);
 
-  // Close on Escape & Outside Click
   useEffect(() => {
     const handleKey = (e: KeyboardEvent) => {
       if (e.key === "Escape") onClose();
@@ -46,62 +48,76 @@ export default function NavbarDropdown({ item, onClose }: NavbarDropdownProps) {
     <div
       ref={panelRef}
       role="menu"
-      className="absolute left-0 top-full z-50 w-full pt-4 animate-in slide-in-from-top-2 fade-in duration-300 ease-out"
+      className="absolute inset-x-0 top-full z-50 w-full pt-2 animate-in fade-in slide-in-from-top-1 duration-200 ease-out"
     >
-      <div className="mx-auto max-w-7xl overflow-hidden rounded-2xl border border-neutral-200 bg-white/95 backdrop-blur-md shadow-2xl dark:border-neutral-800 dark:bg-neutral-900/95">
-        <div className="flex min-h-[420px]">
-          {/* List of sub-categories */}
-          <div className="w-64 border-r border-neutral-100 p-4 dark:border-neutral-800">
-            <div className="mb-2 px-3 text-[10px] font-bold uppercase tracking-widest text-neutral-400">
+      <div
+        className={cn(
+          "mx-auto max-w-7xl overflow-hidden rounded-xl border border-neutral-200/90 bg-white/95 shadow-[0_20px_50px_-12px_rgba(0,0,0,0.15)] backdrop-blur-md",
+          "dark:border-neutral-800 dark:bg-neutral-950/95 dark:shadow-[0_20px_50px_-12px_rgba(0,0,0,0.45)]",
+        )}
+      >
+        <div className="flex min-h-[min(420px,70vh)] max-w-full">
+          {/* Cột danh mục */}
+          <div className="w-56 shrink-0 border-r border-neutral-100 bg-neutral-50/50 py-4 pl-2 pr-2 dark:border-neutral-800/80 dark:bg-neutral-900/30 sm:w-60">
+            <p className="mb-3 px-3 text-[10px] font-medium uppercase tracking-[0.18em] text-neutral-400 dark:text-neutral-500">
               Danh mục
-            </div>
-            <div className="space-y-1">
-              {groups.map((group) => (
-                <button
-                  key={group.id}
-                  role="menuitem"
-                  onMouseEnter={() => setActiveGroup(group.id)}
-                  className={`
-                    group flex w-full items-center justify-between rounded-lg px-3 py-2.5 text-left transition-all
-                    ${
-                      activeGroup === group.id
-                        ? "bg-neutral-900 text-white shadow-md dark:bg-white dark:text-black"
-                        : "text-neutral-600 hover:bg-neutral-100 hover:text-neutral-900 dark:text-neutral-400 dark:hover:bg-neutral-800 dark:hover:text-white"
-                    }
-                  `}
-                >
-                  <span className="text-sm font-semibold">{group.title}</span>
-                  {activeGroup === group.id && (
-                    <ArrowRightIcon weight="bold" size={12} className="animate-in slide-in-from-left-2" />
-                  )}
-                </button>
-              ))}
+            </p>
+            <div className="space-y-0.5">
+              {groups.map((group) => {
+                const isActive = activeGroup === group.id;
+                return (
+                  <button
+                    key={group.id}
+                    type="button"
+                    role="menuitem"
+                    onMouseEnter={() => setActiveGroup(group.id)}
+                    onFocus={() => setActiveGroup(group.id)}
+                    className={cn(
+                      "group flex w-full items-center justify-between gap-2 rounded-lg border border-transparent py-2.5 pl-3 pr-2.5 text-left text-sm font-medium outline-none transition-colors",
+                      "focus-visible:ring-2 focus-visible:ring-neutral-900/20 focus-visible:ring-offset-1 dark:focus-visible:ring-white/25",
+                      isActive
+                        ? "border-neutral-200/80 bg-white text-neutral-900 shadow-sm dark:border-neutral-700 dark:bg-neutral-800 dark:text-white"
+                        : "text-neutral-600 hover:border-neutral-200/60 hover:bg-white/80 hover:text-neutral-900 dark:text-neutral-400 dark:hover:border-neutral-700 dark:hover:bg-neutral-800/40 dark:hover:text-white",
+                    )}
+                  >
+                    <span className="truncate">{group.title}</span>
+                    <CaretRightIcon
+                      weight="bold"
+                      className={cn(
+                        "size-3.5 shrink-0 text-neutral-300 transition-opacity dark:text-neutral-600",
+                        isActive && "text-neutral-900 opacity-100 dark:text-white",
+                        !isActive && "opacity-0 group-hover:opacity-100",
+                      )}
+                      aria-hidden
+                    />
+                  </button>
+                );
+              })}
             </div>
           </div>
 
-          {/* Details & Featured Area */}
-          <div className="flex flex-1 p-8">
-            {/* Grandchildren links */}
-            <div className="flex-1">
-              <div className="grid grid-cols-2 gap-x-12 gap-y-8">
+          {/* Nội dung + ảnh */}
+          <div className="flex min-w-0 flex-1 flex-col lg:flex-row">
+            <div className="min-w-0 flex-1 p-6 sm:p-8">
+              <div className="grid grid-cols-1 gap-8 sm:grid-cols-2 sm:gap-x-10 sm:gap-y-6">
                 {activeChildren.length > 0 ? (
                   activeChildren.map((child) => (
-                    <div key={child.id} className="space-y-3">
+                    <div key={child.id} className="min-w-0">
                       <Link
                         href={child.path}
                         onClick={onClose}
-                        className="text-sm font-bold uppercase tracking-wide text-neutral-900 hover:text-neutral-600 dark:text-white dark:hover:text-neutral-300 transition-colors"
+                        className="inline-block border-b border-transparent text-sm font-semibold text-neutral-900 transition-colors hover:border-neutral-900 dark:text-white dark:hover:border-white"
                       >
                         {child.title}
                       </Link>
                       {child.children && child.children.length > 0 && (
-                        <ul className="space-y-2">
-                          {child.children.slice(0, 5).map((sub) => (
+                        <ul className="mt-3 space-y-1 border-t border-neutral-100 pt-3 dark:border-neutral-800">
+                          {child.children.slice(0, 8).map((sub) => (
                             <li key={sub.id}>
                               <Link
                                 href={sub.path}
                                 onClick={onClose}
-                                className="text-sm text-neutral-500 hover:text-neutral-900 dark:text-neutral-400 dark:hover:text-white transition-colors"
+                                className="block rounded-md py-1.5 text-sm text-neutral-600 transition-colors hover:bg-neutral-50 hover:text-neutral-900 dark:text-neutral-400 dark:hover:bg-neutral-800/50 dark:hover:text-white"
                               >
                                 {sub.title}
                               </Link>
@@ -112,69 +128,71 @@ export default function NavbarDropdown({ item, onClose }: NavbarDropdownProps) {
                     </div>
                   ))
                 ) : (
-                  <div className="col-span-2">
-                    <div className="mb-4">
-                      <h3 className="text-xl font-bold text-neutral-900 dark:text-white">
-                        Khám phá {activeGroupData?.title}
-                      </h3>
-                      {activeGroupData?.description && (
-                        <p className="mt-2 max-w-md text-sm text-neutral-500 dark:text-neutral-400">
-                          {activeGroupData.description}
-                        </p>
-                      )}
-                    </div>
+                  <div className="sm:col-span-2">
+                    <p className="text-[10px] font-medium uppercase tracking-[0.18em] text-neutral-400 dark:text-neutral-500">
+                      {activeGroupData?.title}
+                    </p>
+                    <h3 className="mt-2 text-xl font-semibold tracking-tight text-neutral-900 dark:text-white">
+                      Khám phá {activeGroupData?.title}
+                    </h3>
+                    {activeGroupData?.description ? (
+                      <p className="mt-2 max-w-md text-sm leading-relaxed text-neutral-600 dark:text-neutral-400">
+                        {activeGroupData.description}
+                      </p>
+                    ) : null}
                     <Link
                       href={activeGroupData?.path || "#"}
                       onClick={onClose}
-                      className="inline-flex items-center gap-2 rounded-full bg-neutral-900 px-6 py-2.5 text-sm font-bold text-white transition-all hover:bg-neutral-800 hover:shadow-lg dark:bg-white dark:text-black dark:hover:bg-neutral-200"
+                      className="mt-6 inline-flex items-center gap-2 rounded-md border border-neutral-900 bg-neutral-900 px-5 py-2.5 text-sm font-medium text-white transition-colors hover:bg-neutral-800 dark:border-white dark:bg-white dark:text-neutral-900 dark:hover:bg-neutral-200"
                     >
                       Xem tất cả
-                      <ArrowRightIcon size={16} />
+                      <ArrowRightIcon size={16} weight="bold" aria-hidden />
                     </Link>
                   </div>
                 )}
               </div>
             </div>
 
-            {/* Visual Feature Area (Image from DB) */}
-            <div className="ml-12 w-80 shrink-0">
-              <div className="group relative aspect-[4/5] overflow-hidden rounded-xl bg-neutral-100 dark:bg-neutral-800 shadow-inner">
+            <div className="hidden shrink-0 border-t border-neutral-100 p-6 sm:p-8 lg:block lg:w-[min(100%,280px)] lg:border-l lg:border-t-0 xl:w-80 dark:border-neutral-800">
+              <div className="group relative aspect-[4/5] overflow-hidden rounded-lg bg-neutral-100 ring-1 ring-neutral-200/80 dark:bg-neutral-900 dark:ring-neutral-800">
                 {activeGroupData?.imageUrl ? (
                   <Image
                     src={activeGroupData.imageUrl}
                     alt={activeGroupData.title}
                     fill
-                    className="object-cover transition-transform duration-700 group-hover:scale-105"
-                    sizes="320px"
+                    className="object-cover transition-transform duration-500 ease-out group-hover:scale-[1.02]"
+                    sizes="(max-width: 1024px) 0vw, 320px"
                     priority
                   />
                 ) : (
                   <div className="flex h-full flex-col items-center justify-center p-6 text-center">
-                    <div className="mb-4 rounded-full bg-neutral-200 p-4 dark:bg-neutral-700">
+                    <div className="mb-3 rounded-full bg-neutral-200/80 p-3 dark:bg-neutral-800">
                       <Image
                         src="/logo.png"
-                        alt="Logo"
-                        width={40}
-                        height={40}
-                        className="opacity-20 grayscale"
-                        onError={(e) => (e.currentTarget.style.display = "none")}
+                        alt={activeGroupData?.title ?? "Logo"}
+                        width={36}
+                        height={36}
+                        className="opacity-30 grayscale"
+                        onError={(e) => {
+                          e.currentTarget.style.display = "none";
+                        }}
                       />
                     </div>
-                    <p className="text-sm font-medium text-neutral-400 uppercase tracking-widest">
+                    <p className="text-xs font-medium uppercase tracking-widest text-neutral-400">
                       {activeGroupData?.title}
                     </p>
                   </div>
                 )}
-                {/* Overlay with info */}
-                <div className="absolute inset-x-0 bottom-0 p-6 bg-gradient-to-t from-black/80 via-black/40 to-transparent text-white">
-                  <p className="text-[10px] font-bold uppercase tracking-[0.2em] opacity-80">Bộ sưu tập</p>
-                  <h4 className="mt-1 text-lg font-bold leading-tight">{activeGroupData?.title}</h4>
+                <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/75 via-black/35 to-transparent px-5 pb-5 pt-16 text-white">
+                  <p className="text-[10px] font-medium uppercase tracking-[0.2em] text-white/70">Bộ sưu tập</p>
+                  <h4 className="mt-1 text-base font-semibold leading-snug">{activeGroupData?.title}</h4>
                   <Link
                     href={activeGroupData?.path || "#"}
                     onClick={onClose}
-                    className="mt-3 inline-flex items-center text-xs font-bold uppercase tracking-widest underline underline-offset-4 decoration-2 decoration-white/30 hover:decoration-white transition-all"
+                    className="mt-3 inline-flex items-center gap-1 text-xs font-medium text-white/90 underline decoration-white/30 underline-offset-4 transition-colors hover:text-white hover:decoration-white"
                   >
                     Xem ngay
+                    <ArrowRightIcon size={12} weight="bold" className="opacity-80" aria-hidden />
                   </Link>
                 </div>
               </div>

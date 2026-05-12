@@ -14,6 +14,7 @@ type WishlistContextType = {
   items: WishlistItem[];
   addItem: (product: Product) => void;
   removeItem: (productId: number) => void;
+  clearWishlist: () => void;
   isInWishlist: (productId: number) => boolean;
   toggleWishlist: (product: Product) => void;
 };
@@ -60,6 +61,10 @@ export function WishlistProvider({ children }: { children: ReactNode }) {
     setItems((prev) => prev.filter((i) => i.productId !== productId));
   };
 
+  const clearWishlist = () => {
+    setItems([]);
+  };
+
   const isInWishlist = (productId: number) => {
     return items.some((i) => i.productId === productId);
   };
@@ -75,7 +80,7 @@ export function WishlistProvider({ children }: { children: ReactNode }) {
 
   return (
     <WishlistContext.Provider
-      value={{ items, addItem, removeItem, isInWishlist, toggleWishlist }}
+      value={{ items, addItem, removeItem, clearWishlist, isInWishlist, toggleWishlist }}
     >
       {children}
     </WishlistContext.Provider>

@@ -21,6 +21,9 @@ export async function HeroSection() {
     about?.description ??
     "Thời trang tối giản được thiết kế cho những ai đặt chất lượng lên hàng đầu. Mỗi sản phẩm — một câu chuyện, một lựa chọn có chủ đích.";
   const bannerUrl = about?.bannerImageURL;
+  const tagline =
+    about?.tagline?.trim() ||
+    "Chất liệu chọn lọc · phom dáng rõ ràng — minimal, intentional.";
 
   return (
     <section className="relative w-full bg-neutral-50 dark:bg-black">
@@ -46,7 +49,8 @@ export async function HeroSection() {
                 <p className="text-xs font-medium uppercase tracking-[0.2em] text-white/70">
                   {brandName} — 2026
                 </p>
-                <h1 className="mt-4 font-display text-5xl font-bold tracking-tight md:text-7xl">
+                <p className="mt-3 text-sm font-medium text-white/75 md:text-base">{tagline}</p>
+                <h1 className="mt-5 font-display text-5xl font-bold leading-[1.05] tracking-tight md:text-7xl">
                   Minimal.
                   <br />
                   Intentional.
@@ -74,17 +78,22 @@ export async function HeroSection() {
         </div>
       ) : (
         /* ── Text-only fallback hero ─────────────────────────────────── */
-        <div className="mx-auto max-w-7xl px-4 py-20 md:py-32">
-          <div className="max-w-2xl">
+        <div className="relative mx-auto max-w-7xl px-4 py-20 md:py-32">
+          <div
+            className="pointer-events-none absolute inset-x-0 top-1/2 z-0 h-[min(70%,28rem)] -translate-y-1/2 rounded-[2rem] bg-gradient-to-br from-neutral-200/50 via-transparent to-neutral-300/35 dark:from-neutral-800/40 dark:to-neutral-950/60"
+            aria-hidden
+          />
+          <div className="relative z-10 max-w-2xl">
             <p className="text-xs font-medium uppercase tracking-[0.2em] text-neutral-500 dark:text-neutral-400">
               {brandName} — 2026
             </p>
-            <h1 className="mt-4 font-display text-5xl font-bold tracking-tight text-neutral-900 dark:text-white md:text-7xl">
-              Minimal.
+            <p className="mt-3 text-sm text-neutral-600 dark:text-neutral-400 md:text-base">{tagline}</p>
+            <h1 className="mt-5 font-display text-5xl font-bold leading-[1.05] tracking-tight text-neutral-900 dark:text-white md:text-7xl">
+              Tối giản.
               <br />
-              Intentional.
+              Có chủ đích.
               <br />
-              Yours.
+              Dành cho bạn.
             </h1>
             <p className="mt-6 text-base leading-relaxed text-neutral-600 dark:text-neutral-400 md:text-lg">
               {description}

@@ -9,7 +9,7 @@ export function SearchBox() {
   const searchParams = useSearchParams();
   const inputRef = useRef<HTMLInputElement>(null);
 
-  const query = searchParams.get("query") ?? "";
+  const query = searchParams.get("query") ?? searchParams.get("q") ?? "";
 
   const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -17,14 +17,19 @@ export function SearchBox() {
     if (!q) return;
     const params = new URLSearchParams(searchParams.toString());
     params.set("query", q);
+    params.delete("q");
     params.delete("page");
     router.push(`/search?${params.toString()}`);
   };
 
   const handleClear = () => {
     if (inputRef.current) inputRef.current.value = "";
-    const params = new URLSearchParams();
-    router.push("/search");
+    const params = new URLSearchParams(searchParams.toString());
+    params.delete("query");
+    params.delete("q");
+    params.delete("page");
+    const qs = params.toString();
+    router.push(qs ? `/search?${qs}` : "/search");
   };
 
   return (

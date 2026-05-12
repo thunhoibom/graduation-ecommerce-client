@@ -10,6 +10,10 @@ interface VariantSelectorProps {
   onVariantChange?: (sku: string | null) => void;
 }
 
+function variantOnHand(v: ProductVariantPojo): number {
+  return v.availableStock ?? v.currentStock ?? 0;
+}
+
 export function VariantSelector({
   variants,
   sizeKey = "size",
@@ -44,7 +48,7 @@ export function VariantSelector({
       (v) =>
         v.size === size &&
         ((colorParam && v.color === colorParam) || !colorParam) &&
-        (v.availableStock ?? 0) > 0
+        variantOnHand(v) > 0
     );
 
   const isColorAvailable = (color: string) =>
@@ -52,7 +56,7 @@ export function VariantSelector({
       (v) =>
         v.color === color &&
         ((sizeParam && v.size === sizeParam) || !sizeParam) &&
-        (v.availableStock ?? 0) > 0
+        variantOnHand(v) > 0
     );
 
   const handleSelect = (name: string, value: string) => {

@@ -1,10 +1,16 @@
-INSERT INTO 'app_params'
-('param_id', 'param_category', 'param_name', 'param_value')
-VALUES
-(01, 'company', 'name', 'Trébol Demo'),
-(02, 'company', 'description', 'This is a demostration of integrated eCommerce system Trébol'),
-(03, 'company', 'bannerImageURL', 'https://fakeimg.pl/400x150'),
-(04, 'company', 'logoImageURL', 'https://fakeimg.pl/250');
+-- Cập nhật thông tin công ty (chạy sau khi đã có các dòng category `company` trong `app_params`).
+-- MySQL: dùng backtick cho tên bảng/cột; không dùng dấu nháy đơn cho identifier.
+UPDATE `app_params` SET `param_value` = 'Mono Studio'
+WHERE `param_category` = 'company' AND `param_name` = 'name';
+
+UPDATE `app_params` SET `param_value` = 'Thương mại điện tử tích hợp — đồ án tốt nghiệp Mono Studio'
+WHERE `param_category` = 'company' AND `param_name` = 'description';
+
+UPDATE `app_params` SET `param_value` = 'https://fakeimg.pl/1200x400'
+WHERE `param_category` = 'company' AND `param_name` = 'bannerImageURL';
+
+UPDATE `app_params` SET `param_value` = 'https://fakeimg.pl/250'
+WHERE `param_category` = 'company' AND `param_name` = 'logoImageURL';
 
 INSERT INTO 'order_statuses'
 ('order_status_id', 'order_status_code', 'order_status_name')

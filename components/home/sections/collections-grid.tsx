@@ -23,7 +23,7 @@ export async function CollectionsGrid() {
             <p className="section-subtitle">Danh mục</p>
             <h2 className="section-title mt-1">Bộ sưu tập</h2>
             <p className="mt-2 text-sm leading-relaxed text-neutral-600 dark:text-neutral-400">
-              Chọn dòng sản phẩm phù hợp — mỗi bộ sưu tập được tuyển theo phom dáng và ngữ cảnh mặc khác nhau.
+              Chọn dòng sản phẩm phù hợp — mỗi bộ sưu tập được tuyển theo form dáng và ngữ cảnh mặc khác nhau.
             </p>
           </div>
           <Link

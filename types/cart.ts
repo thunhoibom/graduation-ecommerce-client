@@ -32,12 +32,20 @@ export interface AppliedPromotionLine {
   couponCode?: string;
 }
 
+export interface PromotionNearMiss {
+  ruleId?: number;
+  title?: string;
+  messageVi?: string;
+  remainingAmount?: number;
+}
+
 export interface CartPricingResult {
   subtotal: number;
   discountAmount: number;
   totalAfterDiscount: number;
   freeShipping?: boolean;
   appliedPromotions?: AppliedPromotionLine[];
+  promotionNearMisses?: PromotionNearMiss[];
   appliedDiscountCode?: string;
 }
 

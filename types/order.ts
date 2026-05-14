@@ -84,6 +84,16 @@ export interface ReturnRequestPojo {
   refundMethod: string;
   refundAmount?: number;  // VND
   trackingNumber?: string;
+  refundBankName?: string;
+  refundBankAccountNumber?: string;
+  refundBankAccountHolder?: string;
+  refundProofUrl?: string;
+  refundReference?: string;
+  refundedAt?: string;
+  qcStatus?: string;
+  qcNotes?: string;
+  qcPhotoUrls?: string;
+  qcCompletedAt?: string;
   orderId?: number;
   items: ReturnRequestItemPojo[];
 }

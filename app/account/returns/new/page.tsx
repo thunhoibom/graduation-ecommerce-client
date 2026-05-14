@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import { useSearchParams } from "next/navigation";
 import { ArrowLeft, Package, Check } from "@phosphor-icons/react";
 import { toast } from "sonner";
 import { useAuth } from "@/hooks/use-auth";
@@ -25,13 +26,28 @@ const REASON_OPTIONS = [
 ];
 
 const REFUND_METHODS = [
-  { value: "ORIGINAL", label: "Hoàn tiền qua phương thức thanh toán ban đầu" },
+  { value: "ORIGINAL_PAYMENT", label: "Hoàn tiền qua phương thức thanh toán ban đầu" },
   { value: "STORE_CREDIT", label: "Hoàn vào tài khoản mua sắm" },
+  { value: "BANK_TRANSFER", label: "Chuyển khoản ngân hàng (nhập STK)" },
 ];
+
+function normalizeFulfillmentStatus(order: OrderPojo): string {
+  const raw = (order.fulfillmentStatus ?? order.status ?? "").toUpperCase();
+  if (raw === "DELIVERY_COMPLETE") return "DELIVERED";
+  if (raw === "DELIVERY_ON_ROUTE") return "DELIVERING";
+  if (raw === "DELIVERY_CANCELLED") return "CANCELLED";
+  return raw;
+}
+
+function canReturnOrder(order: OrderPojo): boolean {
+  const status = normalizeFulfillmentStatus(order);
+  return status === "DELIVERED" || status === "COMPLETED" || status === "CANCELLED";
+}
 
 export default function NewReturnPage() {
   const { isAuthenticated, isLoading } = useAuth();
   const router = useRouter();
+  const searchParams = useSearchParams();
 
   const [orders, setOrders] = useState<OrderPojo[]>([]);
   const [loadingOrders, setLoadingOrders] = useState(true);
@@ -39,8 +55,11 @@ export default function NewReturnPage() {
   const [selectedOrderId, setSelectedOrderId] = useState<string>("");
   const [selectedItems, setSelectedItems] = useState<Set<number>>(new Set());
   const [reason, setReason] = useState("");
-  const [refundMethod, setRefundMethod] = useState("ORIGINAL");
+  const [refundMethod, setRefundMethod] = useState("ORIGINAL_PAYMENT");
   const [notes, setNotes] = useState("");
+  const [refundBankName, setRefundBankName] = useState("");
+  const [refundBankAccountNumber, setRefundBankAccountNumber] = useState("");
+  const [refundBankAccountHolder, setRefundBankAccountHolder] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const [step, setStep] = useState<"order" | "items" | "reason" | "done">("order");
 
@@ -52,17 +71,25 @@ export default function NewReturnPage() {
 
   useEffect(() => {
     if (!isAuthenticated) return;
-    getMyOrders({ pageIndex: 0, pageSize: 20 })
+    getMyOrders({ pageIndex: 0, pageSize: 100 })
       .then((data) => {
-        // Only show delivered/cancelled orders that can be returned
-        const eligible = (data.items ?? []).filter(
-          (o) => o.status === "DELIVERED" || o.status === "CANCELLED"
-        );
+        const eligible = (data.items ?? []).filter((o) => canReturnOrder(o));
         setOrders(eligible);
       })
       .catch(() => toast.error("Không thể tải danh sách đơn hàng"))
       .finally(() => setLoadingOrders(false));
   }, [isAuthenticated]);
+
+  useEffect(() => {
+    if (!orders.length) return;
+    const prefillOrderId = searchParams.get("orderId");
+    if (!prefillOrderId) return;
+    const matched = orders.find((o) => String(o.buyOrder) === prefillOrderId);
+    if (!matched) return;
+    setSelectedOrderId(prefillOrderId);
+    setSelectedItems(new Set());
+    setStep("items");
+  }, [orders, searchParams]);
 
   const selectedOrder = orders.find((o) => String(o.buyOrder) === selectedOrderId);
 
@@ -81,6 +108,12 @@ export default function NewReturnPage() {
       toast.error("Vui lòng nhập lý do đổi/trả");
       return;
     }
+    if (refundMethod === "BANK_TRANSFER") {
+      if (!refundBankName.trim() || !refundBankAccountNumber.trim() || !refundBankAccountHolder.trim()) {
+        toast.error("Vui lòng nhập đầy đủ thông tin tài khoản ngân hàng để hoàn tiền");
+        return;
+      }
+    }
 
     setSubmitting(true);
     try {
@@ -97,7 +130,11 @@ export default function NewReturnPage() {
       await createReturnRequest({
         orderId: selectedOrder.buyOrder!,
         reason,
+        status: "PENDING",
         refundMethod,
+        refundBankName: refundMethod === "BANK_TRANSFER" ? refundBankName.trim() : undefined,
+        refundBankAccountNumber: refundMethod === "BANK_TRANSFER" ? refundBankAccountNumber.trim() : undefined,
+        refundBankAccountHolder: refundMethod === "BANK_TRANSFER" ? refundBankAccountHolder.trim() : undefined,
         items,
       });
 
@@ -207,6 +244,10 @@ export default function NewReturnPage() {
           ) : (
             <div className="space-y-3">
               {orders.map((order) => (
+                (() => {
+                  const normalized = normalizeFulfillmentStatus(order);
+                  const isDeliveredLike = normalized === "DELIVERED" || normalized === "COMPLETED";
+                  return (
                 <label
                   key={order.buyOrder}
                   className={cn(
@@ -239,13 +280,15 @@ export default function NewReturnPage() {
                   </div>
                   <span className={cn(
                     "rounded px-2 py-0.5 text-[11px] font-medium",
-                    order.status === "DELIVERED"
+                    isDeliveredLike
                       ? "bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400"
                       : "bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400"
                   )}>
-                    {order.status === "DELIVERED" ? "Đã giao" : "Đã hủy"}
+                    {isDeliveredLike ? "Đã giao" : "Đã hủy"}
                   </span>
                 </label>
+                  );
+                })()
               ))}
             </div>
           )}
@@ -390,6 +433,42 @@ export default function NewReturnPage() {
               ))}
             </div>
           </div>
+
+          {refundMethod === "BANK_TRANSFER" && (
+            <div className="space-y-4">
+              <Label className="text-sm font-semibold">Thông tin nhận hoàn tiền</Label>
+              <div className="space-y-2">
+                <Label htmlFor="refund-bank-name">Tên ngân hàng *</Label>
+                <Input
+                  id="refund-bank-name"
+                  value={refundBankName}
+                  onChange={(e) => setRefundBankName(e.target.value)}
+                  placeholder="VD: Vietcombank"
+                  className="rounded-none"
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="refund-bank-account-number">Số tài khoản *</Label>
+                <Input
+                  id="refund-bank-account-number"
+                  value={refundBankAccountNumber}
+                  onChange={(e) => setRefundBankAccountNumber(e.target.value)}
+                  placeholder="Nhập số tài khoản nhận hoàn"
+                  className="rounded-none"
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="refund-bank-account-holder">Tên chủ tài khoản *</Label>
+                <Input
+                  id="refund-bank-account-holder"
+                  value={refundBankAccountHolder}
+                  onChange={(e) => setRefundBankAccountHolder(e.target.value)}
+                  placeholder="VD: NGUYEN VAN A"
+                  className="rounded-none"
+                />
+              </div>
+            </div>
+          )}
 
           <Button
             onClick={handleSubmit}

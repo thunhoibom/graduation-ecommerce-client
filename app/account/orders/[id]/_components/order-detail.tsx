@@ -110,6 +110,11 @@ export function OrderDetail({ buyOrder }: { buyOrder: number }) {
     (order.paymentStatus === "UNPAID" || order.paymentStatus === "EXPIRED" || order.paymentStatus === "PAYMENT_CANCELLED");
   const canRequestCancel = fulfillment === "PROCESSING" || fulfillment === "READY_TO_PICK";
   const canCancel = canCancelNow || canRequestCancel;
+  const canRequestReturn =
+    fulfillment === "DELIVERED" ||
+    fulfillment === "COMPLETED" ||
+    fulfillment === "DELIVERY_COMPLETE" ||
+    fulfillment === "CANCELLED";
 
   return (
     <div className="space-y-6">
@@ -154,6 +159,23 @@ export function OrderDetail({ buyOrder }: { buyOrder: number }) {
           >
             {cancelling ? "Đang xử lý…" : canCancelNow ? "Hủy đơn hàng" : "Gửi yêu cầu hủy"}
           </Button>
+        </div>
+      )}
+
+      {canRequestReturn && (
+        <div className="rounded-none border border-neutral-200 bg-neutral-50 p-4 dark:border-neutral-800 dark:bg-neutral-900/40">
+          <p className="text-sm text-neutral-700 dark:text-neutral-300">
+            Bạn có thể gửi yêu cầu đổi/trả cho đơn hàng này.
+          </p>
+          <Link href={`/account/returns/new?orderId=${order.buyOrder}`}>
+            <Button
+              variant="outline"
+              size="sm"
+              className="mt-3 rounded-none"
+            >
+              Yêu cầu đổi / trả
+            </Button>
+          </Link>
         </div>
       )}
 

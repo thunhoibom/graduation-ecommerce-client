@@ -66,12 +66,14 @@ export default function NavbarDropdown({ item, onClose }: NavbarDropdownProps) {
               {groups.map((group) => {
                 const isActive = activeGroup === group.id;
                 return (
-                  <button
+                  <Link
                     key={group.id}
-                    type="button"
+                    href={group.path}
                     role="menuitem"
+                    prefetch={true}
                     onMouseEnter={() => setActiveGroup(group.id)}
                     onFocus={() => setActiveGroup(group.id)}
+                    onClick={onClose}
                     className={cn(
                       "group flex w-full items-center justify-between gap-2 rounded-lg border border-transparent py-2.5 pl-3 pr-2.5 text-left text-sm font-medium outline-none transition-colors",
                       "focus-visible:ring-2 focus-visible:ring-neutral-900/20 focus-visible:ring-offset-1 dark:focus-visible:ring-white/25",
@@ -90,7 +92,7 @@ export default function NavbarDropdown({ item, onClose }: NavbarDropdownProps) {
                       )}
                       aria-hidden
                     />
-                  </button>
+                  </Link>
                 );
               })}
             </div>

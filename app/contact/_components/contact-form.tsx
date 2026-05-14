@@ -13,7 +13,8 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { CheckCircle, XCircle } from "@phosphor-icons/react";
-import { cn } from "@/lib/utils";
+import { isAxiosError } from "axios";
+import { postContactInquiry } from "@/services/rest-api/contact/contact";
 
 const SUBJECTS = [
   { value: "order", label: "Tư vấn đơn hàng" },
@@ -44,6 +45,7 @@ export function ContactForm() {
   });
   const [errors, setErrors] = useState<Partial<FormState>>({});
   const [status, setStatus] = useState<Status>("idle");
+  const [errorBanner, setErrorBanner] = useState<string | null>(null);
 
   const validate = (): boolean => {
     const e: Partial<FormState> = {};
@@ -68,11 +70,45 @@ export function ContactForm() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    setErrorBanner(null);
     if (!validate()) return;
     setStatus("submitting");
-    // Simulate API call — replace with real endpoint when available
-    await new Promise((res) => setTimeout(res, 1200));
-    setStatus("success");
+    try {
+      await postContactInquiry({
+        name: form.name,
+        email: form.email,
+        phone: form.phone.trim() || undefined,
+        subject: form.subject,
+        message: form.message,
+      });
+      setStatus("success");
+    } catch (err) {
+      setStatus("error");
+      if (isAxiosError(err)) {
+        const st = err.response?.status;
+        const data = err.response?.data as
+          | { message?: string; detailMessage?: string; code?: string }
+          | undefined;
+        if (st === 429) {
+          setErrorBanner(
+            data?.message ??
+              "Bạn đã gửi quá nhiều tin nhắn. Vui lòng thử lại sau một phút."
+          );
+        } else if (st === 400 && data?.detailMessage) {
+          setErrorBanner(data.detailMessage);
+        } else if (data?.message) {
+          setErrorBanner(data.message);
+        } else {
+          setErrorBanner(
+            "Đã xảy ra lỗi khi gửi tin nhắn. Vui lòng thử lại sau."
+          );
+        }
+      } else {
+        setErrorBanner(
+          "Đã xảy ra lỗi khi gửi tin nhắn. Vui lòng thử lại sau."
+        );
+      }
+    }
   };
 
   const handleChange = (
@@ -101,6 +137,7 @@ export function ContactForm() {
           onClick={() => {
             setForm({ name: "", email: "", phone: "", subject: "", message: "" });
             setStatus("idle");
+            setErrorBanner(null);
           }}
         >
           Gửi tin nhắn khác
@@ -210,11 +247,11 @@ export function ContactForm() {
       </div>
 
       {/* Error banner */}
-      {status === "error" && (
+      {status === "error" && errorBanner && (
         <div className="flex items-center gap-2 rounded-none border border-red-200 bg-red-50 px-4 py-3 dark:border-red-900 dark:bg-red-950">
           <XCircle className="size-4 shrink-0 text-red-500" />
-          <p className="text-sm text-red-700 dark:text-red-300">
-            Đã xảy ra lỗi khi gửi tin nhắn. Vui lòng thử lại.
+          <p className="text-sm text-red-700 dark:text-red-300 whitespace-pre-wrap">
+            {errorBanner}
           </p>
         </div>
       )}

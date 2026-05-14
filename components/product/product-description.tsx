@@ -15,6 +15,7 @@ import {
 } from "@phosphor-icons/react";
 import { useCart } from "@/components/cart/cart-context";
 import { VariantSelector } from "@/components/product/variant-selector";
+import { ProductSizeGuide } from "@/components/product/product-size-guide";
 import { useWishlist } from "@/components/product/wishlist-context";
 import type { Product, ProductVariantPojo } from "@/types/product";
 import { getOrCreateDeviceId } from "@/lib/device-id";
@@ -191,6 +192,8 @@ export function ProductDescription({ product }: ProductDescriptionProps) {
 
   const promoEndLabel = formatPromoEnd(product.discountActiveUntil);
 
+  const hasSizeVariants = variants.some((v) => Boolean(v.size));
+
   const attributesText = selectedVariant?.attributes?.trim();
 
   return (
@@ -267,6 +270,8 @@ export function ProductDescription({ product }: ProductDescriptionProps) {
         colorKey="color"
         onVariantChange={handleVariantChange}
       />
+
+      <ProductSizeGuide visible={hasSizeVariants} />
 
       {attributesText ? (
         <div className="space-y-2 border-t border-neutral-100 pt-4 dark:border-neutral-900">

@@ -20,13 +20,13 @@ interface BreadcrumbProps {
 
 /**
  * Builds the breadcrumb trail from a collection node's parent chain.
- * Shows: Trang chủ → Bộ sưu tập → [parent] → [current]
+ * Shows: Trang chủ → Tất cả sản phẩm → [parents…] → [current]
  */
 function buildTrail(collection: BreadcrumbProps["collection"]): BreadcrumbItem[] {
   const trail: BreadcrumbItem[] = [];
 
   trail.push({ label: "Trang chủ", href: "/" });
-  trail.push({ label: "Bộ sưu tập", href: "/collections" });
+  trail.push({ label: "Tất cả sản phẩm", href: "/collections/all" });
 
   // Walk up the parent chain to build full trail
   let current: ProductCategoryPojo | undefined = collection.parent;

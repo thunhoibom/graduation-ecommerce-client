@@ -166,14 +166,14 @@ export const HEADER_MENU: MenuItem[] = [
   },
   {
     id: 7,
-    title: "Blog",
+    title: "Tin tức",
     path: "/blog",
     description: "Câu chuyện, phong cách và tin tức từ Mono Studio",
     menuPanel: "blog",
   },
   {
     id: 5,
-    title: "About",
+    title: "Giới thiệu",
     path: "/about",
     children: [
       { id: 51, title: "Về Mono Studio", path: "/about" },
@@ -183,7 +183,7 @@ export const HEADER_MENU: MenuItem[] = [
   },
   {
     id: 6,
-    title: "Contact",
+    title: "Liên hệ",
     path: "/contact",
     children: [
       { id: 61, title: "Liên hệ", path: "/contact" },
@@ -213,7 +213,7 @@ export const FOOTER_MENU: MenuItem[] = [
     children: [
       { id: 111, title: "Giới thiệu", path: "/about" },
       { id: 112, title: "Tuyển dụng", path: "/careers" },
-      { id: 113, title: "Blog", path: "/blog" },
+      { id: 113, title: "Tin tức", path: "/blog" },
     ],
   },
   {

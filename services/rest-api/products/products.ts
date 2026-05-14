@@ -305,3 +305,11 @@ export async function submitProductReview(review: ProductReviewPojo): Promise<Pr
   const { data } = await api.post<ProductReviewPojo>("/api/account/reviews", review);
   return data;
 }
+
+/** GET /api/account/reviews — reviews written by the logged-in customer */
+export async function getMyReviews(): Promise<ProductReviewPojo[]> {
+  const { data } = await api.get<ProductReviewPojo[] | null | undefined>(
+    "/api/account/reviews"
+  );
+  return Array.isArray(data) ? data : [];
+}

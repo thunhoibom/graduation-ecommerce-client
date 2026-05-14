@@ -11,6 +11,7 @@ import { formatMoney } from "@/lib/utils";
 import { getPromotionReason, parseAppliedPromotions } from "@/lib/cart-promotions";
 import type { CartItem } from "@/types/cart";
 import { ForYouRail } from "@/components/product/for-you-rail";
+import { PromotionNearMissPanel } from "@/components/cart/promotion-near-miss-panel";
 
 interface CartItemRowProps {
   item: CartItem;
@@ -207,7 +208,7 @@ function DiscountForm({ appliedCode, discountAmount }: DiscountFormProps) {
 // ─── Main CartView ─────────────────────────────────────────────────────────────
 
 export function CartView() {
-  const { cart, isLoading } = useCart();
+  const { cart, isLoading, promotionNearMisses } = useCart();
 
   const items = cart?.items ?? [];
   const subtotal = cart?.subtotal ?? 0;
@@ -298,6 +299,10 @@ export function CartView() {
           <h2 className="mb-5 text-base font-semibold text-neutral-900 dark:text-white">
             Tóm tắt đơn hàng
           </h2>
+
+          <div className="mb-5">
+            <PromotionNearMissPanel nearMisses={promotionNearMisses} cartSubtotal={subtotal} />
+          </div>
 
           {/* Discount code */}
           <div className="mb-5">

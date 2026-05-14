@@ -8,6 +8,7 @@ import { HomeForYouSection } from "@/components/home/sections/home-for-you-secti
 import { HomeBlogSection } from "@/components/home/sections/home-blog-section";
 import { HomeUspStrip } from "@/components/home/sections/home-usp-strip";
 import { HomeShopShortcuts } from "@/components/home/sections/home-shop-shortcuts";
+import { HomePromotionsStrip } from "@/components/home/sections/home-promotions-strip";
 import Footer from "@/components/layout/footer";
 import { getAbout } from "@/services/rest-api/about/about";
 import { baseUrl } from "@/lib/utils";
@@ -67,6 +68,7 @@ export default async function HomePage() {
       <HeroSection />
       <HomeUspStrip />
       <HomeShopShortcuts />
+      <HomePromotionsStrip />
       <WeatherHeroSection />
       <ThreeItemGrid />
       <CollectionsGrid />

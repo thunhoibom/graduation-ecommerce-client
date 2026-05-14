@@ -45,7 +45,24 @@ function ReceiptContent() {
     }
     getReceipt(token)
       .then(setReceipt)
-      .catch(() => setError("Không thể tải thông tin biên nhận."))
+      .catch((err: unknown) => {
+        const error = err as {
+          message?: string;
+          response?: { status?: number; data?: unknown };
+          config?: { baseURL?: string; url?: string };
+        };
+        console.error("[Receipt] Failed to load receipt", {
+          token,
+          message: error?.message,
+          status: error?.response?.status,
+          responseData: error?.response?.data,
+          requestUrl:
+            error?.config?.baseURL && error?.config?.url
+              ? `${error.config.baseURL}${error.config.url}`
+              : error?.config?.url,
+        });
+        setError("Không thể tải thông tin biên nhận.");
+      })
       .finally(() => setLoading(false));
   }, [token]);
 

@@ -1,11 +1,13 @@
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
+import { cn } from "@/lib/utils";
 
 interface HeroArrowButtonProps {
   href: string;
   variant?: "primary" | "outline";
   label: string;
   arrow?: boolean;
+  className?: string;
 }
 
 export function HeroArrowButton({
@@ -13,10 +15,11 @@ export function HeroArrowButton({
   variant = "primary",
   label,
   arrow = false,
+  className,
 }: HeroArrowButtonProps) {
   if (variant === "primary") {
     return (
-      <Button asChild size="lg" className="gap-2">
+      <Button asChild size="lg" className={cn("gap-2", className)}>
         <Link href={href}>
           {label}
           {arrow && (
@@ -46,7 +49,10 @@ export function HeroArrowButton({
       asChild
       variant="outline"
       size="lg"
-      className="border-neutral-300 text-neutral-900 hover:border-neutral-900 dark:border-neutral-700 dark:text-neutral-100 dark:hover:border-neutral-100"
+      className={cn(
+        "border-neutral-300 text-neutral-900 hover:border-neutral-900 dark:border-neutral-700 dark:text-neutral-100 dark:hover:border-neutral-100",
+        className,
+      )}
     >
       <Link href={href}>{label}</Link>
     </Button>

@@ -36,8 +36,8 @@ export interface CheckoutStartPayload {
   /** Customer info — firstName + lastName + email + phone */
   customer: PersonPojo;
   shippingAddress: AddressPojo;
-  /** Payment type: VNPAY | MOMO | PAYOS | COD */
-  paymentType: "VNPAY" | "MOMO" | "PAYOS" | "COD";
+  /** Payment storefront: PayOS (online) or COD */
+  paymentType: "PAYOS" | "COD";
   billingType: "individual" | "enterprise";
   billingCompany?: {
     companyName: string;
@@ -53,6 +53,14 @@ export interface PaymentRedirectionDetails {
   url?: string;
   token?: string;
   buyOrder?: number;
+}
+
+/** POST /api/public/checkout/initiate & /resend-otp */
+export interface CheckoutOtpInitiateResponse {
+  orderId: number;
+  maskedEmail: string;
+  expiresAt: string;
+  resendAfterSeconds: number;
 }
 
 // ─── Receipt (mirrors backend ReceiptPojo) ─────────────────────────────────────

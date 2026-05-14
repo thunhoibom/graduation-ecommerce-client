@@ -10,6 +10,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { cn } from "@/lib/utils";
+import { useAuth } from "@/hooks/use-auth";
 import { updateProfile } from "@/services/rest-api/auth/auth";
 import type { PersonPojo } from "@/types/person";
 
@@ -31,6 +32,7 @@ interface ProfileFormProps {
 
 export function ProfileForm({ initial, onUpdate }: ProfileFormProps) {
   const [saved, setSaved] = useState(false);
+  const { refreshUser } = useAuth();
 
   const {
     register,
@@ -56,6 +58,7 @@ export function ProfileForm({ initial, onUpdate }: ProfileFormProps) {
       setSaved(true);
       setTimeout(() => setSaved(false), 3000);
       toast.success("Cập nhật hồ sơ thành công");
+      await refreshUser();
       onUpdate?.(updated);
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : "Không thể cập nhật hồ sơ";

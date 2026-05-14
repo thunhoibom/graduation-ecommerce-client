@@ -18,7 +18,7 @@ import {
   removeFromCart,
   calculateCartPricing,
 } from "@/services/rest-api/cart/cart";
-import type { Cart, CartItem } from "@/types/cart";
+import type { Cart, CartItem, PromotionNearMiss } from "@/types/cart";
 
 type CartContextType = {
   cart: Cart | null;
@@ -26,6 +26,8 @@ type CartContextType = {
   isOpen: boolean;
   setIsOpen: (open: boolean) => void;
   refreshCart: () => Promise<void>;
+  /** Gần đạt ngưỡng khuyến mãi (sau lần tính giá gần nhất) */
+  promotionNearMisses: PromotionNearMiss[];
   addItem: (variantSku: string, quantity?: number) => void;
   updateItem: (variantSku: string, quantity: number) => void;
   removeItem: (variantSku: string) => void;
@@ -104,17 +106,38 @@ export function CartProvider({ children }: { children: ReactNode }) {
   const [cart, setCart] = useState<Cart | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isOpen, setIsOpen] = useState(false);
+  const [promotionNearMisses, setPromotionNearMisses] = useState<PromotionNearMiss[]>([]);
   const [optimisticCart, dispatch] = useOptimistic(cart, cartReducer);
-  const [isPending, startTransition] = useTransition();
+  const [, startTransition] = useTransition();
 
   const prevCountRef = useRef(0);
 
-  useEffect(() => {
-    getCart()
-      .then(setCart)
-      .catch(() => setCart(null))
-      .finally(() => setIsLoading(false));
+  const refreshCart = useCallback(async () => {
+    setIsLoading(true);
+    try {
+      const fresh = await getCart();
+      setCart(fresh);
+      if (fresh?.items?.length) {
+        try {
+          const pricing = await calculateCartPricing(fresh.appliedDiscountCode);
+          setPromotionNearMisses(pricing.promotionNearMisses ?? []);
+        } catch {
+          setPromotionNearMisses([]);
+        }
+      } else {
+        setPromotionNearMisses([]);
+      }
+    } catch {
+      setCart(null);
+      setPromotionNearMisses([]);
+    } finally {
+      setIsLoading(false);
+    }
   }, []);
+
+  useEffect(() => {
+    void refreshCart();
+  }, [refreshCart]);
 
   useEffect(() => {
     if (!optimisticCart) return;
@@ -126,23 +149,15 @@ export function CartProvider({ children }: { children: ReactNode }) {
     }
   }, [optimisticCart?.itemCount, isOpen]);
 
-  const refreshCart = useCallback(async () => {
-    setIsLoading(true);
-    try {
-      const fresh = await getCart();
-      setCart(fresh);
-    } finally {
-      setIsLoading(false);
-    }
-  }, []);
-
   const recalculatePricingAndRefresh = useCallback(async (fallbackCart: Cart) => {
     try {
-      await calculateCartPricing();
+      const pricing = await calculateCartPricing(fallbackCart.appliedDiscountCode);
+      setPromotionNearMisses(pricing.promotionNearMisses ?? []);
       const refreshed = await getCart();
       setCart(refreshed ?? fallbackCart);
     } catch {
       setCart(fallbackCart);
+      setPromotionNearMisses([]);
     }
   }, []);
 
@@ -199,6 +214,7 @@ export function CartProvider({ children }: { children: ReactNode }) {
         isOpen,
         setIsOpen,
         refreshCart,
+        promotionNearMisses,
         addItem,
         updateItem,
         removeItem,

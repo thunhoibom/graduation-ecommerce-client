@@ -3,6 +3,7 @@
 import { useRouter, useSearchParams } from "next/navigation";
 import { MagnifyingGlass } from "@phosphor-icons/react";
 import { useRef } from "react";
+import { addSearchHistoryEntry } from "@/lib/search-history";
 
 export function SearchBox() {
   const router = useRouter();
@@ -15,6 +16,7 @@ export function SearchBox() {
     e.preventDefault();
     const q = inputRef.current?.value.trim();
     if (!q) return;
+    addSearchHistoryEntry(q);
     const params = new URLSearchParams(searchParams.toString());
     params.set("query", q);
     params.delete("q");

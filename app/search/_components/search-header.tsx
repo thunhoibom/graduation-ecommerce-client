@@ -5,6 +5,7 @@ import { CaretDownIcon } from "@phosphor-icons/react";
 import { SearchBox } from "./search-box";
 
 const SORT_OPTIONS = [
+  { label: "Liên quan nhất", value: "relevance,desc" },
   { label: "Tên A–Z", value: "name,asc" },
   { label: "Tên Z–A", value: "name,desc" },
   { label: "Giá thấp → cao", value: "price,asc" },
@@ -30,8 +31,13 @@ export function SearchHeader({ totalCount, sortBy, sortDir, hasQuery }: SearchHe
   const updateSort = (value: string) => {
     const [by, dir] = value.split(",");
     const params = new URLSearchParams(searchParams.toString());
-    params.set("sortBy", by!);
-    params.set("sortDir", dir!);
+    if (by === "relevance") {
+      params.delete("sortBy");
+      params.delete("sortDir");
+    } else {
+      params.set("sortBy", by!);
+      params.set("sortDir", dir!);
+    }
     params.delete("page");
     router.replace(`?${params.toString()}`, { scroll: false });
   };

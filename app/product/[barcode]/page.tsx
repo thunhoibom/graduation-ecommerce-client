@@ -8,6 +8,7 @@ import { ProductReviews } from "./_components/product-reviews";
 import { RelatedProducts } from "./_components/related-products";
 import { ProductViewBehavior } from "./_components/product-view-behavior";
 import { ProductJsonLd } from "./_components/product-json-ld";
+import { ProductPromotionTeaser } from "./_components/product-promotion-teaser";
 import { ForYouRail } from "@/components/product/for-you-rail";
 import type { ProductVariantPojo } from "@/types/product";
 import { baseUrl } from "@/lib/utils";
@@ -108,6 +109,10 @@ export default async function ProductPage({ params }: Props) {
           category={product.category?.name}
           categorySlug={product.category?.code}
         />
+      </div>
+
+      <div className="mx-auto max-w-7xl px-4 lg:px-6">
+        <ProductPromotionTeaser barcode={barcode} />
       </div>
 
       <div className="mx-auto max-w-7xl px-4 pb-32 lg:px-6 lg:pb-16">

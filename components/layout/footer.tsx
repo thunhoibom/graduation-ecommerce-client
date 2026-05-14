@@ -20,7 +20,7 @@ const SECTIONS = [
     children: [
       { id: 111, title: "Giới thiệu", path: "/about" },
       { id: 112, title: "Tuyển dụng", path: "/careers" },
-      { id: 113, title: "Blog", path: "/blog" },
+      { id: 113, title: "Tin tức", path: "/blog" },
     ],
   },
   {

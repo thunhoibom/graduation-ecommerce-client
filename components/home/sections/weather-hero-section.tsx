@@ -45,7 +45,7 @@ function buildDressingTips(weather?: WeatherContext): string[] {
   const tips: string[] = [];
 
   if (band === "hot") {
-    tips.push("Ưu tiên vải thoáng (cotton, linen) và phom rộng vừa đủ để da thở.");
+    tips.push("Ưu tiên vải thoáng (cotton, linen) và form rộng vừa đủ để da thở.");
     tips.push("Tông màu sáng hoặc trung tính hấp thụ nhiệt ít hơn khi ra ngoài lâu.");
   } else if (band === "warm") {
     tips.push("Một lớp áo mỏng + quần dài là đủ; có thể mang thêm sơ mi để cởi khi vào máy lạnh.");

@@ -65,7 +65,7 @@ export default function Navbar() {
           }))
         }));
 
-        // Merge dynamic categories with static non-category items (About, Contact)
+        // Merge dynamic categories with static non-category items (Tin tức, Giới thiệu, Liên hệ, …)
         const staticItems = HEADER_MENU.filter(item => 
           !["Men", "Women", "New Arrivals", "Sale"].includes(item.title)
         );
@@ -147,11 +147,9 @@ export default function Navbar() {
                     onMouseLeave={() => hasChildren && closeDropdownHandler()}
                   >
                     {hasChildren ? (
-                      <button
-                        type="button"
-                        onClick={() =>
-                          setOpenDropdown((prev) => (prev === item.id ? null : item.id))
-                        }
+                      <Link
+                        href={item.path}
+                        prefetch={true}
                         className={`
                           relative flex items-center gap-1.5 px-4 py-2 text-sm font-semibold transition-all rounded-full
                           ${isOpen
@@ -167,8 +165,9 @@ export default function Navbar() {
                           size={10}
                           weight="bold"
                           className={`transition-transform duration-300 ${isOpen ? "rotate-180" : "opacity-50"}`}
+                          aria-hidden
                         />
-                      </button>
+                      </Link>
                     ) : (
                       <Link
                         href={item.path}

@@ -9,6 +9,7 @@ import { useCart } from "./cart-context";
 import { Button } from "@/components/ui/button";
 import { formatMoney } from "@/lib/utils";
 import { getPromotionReason, parseAppliedPromotions } from "@/lib/cart-promotions";
+import { PromotionNearMissPanel } from "@/components/cart/promotion-near-miss-panel";
 
 const CartItemRow = memo(function CartItemRow({
   item,
@@ -100,7 +101,7 @@ const CartItemRow = memo(function CartItemRow({
 });
 
 export default function CartModal() {
-  const { cart, isOpen, setIsOpen, isLoading } = useCart();
+  const { cart, isOpen, setIsOpen, isLoading, promotionNearMisses } = useCart();
 
   const itemCount = cart?.itemCount ?? 0;
   const items = cart?.items ?? [];
@@ -191,6 +192,11 @@ export default function CartModal() {
 
                   {/* Summary */}
                   <div className="border-t border-neutral-100 px-5 py-4 dark:border-neutral-800">
+                    <PromotionNearMissPanel
+                      nearMisses={promotionNearMisses}
+                      cartSubtotal={subtotal}
+                      className="mb-3"
+                    />
                     {appliedPromotions.length > 0 && (
                       <div className="mb-3 rounded border border-neutral-200 bg-neutral-50 p-2.5 dark:border-neutral-800 dark:bg-neutral-900/40">
                         <p className="mb-1.5 text-[11px] font-semibold uppercase tracking-wide text-neutral-500 dark:text-neutral-400">

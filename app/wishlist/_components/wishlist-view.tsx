@@ -12,7 +12,6 @@ import { Button } from "@/components/ui/button";
 import { formatMoney } from "@/lib/utils";
 import {
   addToCart,
-  calculateCartPricing,
 } from "@/services/rest-api/cart/cart";
 
 function formatSavedAt(iso?: string): string | null {
@@ -55,7 +54,6 @@ export function WishlistView() {
   const handleAddToCart = async (variantSku: string) => {
     try {
       await addToCart({ variantSku, quantity: 1 });
-      await calculateCartPricing();
       await refreshCart();
       toast.success("Đã thêm vào giỏ hàng");
     } catch {
@@ -75,11 +73,6 @@ export function WishlistView() {
       } catch {
         fail++;
       }
-    }
-    try {
-      await calculateCartPricing();
-    } catch {
-      /* pricing optional */
     }
     await refreshCart();
     setBulkAdding(false);

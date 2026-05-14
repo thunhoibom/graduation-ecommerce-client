@@ -135,7 +135,7 @@ const SECTIONS = [
   { title: "Công ty", children: [
     { id: 111, title: "Giới thiệu", path: "/about" },
     { id: 112, title: "Tuyển dụng", path: "/careers" },
-    { id: 113, title: "Blog", path: "/blog" },
+    { id: 113, title: "Tin tức", path: "/blog" },
   ]},
   { title: "Kết nối", children: [
     { id: 121, title: "Facebook", path: "https://facebook.com", external: true },

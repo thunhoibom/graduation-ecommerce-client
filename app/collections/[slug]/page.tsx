@@ -17,6 +17,12 @@ import { CollectionHeader } from "./_components/collection-header";
 import { FilterSidebar } from "./_components/filter-sidebar";
 import { ActiveFilters } from "./_components/active-filters";
 import { Breadcrumb } from "./_components/breadcrumb";
+import { CollectionHero } from "./_components/collection-hero";
+import { CollectionStory } from "./_components/collection-story";
+import { CollectionFaq } from "./_components/collection-faq";
+import { CollectionJsonLd } from "./_components/collection-json-ld";
+import { CollectionWeatherRail } from "./_components/collection-weather-rail";
+import { TrustStrip } from "@/components/storefront/trust-strip";
 import { Badge } from "@/components/ui/badge";
 import Link from "next/link";
 
@@ -61,12 +67,13 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { slug } = await params;
   try {
     const collection = await getCollection(slug);
-    return {
-      title: `${collection.name} — Mono Studio`,
-      description:
-        collection.description ??
-        `Khám phá bộ sưu tập ${collection.name} tại Mono Studio. Thời trang tối giản, chất lượng cao.`,
-    };
+    const title =
+      collection.seo?.title?.trim() || `${collection.name} — Mono Studio`;
+    const description =
+      collection.seo?.description?.trim() ||
+      collection.description ||
+      `Khám phá bộ sưu tập ${collection.name} tại Mono Studio. Thời trang tối giản, chất lượng cao.`;
+    return { title, description };
   } catch {
     return { title: "Bộ sưu tập" };
   }
@@ -138,17 +145,25 @@ export default async function CollectionPage({ params, searchParams }: Props) {
   const hasChildren = collection.children && collection.children.length > 0;
 
   return (
-    <div className="mx-auto max-w-7xl px-4 py-6 lg:px-6">
-      <div className="mb-5">
-        <Breadcrumb collection={collection} />
-      </div>
+    <>
+      <CollectionJsonLd collection={collection} products={products} totalCount={totalCount ?? 0} />
+      <div className="mx-auto max-w-7xl px-4 py-6 lg:px-6">
+        <div className="mb-5">
+          <Breadcrumb collection={collection} />
+        </div>
 
-      <CollectionHeader
-        collection={collection}
-        totalCount={totalCount ?? 0}
-        sortBy={sortBy ?? "name"}
-        sortDir={sortDir ?? "asc"}
-      />
+        <CollectionHero collection={collection} />
+
+        <TrustStrip />
+
+        <CollectionHeader
+          collection={collection}
+          totalCount={totalCount ?? 0}
+          sortBy={sortBy ?? "name"}
+          sortDir={sortDir ?? "asc"}
+        />
+
+        <CollectionStory descriptionHtml={collection.descriptionHtml} />
 
       {hasChildren && (
         <div className="mt-4 mb-2 overflow-x-auto">
@@ -198,7 +213,7 @@ export default async function CollectionPage({ params, searchParams }: Props) {
           <FilterSidebar />
         </div>
 
-        <div className="min-w-0 flex-1">
+        <div className="min-w-0 flex-1 space-y-10">
           <ProductGrid
             products={products}
             page={gridPage}
@@ -207,8 +222,12 @@ export default async function CollectionPage({ params, searchParams }: Props) {
             sortDir={sortDir ?? "asc"}
             collectionSlug={slug}
           />
+          <CollectionWeatherRail categoryCode={slug} />
         </div>
       </div>
-    </div>
+
+        <CollectionFaq />
+      </div>
+    </>
   );
 }

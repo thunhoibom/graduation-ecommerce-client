@@ -1,9 +1,10 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { use } from "react";
 import { useAuth } from "@/hooks/use-auth";
+import { AccountLayout } from "../../_components/account-layout";
 import { OrderDetail } from "./_components/order-detail";
 
 interface Props {
@@ -14,20 +15,17 @@ export default function OrderDetailPage({ params }: Props) {
   const { isAuthenticated, isLoading } = useAuth();
   const router = useRouter();
   const { id } = use(params);
-  const [resolved, setResolved] = useState(false);
 
   useEffect(() => {
-    if (!isLoading && !isAuthenticated) {
-      router.replace("/login?redirect=/account/orders");
+    if (!isLoading && !isAuthenticated && id) {
+      router.replace(`/login?redirect=${encodeURIComponent(`/account/orders/${id}`)}`);
     }
-  }, [isLoading, isAuthenticated, router]);
+  }, [isLoading, isAuthenticated, router, id]);
 
   if (isLoading || !isAuthenticated) {
     return (
-      <div className="mx-auto max-w-3xl px-4 py-8 lg:px-6">
-        <div className="flex items-center justify-center py-20">
-          <div className="h-8 w-8 animate-spin rounded-full border-2 border-neutral-300 border-t-neutral-900" />
-        </div>
+      <div className="flex items-center justify-center py-32">
+        <div className="h-8 w-8 animate-spin rounded-full border-2 border-neutral-300 border-t-neutral-900 dark:border-neutral-700 dark:border-t-neutral-100" />
       </div>
     );
   }
@@ -36,15 +34,19 @@ export default function OrderDetailPage({ params }: Props) {
 
   if (isNaN(buyOrder)) {
     return (
-      <div className="mx-auto max-w-3xl px-4 py-8 lg:px-6">
-        <p className="text-center text-neutral-500">Mã đơn hàng không hợp lệ.</p>
-      </div>
+      <AccountLayout>
+        <div className="rounded-none border border-neutral-200 p-6 text-center dark:border-neutral-800">
+          <p className="text-neutral-500">Mã đơn hàng không hợp lệ.</p>
+        </div>
+      </AccountLayout>
     );
   }
 
   return (
-    <div className="mx-auto max-w-3xl px-4 py-8 lg:px-6">
-      <OrderDetail buyOrder={buyOrder} />
-    </div>
+    <AccountLayout>
+      <div className="rounded-none border border-neutral-200 p-6 dark:border-neutral-800">
+        <OrderDetail buyOrder={buyOrder} />
+      </div>
+    </AccountLayout>
   );
 }

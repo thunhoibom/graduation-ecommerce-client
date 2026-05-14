@@ -6,12 +6,17 @@ import {
   searchProducts,
   type ProductFilters,
 } from "@/services/rest-api/products/products";
+import { getCategoryTree } from "@/services/rest-api/collections/collections";
 import type { ProductListItem, ProductSearchItem } from "@/types/product";
+import type { Collection } from "@/types/collection";
 import { SearchHeader } from "./_components/search-header";
 import { SearchBehaviorTracker } from "./_components/search-behavior-tracker";
 import { SearchForYouSection } from "./_components/search-for-you";
+import { SearchBreadcrumb } from "./_components/search-breadcrumb";
+import { SearchLanding } from "./_components/search-landing";
 import { ProductGrid } from "@/app/collections/[slug]/_components/product-grid";
 import { FilterSidebar } from "@/app/collections/[slug]/_components/filter-sidebar";
+import { ActiveFilters } from "@/app/collections/[slug]/_components/active-filters";
 
 interface Props {
   searchParams: Promise<{
@@ -42,8 +47,8 @@ export async function generateMetadata({ searchParams }: Props): Promise<Metadat
   return {
     title: query ? `"${query}" — Tìm kiếm — Mono Studio` : "Tìm kiếm — Mono Studio",
     description: query
-      ? `Kết quả tìm kiếm cho "${query}" tại Mono Studio`
-      : "Tìm kiếm sản phẩm tại Mono Studio.",
+      ? `Kết quả cho "${query}" tại Mono Studio — lọc giá, màu, size và xem gợi ý liên quan.`
+      : "Tìm kiếm và khám phá sản phẩm Mono Studio — gợi ý từ khóa, danh mục nổi bật, khuyến mãi và lịch sử trên thiết bị của bạn.",
   };
 }
 
@@ -63,22 +68,34 @@ export default async function SearchPage({ searchParams }: Props) {
 
   const page = pageStr ? parseInt(pageStr) : 1;
 
-  // Only fetch products if there's a query
   let items: ProductListItem[] = [];
   let totalCount = 0;
-  /** 1-based page for pagination UI (API returns 0-based pageIndex) */
   let gridPage = page;
   let totalPages = 1;
 
-  if (query && query.trim().length > 0) {
+  const hasQuery = Boolean(query && query.trim().length > 0);
+
+  let categoryRoots: Collection[] = [];
+  if (!hasQuery) {
+    try {
+      categoryRoots = await getCategoryTree();
+    } catch {
+      categoryRoots = [];
+    }
+  }
+
+  if (hasQuery) {
     const colorTrimmed = parseOptionalTrimmed(color);
     const sizeTrimmed = parseOptionalTrimmed(size);
     const filters: ProductFilters = {
       query: query.trim(),
       page,
       pageSize: 24,
-      sortBy: sortBy ?? "price",
-      sortDir: (sortDir as "asc" | "desc") ?? "desc",
+      // Default: no sort params → Elasticsearch orders by relevance (_score).
+      // Sending price/desc by default made exact title matches rank below pricier “polo” hits.
+      ...(sortBy
+        ? { sortBy, sortDir: (sortDir as "asc" | "desc") ?? "desc" }
+        : {}),
       minPrice: parseIntSearchParam(minPrice),
       maxPrice: parseIntSearchParam(maxPrice),
       ...(inStock === "true" && { inStock: true }),
@@ -89,7 +106,6 @@ export default async function SearchPage({ searchParams }: Props) {
     try {
       const result = await searchProducts(filters);
 
-      // Map ProductSearchItem to ProductListItem for the UI components
       items = (result.items ?? []).map((si: ProductSearchItem) => ({
         id: si.id ? parseInt(si.id, 10) : undefined,
         name: si.name,
@@ -113,7 +129,6 @@ export default async function SearchPage({ searchParams }: Props) {
     }
   }
 
-  const hasQuery = Boolean(query && query.trim().length > 0);
   const excludeIdsForYou =
     items.length > 0
       ? items
@@ -121,11 +136,15 @@ export default async function SearchPage({ searchParams }: Props) {
           .filter((x): x is string => x != null)
       : [];
 
-  const sortByResolved = sortBy ?? "price";
-  const sortDirResolved = (sortDir as "asc" | "desc") ?? "desc";
+  const sortByResolved = sortBy ?? "relevance";
+  const sortDirResolved = sortBy
+    ? ((sortDir as "asc" | "desc") ?? "desc")
+    : "desc";
 
   return (
     <div className="mx-auto max-w-7xl px-4 py-6 lg:px-6">
+      <SearchBreadcrumb />
+
       <Suspense fallback={null}>
         <SearchHeader
           totalCount={totalCount}
@@ -141,12 +160,18 @@ export default async function SearchPage({ searchParams }: Props) {
             <SearchBehaviorTracker />
           </Suspense>
 
-          <div className="flex gap-8">
+          <div className="mt-4">
+            <Suspense fallback={null}>
+              <ActiveFilters />
+            </Suspense>
+          </div>
+
+          <div className="mt-6 flex gap-8">
             <Suspense fallback={null}>
               <FilterSidebar />
             </Suspense>
 
-            <div className="min-w-0 flex-1">
+            <div className="min-w-0 flex-1 space-y-10">
               <ProductGrid
                 products={items}
                 page={gridPage}
@@ -155,7 +180,7 @@ export default async function SearchPage({ searchParams }: Props) {
                 sortDir={sortDirResolved}
                 collectionSlug=""
                 emptyTitle="Không tìm thấy sản phẩm nào"
-                emptySubtitle="Thử từ khóa khác hoặc kiểm tra lại chính tả"
+                emptySubtitle="Thử từ khóa khác, xóa bộ lọc hoặc xem toàn bộ cửa hàng."
               />
               {items.length > 0 && query && (
                 <SearchForYouSection query={query.trim()} excludeIds={excludeIdsForYou} />
@@ -164,33 +189,7 @@ export default async function SearchPage({ searchParams }: Props) {
           </div>
         </>
       ) : (
-        <div className="py-16 text-center">
-          <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center bg-neutral-100 dark:bg-neutral-900">
-            <svg width="28" height="28" viewBox="0 0 28 28" fill="none" aria-hidden="true">
-              <circle
-                cx="12"
-                cy="12"
-                r="7"
-                stroke="currentColor"
-                strokeWidth="1.5"
-                className="text-neutral-300 dark:text-neutral-700"
-              />
-              <path
-                d="M17 17l5 5"
-                stroke="currentColor"
-                strokeWidth="1.5"
-                strokeLinecap="round"
-                className="text-neutral-300 dark:text-neutral-700"
-              />
-            </svg>
-          </div>
-          <p className="text-base font-medium text-neutral-500">
-            Tìm kiếm sản phẩm bạn muốn
-          </p>
-          <p className="mt-1 text-sm text-neutral-400">
-            Nhập từ khóa vào ô tìm kiếm phía trên
-          </p>
-        </div>
+        <SearchLanding roots={categoryRoots} />
       )}
     </div>
   );

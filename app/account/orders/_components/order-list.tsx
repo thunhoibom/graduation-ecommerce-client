@@ -7,7 +7,7 @@ import { getMyOrders } from "@/services/rest-api/orders/orders";
 import type { OrderPojo } from "@/types/order";
 import { formatMoney } from "@/lib/utils";
 
-const STATUS_LABELS: Record<string, { label: string; color: string }> = {
+export const ORDER_FULFILLMENT_LABELS: Record<string, { label: string; color: string }> = {
   PENDING:            { label: "Chờ xử lý", color: "bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-400" },
   CONFIRMED:          { label: "Đã xác nhận", color: "bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-400" },
   PROCESSING:         { label: "Đang chuẩn bị hàng", color: "bg-cyan-100 text-cyan-800 dark:bg-cyan-900/30 dark:text-cyan-400" },
@@ -37,7 +37,7 @@ const PAYMENT_LABELS: Record<string, { label: string; color: string }> = {
   PARTIALLY_REFUNDED: { label: "Hoàn tiền một phần", color: "text-fuchsia-600 dark:text-fuchsia-400" },
 };
 
-function formatDate(dateStr?: string) {
+export function formatOrderShortDate(dateStr?: string) {
   if (!dateStr) return "—";
   try {
     return new Intl.DateTimeFormat("vi-VN", {
@@ -119,7 +119,7 @@ export function OrderList() {
         {orders.map((order) => {
           const fulfillment = order.fulfillmentStatus ?? order.status;
           const payment = order.paymentStatus;
-          const statusInfo = STATUS_LABELS[fulfillment ?? ""] ?? {
+          const statusInfo = ORDER_FULFILLMENT_LABELS[fulfillment ?? ""] ?? {
             label: fulfillment ?? "—",
             color: "bg-neutral-100 text-neutral-600 dark:bg-neutral-800 dark:text-neutral-400",
           };
@@ -145,7 +145,7 @@ export function OrderList() {
                     </span>
                   </div>
                   <p className="text-xs text-neutral-500">
-                    {formatDate(order.date)} · {order.details?.length ?? 0} sản phẩm
+                    {formatOrderShortDate(order.date)} · {order.details?.length ?? 0} sản phẩm
                   </p>
                   {paymentInfo.label && (
                     <p className={`text-[11px] ${paymentInfo.color}`}>{paymentInfo.label}</p>

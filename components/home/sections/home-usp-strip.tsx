@@ -51,7 +51,7 @@ const items = [
   },
   {
     icon: IconFabric,
-    title: "Chất liệu & phom dáng",
+    title: "Chất liệu & form dáng",
     body: "Tuyển chọn form tối giản, bền mặc và dễ phối hằng ngày.",
   },
 ] as const;

@@ -4,6 +4,7 @@ import { useState, useEffect, useRef } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
+import { isAxiosError } from "axios";
 import {
   Truck,
   Lock,
@@ -38,7 +39,9 @@ import {
   getGhnProvinces,
   getGhnWards,
   getShippingMethods,
-  initiateCheckout,
+  initiateCheckoutOtp,
+  resendCheckoutOtp,
+  verifyCheckoutOtp,
   type GhnDistrict,
   type GhnProvince,
   type GhnWard,
@@ -48,9 +51,29 @@ import type { CartPricingResult } from "@/types/cart";
 import { getOrCreateDeviceId } from "@/lib/device-id";
 import { postBehaviorEvent } from "@/services/rest-api/behavior";
 
+function parseCheckoutApiError(err: unknown): string {
+  if (isAxiosError(err)) {
+    const data = err.response?.data as
+      | string
+      | { message?: string; detailMessage?: string }
+      | undefined;
+    if (typeof data === "string" && data.trim()) return data.trim();
+    if (data && typeof data === "object") {
+      if (typeof data.detailMessage === "string" && data.detailMessage.trim()) {
+        return data.detailMessage.trim();
+      }
+      if (typeof data.message === "string" && data.message.trim()) {
+        return data.message.trim();
+      }
+    }
+  }
+  if (err instanceof Error && err.message) return err.message;
+  return "Đã có lỗi xảy ra. Vui lòng thử lại.";
+}
+
 // ─── Step type ─────────────────────────────────────────────────────────────────
 
-type Step = "shipping" | "shipping_method" | "payment" | "review";
+type Step = "shipping" | "shipping_method" | "payment" | "review" | "verify_otp";
 
 // ─── Form data shapes ──────────────────────────────────────────────────────────
 
@@ -235,7 +258,7 @@ function ShippingCard({
 
 // ─── Payment type selector ──────────────────────────────────────────────────────
 
-type PaymentType = "VNPAY" | "MOMO" | "PAYOS" | "COD";
+type PaymentType = "PAYOS" | "COD";
 
 function PaymentOption({
   type,
@@ -246,21 +269,11 @@ function PaymentOption({
   selected: boolean;
   onSelect: () => void;
 }) {
-  const isVnpay = type === "VNPAY";
-  const isMomo = type === "MOMO";
   const isPayos = type === "PAYOS";
-  const title = isVnpay
-    ? "Thanh toán qua VNPAY"
-    : isMomo
-    ? "Thanh toán qua MOMO"
-    : isPayos
+  const title = isPayos
     ? "Thanh toán qua PayOS"
     : "Thanh toán khi nhận hàng (COD)";
-  const description = isVnpay
-    ? "Thanh toán an toàn qua cổng VNPAY (ATM / QR Code / Visa / Mastercard)"
-    : isMomo
-    ? "Quét QR hoặc thanh toán bằng ví MOMO trên trang thanh toán bảo mật"
-    : isPayos
+  const description = isPayos
     ? "Thanh toán chuyển khoản/QR qua PayOS với trang thanh toán bảo mật"
     : "Trả tiền mặt khi nhận được hàng";
   return (
@@ -286,7 +299,7 @@ function PaymentOption({
           <div className="h-1.5 w-1.5 rounded-full bg-white dark:bg-black" />
         )}
       </div>
-      {isVnpay || isMomo || isPayos ? (
+      {isPayos ? (
         <CreditCard className="size-5 text-neutral-500" />
       ) : (
         <HandCoins className="size-5 text-neutral-500" />
@@ -411,13 +424,18 @@ export function CheckoutForm() {
   const [shippingLoading, setShippingLoading] = useState(false);
 
   // Payment (Step 3)
-  const [paymentType, setPaymentType] = useState<PaymentType>("VNPAY");
+  const [paymentType, setPaymentType] = useState<PaymentType>("PAYOS");
   const [discountCode, setDiscountCode] = useState("");
   const [pricingPreview, setPricingPreview] = useState<CartPricingResult | null>(null);
   const [discountLoading, setDiscountLoading] = useState(false);
   const [billingType, setBillingType] = useState<"individual" | "enterprise">("individual");
 
-  // ── Computed totals ───────────────────────────────────────────────────────
+  // OTP (after POST /checkout/initiate)
+  const [pendingOtpOrderId, setPendingOtpOrderId] = useState<number | null>(null);
+  const [otpMaskedEmail, setOtpMaskedEmail] = useState<string | null>(null);
+  const [otpExpiresAt, setOtpExpiresAt] = useState<string | null>(null);
+  const [otpResendIn, setOtpResendIn] = useState(0);
+  const [otpCode, setOtpCode] = useState("");
   const items = cart?.items ?? [];
   const subtotal = cart?.subtotal ?? 0;
   const cartDiscount = cart?.discountAmount ?? 0;
@@ -425,6 +443,12 @@ export function CheckoutForm() {
   const selectedMethod = shippingMethods.find((m) => m.id === selectedShipping);
   const shippingFee = (selectedMethod as any)?.fee ?? selectedMethod?.baseFee ?? 0;
   const total = Math.max(subtotal + shippingFee - totalDiscount, 0);
+
+  useEffect(() => {
+    if (otpResendIn <= 0) return;
+    const t = window.setTimeout(() => setOtpResendIn((s) => s - 1), 1000);
+    return () => window.clearTimeout(t);
+  }, [otpResendIn]);
 
   // ── Load saved addresses on mount ──────────────────────────────────────────
   useEffect(() => {
@@ -589,38 +613,39 @@ export function CheckoutForm() {
 
   const handlePaymentSubmit = () => goTo("review");
 
-  // ── Final order submission ─────────────────────────────────────────────────
+  const buildCheckoutPayload = (): CheckoutStartPayload => ({
+    shippingMethodId: selectedShipping!,
+    discountCode: pricingPreview?.appliedDiscountCode ?? cart?.appliedDiscountCode,
+    customer: {
+      firstName: customerForm.firstName.trim(),
+      lastName: customerForm.lastName.trim(),
+      email: customerForm.email.trim(),
+      phone: customerForm.phone.trim(),
+    },
+    shippingAddress: {
+      firstLine: addressForm.firstLine.trim(),
+      municipality: (selectedDistrict?.districtName ?? addressForm.municipality).trim(),
+      city: (selectedProvince?.provinceName ?? addressForm.city).trim(),
+      postalCode: addressForm.postalCode.trim() || undefined,
+      notes: addressForm.notes.trim() || undefined,
+      latitude: addressForm.latitude,
+      longitude: addressForm.longitude,
+      districtId: addressForm.districtId,
+      wardCode: addressForm.wardCode?.trim() || undefined,
+    },
+    paymentType,
+    billingType,
+  });
+
   const handlePlaceOrder = async () => {
     if (!selectedShipping) return;
+
+    if (pendingOtpOrderId != null) {
+      setStep("verify_otp");
+      return;
+    }
+
     setIsSubmitting(true);
-
-    const nameParts = `${customerForm.firstName} ${customerForm.lastName}`.trim();
-    const [firstNamePart, ...rest] = nameParts.split(" ");
-    const lastNamePart = rest.join(" ");
-
-    const payload: CheckoutStartPayload = {
-      shippingMethodId: selectedShipping,
-      discountCode: pricingPreview?.appliedDiscountCode ?? cart?.appliedDiscountCode,
-      customer: {
-        firstName: customerForm.firstName.trim(),
-        lastName: customerForm.lastName.trim(),
-        email: customerForm.email.trim(),
-        phone: customerForm.phone.trim(),
-      },
-      shippingAddress: {
-        firstLine: addressForm.firstLine.trim(),
-        municipality: (selectedDistrict?.districtName ?? addressForm.municipality).trim(),
-        city: (selectedProvince?.provinceName ?? addressForm.city).trim(),
-        postalCode: addressForm.postalCode.trim() || undefined,
-        notes: addressForm.notes.trim() || undefined,
-        latitude: addressForm.latitude,
-        longitude: addressForm.longitude,
-        districtId: addressForm.districtId,
-        wardCode: addressForm.wardCode?.trim() || undefined,
-      },
-      paymentType,
-      billingType,
-    };
 
     try {
       const deviceId = getOrCreateDeviceId();
@@ -635,23 +660,70 @@ export function CheckoutForm() {
           },
         }).catch(() => undefined);
       }
-      const result = await initiateCheckout(payload);
 
-      // COD → no redirect, go straight to success page
+      const otpResp = await initiateCheckoutOtp(buildCheckoutPayload());
+      setPendingOtpOrderId(otpResp.orderId);
+      setOtpMaskedEmail(otpResp.maskedEmail);
+      setOtpExpiresAt(otpResp.expiresAt);
+      setOtpResendIn(Math.max(0, otpResp.resendAfterSeconds));
+      setOtpCode("");
+      setStep("verify_otp");
+      toast.success("Đã gửi mã xác thực tới email của bạn.");
+    } catch (err: unknown) {
+      toast.error(parseCheckoutApiError(err));
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  const handleVerifyOtp = async () => {
+    if (pendingOtpOrderId == null) return;
+    const code = otpCode.trim().replace(/\s/g, "");
+    if (!code) {
+      toast.error("Vui lòng nhập mã OTP");
+      return;
+    }
+
+    setIsSubmitting(true);
+    try {
+      const result = await verifyCheckoutOtp(pendingOtpOrderId, code);
+      const buyOrder = result.buyOrder ?? pendingOtpOrderId;
+
+      setPendingOtpOrderId(null);
+      setOtpMaskedEmail(null);
+      setOtpExpiresAt(null);
+      setOtpResendIn(0);
+      setOtpCode("");
+
       if (paymentType === "COD" || !result.url) {
         router.push(
-          `/checkout/success?buyOrder=${result.buyOrder ?? ""}&token=${result.token ?? ""}`
+          `/checkout/success?buyOrder=${buyOrder}&token=${encodeURIComponent(result.token ?? "")}`
         );
         return;
       }
 
-      // Webpay → redirect to payment gateway
       window.location.href = result.url;
     } catch (err: unknown) {
-      const msg = err instanceof Error ? err.message : "Thanh toán thất bại";
-      toast.error(msg);
+      toast.error(parseCheckoutApiError(err));
     } finally {
       setIsSubmitting(false);
+    }
+  };
+
+  const handleResendOtp = async () => {
+    if (pendingOtpOrderId == null || otpResendIn > 0) return;
+    const checkoutEmail = customerForm.email.trim();
+    if (!checkoutEmail) {
+      toast.error("Vui lòng nhập email để gửi lại OTP");
+      return;
+    }
+    try {
+      const r = await resendCheckoutOtp(pendingOtpOrderId, checkoutEmail);
+      setOtpResendIn(Math.max(0, r.resendAfterSeconds));
+      setOtpExpiresAt(r.expiresAt);
+      toast.success("Đã gửi lại mã OTP");
+    } catch (err: unknown) {
+      toast.error(parseCheckoutApiError(err));
     }
   };
 
@@ -675,7 +747,9 @@ export function CheckoutForm() {
       <div className="lg:col-span-2 space-y-6">
 
         {/* Step indicator */}
-        <StepIndicator current={step} onStepClick={goTo} />
+        {step !== "verify_otp" && (
+          <StepIndicator current={step} onStepClick={goTo} />
+        )}
 
         {/* ── Step 1: Shipping information ─────────────────────────────── */}
         {step === "shipping" && (
@@ -1044,16 +1118,6 @@ export function CheckoutForm() {
               </p>
               <div className="space-y-2">
                 <PaymentOption
-                  type="VNPAY"
-                  selected={paymentType === "VNPAY"}
-                  onSelect={() => setPaymentType("VNPAY")}
-                />
-                <PaymentOption
-                  type="MOMO"
-                  selected={paymentType === "MOMO"}
-                  onSelect={() => setPaymentType("MOMO")}
-                />
-                <PaymentOption
                   type="PAYOS"
                   selected={paymentType === "PAYOS"}
                   onSelect={() => setPaymentType("PAYOS")}
@@ -1213,11 +1277,7 @@ export function CheckoutForm() {
                 </button>
               </div>
               <p className="text-sm font-medium text-neutral-900 dark:text-white">
-                {paymentType === "VNPAY"
-                  ? "Thanh toán trực tuyến (VNPAY)"
-                  : paymentType === "MOMO"
-                  ? "Thanh toán trực tuyến (MOMO)"
-                  : paymentType === "PAYOS"
+                {paymentType === "PAYOS"
                   ? "Thanh toán trực tuyến (PayOS)"
                   : "Thanh toán khi nhận hàng (COD)"}
               </p>
@@ -1240,6 +1300,11 @@ export function CheckoutForm() {
                   <span className="h-4 w-4 animate-spin rounded-full border-2 border-white/30 border-t-white" />
                   Đang xử lý…
                 </span>
+              ) : pendingOtpOrderId != null ? (
+                <span className="flex items-center gap-2">
+                  <Lock className="size-4" />
+                  Tiếp tục xác thực email
+                </span>
               ) : (
                 <span className="flex items-center gap-2">
                   <Lock className="size-4" />
@@ -1249,12 +1314,98 @@ export function CheckoutForm() {
             </Button>
 
             <p className="text-center text-xs text-neutral-400">
-              Nhấn "Đặt hàng" đồng nghĩa với việc bạn đồng ý với{" "}
-              <Link href="/about" className="underline hover:text-neutral-600">
-                điều khoản sử dụng
-              </Link>{" "}
-              của Mono Studio.
+              {pendingOtpOrderId != null
+                ? "Bạn có một đơn chờ xác thực OTP qua email. Nhấn nút bên trên để mở bước nhập mã."
+                : 'Nhấn "Đặt hàng" đồng nghĩa với việc bạn đồng ý với '}
+              {pendingOtpOrderId == null && (
+                <>
+                  <Link href="/about" className="underline hover:text-neutral-600">
+                    điều khoản sử dụng
+                  </Link>{" "}
+                  của Mono Studio.
+                </>
+              )}
             </p>
+          </div>
+        )}
+
+        {step === "verify_otp" && (
+          <div className="space-y-6">
+            <button
+              type="button"
+              onClick={() => setStep("review")}
+              className="text-sm text-neutral-500 hover:text-neutral-900 dark:hover:text-white transition-colors"
+            >
+              ← Quay lại xác nhận đơn
+            </button>
+
+            <div className="rounded-none border border-neutral-200 p-6 dark:border-neutral-800 space-y-4">
+              <div className="flex items-center gap-2 font-semibold">
+                <EnvelopeSimple className="size-5 text-neutral-500" />
+                <h2>Xác thực email</h2>
+              </div>
+              <p className="text-sm text-neutral-600 dark:text-neutral-400">
+                Mã OTP đã gửi tới{" "}
+                <span className="font-medium text-neutral-900 dark:text-white">
+                  {otpMaskedEmail ?? "email của bạn"}
+                </span>
+                . Nhập mã để tiếp tục thanh toán hoặc hoàn tất đơn COD.
+              </p>
+              {otpExpiresAt && (
+                <p className="text-xs text-neutral-500">
+                  Mã có hiệu lực đến:{" "}
+                  {new Date(otpExpiresAt).toLocaleString("vi-VN", {
+                    dateStyle: "medium",
+                    timeStyle: "short",
+                  })}
+                </p>
+              )}
+              <div className="space-y-1.5">
+                <Label htmlFor="checkout-otp">Mã OTP</Label>
+                <Input
+                  id="checkout-otp"
+                  inputMode="numeric"
+                  autoComplete="one-time-code"
+                  maxLength={12}
+                  placeholder="Nhập mã từ email"
+                  value={otpCode}
+                  onChange={(e) =>
+                    setOtpCode(e.target.value.replace(/[^\d\s]/g, ""))
+                  }
+                  className="rounded-none font-mono text-lg tracking-widest"
+                />
+              </div>
+              <Button
+                onClick={handleVerifyOtp}
+                disabled={isSubmitting}
+                className="w-full"
+                size="lg"
+              >
+                {isSubmitting ? (
+                  <span className="flex items-center justify-center gap-2">
+                    <span className="h-4 w-4 animate-spin rounded-full border-2 border-white/30 border-t-white" />
+                    Đang xác thực…
+                  </span>
+                ) : (
+                  <span className="flex items-center gap-2">
+                    <Lock className="size-4" />
+                    Xác thực &amp; thanh toán
+                  </span>
+                )}
+              </Button>
+              <div className="flex justify-center pt-1">
+                <button
+                  type="button"
+                  onClick={handleResendOtp}
+                  disabled={otpResendIn > 0}
+                  className="text-sm text-neutral-600 underline-offset-2 hover:underline disabled:cursor-not-allowed disabled:opacity-50 dark:text-neutral-400"
+                >
+                  {otpResendIn > 0
+                    ? `Gửi lại mã sau ${otpResendIn}s`
+                    : "Gửi lại mã OTP"}
+                </button>
+              </div>
+            </div>
           </div>
         )}
       </div>

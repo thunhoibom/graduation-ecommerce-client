@@ -18,6 +18,7 @@ import {
   ORDER_FULFILLMENT_LABELS,
   formatOrderShortDate,
 } from "../orders/_components/order-list";
+import { resolveOrderPaymentDisplay } from "@/lib/order-return-eligibility";
 import { ProfileForm } from "./profile-form";
 
 interface AccountOverviewProps {
@@ -69,6 +70,7 @@ export function AccountOverview({ user }: AccountOverviewProps) {
     color:
       "bg-neutral-100 text-neutral-600 dark:bg-neutral-800 dark:text-neutral-400",
   };
+  const paymentInfo = recentOrder ? resolveOrderPaymentDisplay(recentOrder) : null;
 
   const addressLine = defaultAddr
     ? [
@@ -126,6 +128,9 @@ export function AccountOverview({ user }: AccountOverviewProps) {
               >
                 {statusInfo.label}
               </span>
+              {paymentInfo?.label ? (
+                <p className={`mt-1 text-[11px] ${paymentInfo.color}`}>{paymentInfo.label}</p>
+              ) : null}
               <p className="mt-2 text-sm font-medium text-neutral-900 dark:text-white">
                 {formatMoney(
                   recentOrder.totalValue ?? recentOrder.netValue ?? 0

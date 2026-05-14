@@ -19,7 +19,7 @@ import { postContactInquiry } from "@/services/rest-api/contact/contact";
 const SUBJECTS = [
   { value: "order", label: "Tư vấn đơn hàng" },
   { value: "product", label: "Hỏi về sản phẩm" },
-  { value: "return", label: "Yêu cầu đổi/trả" },
+  { value: "return", label: "Yêu cầu trả hàng" },
   { value: "cooperation", label: "Hợp tác kinh doanh" },
   { value: "feedback", label: "Góp ý / Phản hồi" },
   { value: "other", label: "Khác" },

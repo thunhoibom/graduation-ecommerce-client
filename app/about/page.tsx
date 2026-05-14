@@ -1,6 +1,4 @@
-import { notFound } from "next/navigation";
 import type { Metadata } from "next";
-import Image from "next/image";
 import Link from "next/link";
 import { MapPin, Phone, EnvelopeSimple, InstagramLogo, FacebookLogo, TiktokLogo } from "@phosphor-icons/react/dist/ssr";
 import { Button } from "@/components/ui/button";
@@ -14,17 +12,14 @@ export const metadata: Metadata = {
 };
 
 export default async function AboutPage() {
-  let about;
+  let about: Awaited<ReturnType<typeof getAbout>> | null = null;
   try {
     about = await getAbout();
   } catch {
-    notFound();
+    about = null;
   }
 
-  const name = about?.name ?? "Mono Studio";
-  const tagline = about?.tagline ?? "Thời trang tối giản, có chủ đích.";
   const description =
-    about?.description ??
     "Mono Studio là thương hiệu thời trang tối giản đến từ Việt Nam. Chúng tôi tin rằng mỗi người đều xứng đáng được mặc những gì họ thực sự thích — không quá phức tạp, không quá đông đúc, chỉ cần đúng với phong cách riêng.";
   const phone = about?.phone ?? "0901 234 567";
   const email = about?.email ?? "contact@monostudio.vn";
@@ -70,50 +65,7 @@ export default async function AboutPage() {
 
   return (
     <>
-      {/* ── Hero ─────────────────────────────────────────────── */}
-      <section className="relative overflow-hidden bg-neutral-50 dark:bg-neutral-950">
-        {about?.bannerImageURL && (
-          <div className="absolute inset-0">
-            <Image
-              src={about.bannerImageURL}
-              alt=""
-              fill
-              className="object-cover opacity-60"
-              priority
-            />
-          </div>
-        )}
-        <div className="relative mx-auto max-w-7xl px-4 py-24 text-center lg:px-6">
-          {about?.logoImageURL && (
-            <div className="mx-auto mb-6 flex h-16 w-16 items-center justify-center">
-              <Image
-                src={about.logoImageURL}
-                alt={name}
-                width={64}
-                height={64}
-                className="object-contain"
-              />
-            </div>
-          )}
-          <h1 className="text-4xl font-bold tracking-tight text-neutral-900 dark:text-white lg:text-5xl">
-            {name}
-          </h1>
-          <p className="mx-auto mt-4 max-w-xl text-base text-neutral-600 dark:text-neutral-300">
-            {tagline}
-          </p>
-        </div>
-      </section>
-
-      {/* ── Story ────────────────────────────────────────────── */}
-      <section className="mx-auto max-w-7xl px-4 py-16 lg:px-6">
-        <div className="mx-auto max-w-3xl">
-          <p className="text-lg leading-relaxed text-neutral-700 dark:text-neutral-300">
-            {description}
-          </p>
-        </div>
-      </section>
-
-      {/* ── Values ───────────────────────────────────────────── */}
+          {/* ── Values ───────────────────────────────────────────── */}
       <section className="bg-neutral-50 dark:bg-neutral-950">
         <div className="mx-auto max-w-7xl px-4 py-16 lg:px-6">
           <div className="mb-12 text-center">

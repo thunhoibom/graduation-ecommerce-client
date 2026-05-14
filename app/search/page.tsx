@@ -7,7 +7,8 @@ import {
   type ProductFilters,
 } from "@/services/rest-api/products/products";
 import { getCategoryTree } from "@/services/rest-api/collections/collections";
-import type { ProductListItem, ProductSearchItem } from "@/types/product";
+import type { ProductListItem } from "@/types/product";
+import { mapSearchItemToListItem } from "@/lib/product-pricing";
 import type { Collection } from "@/types/collection";
 import { SearchHeader } from "./_components/search-header";
 import { SearchBehaviorTracker } from "./_components/search-behavior-tracker";
@@ -106,18 +107,7 @@ export default async function SearchPage({ searchParams }: Props) {
     try {
       const result = await searchProducts(filters);
 
-      items = (result.items ?? []).map((si: ProductSearchItem) => ({
-        id: si.id ? parseInt(si.id, 10) : undefined,
-        name: si.name,
-        barcode: si.barcode,
-        currentPrice: si.price,
-        category: {
-          name: si.categoryName,
-          code: si.categoryCodes && si.categoryCodes.length > 0 ? si.categoryCodes[0] : undefined,
-        },
-        images: si.primaryImageUrl ? [{ url: si.primaryImageUrl }] : [],
-        currentStock: 1,
-      }));
+      items = (result.items ?? []).map((si) => mapSearchItemToListItem(si));
 
       totalCount = result.totalCount ?? 0;
       const apiIdx = result.pageIndex;

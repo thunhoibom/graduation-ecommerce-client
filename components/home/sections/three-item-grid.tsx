@@ -2,7 +2,10 @@ import Link from "next/link";
 import Image from "next/image";
 import { getProducts } from "@/services/rest-api/products/products";
 import type { ProductListItem } from "@/types/product";
-import { formatMoney } from "@/lib/utils";
+import { HomeSectionHeader } from "@/components/home/sections/home-section-header";
+import { resolveProductCardPricing } from "@/lib/product-pricing";
+import { ProductDiscountBadge } from "@/components/product/product-discount-badge";
+import { ProductCardPrice } from "@/components/product/product-card-price";
 
 export async function ThreeItemGrid() {
   let items: ProductListItem[] = [];
@@ -16,37 +19,32 @@ export async function ThreeItemGrid() {
   if (!items.length) return null;
 
   return (
-    <section className="border-y border-neutral-200/80 bg-white/70 py-12 md:py-14 dark:border-neutral-800 dark:bg-neutral-950/40">
+    <section className="home-surface home-section">
       <div className="section-shell">
-        <div className="mb-8 flex flex-wrap items-end justify-between gap-4">
-          <div>
-            <p className="section-subtitle">Mới cập nhật</p>
-            <h2 className="section-title mt-1">Sản phẩm mới</h2>
-          </div>
-          <Link
-            href="/collections/all"
-            className="text-sm font-medium text-neutral-500 underline-offset-4 transition-colors hover:text-neutral-900 hover:underline dark:text-neutral-400 dark:hover:text-white"
-          >
-            Xem tất cả
-          </Link>
-        </div>
+        <HomeSectionHeader
+          eyebrow="Mới cập nhật"
+          title="Sản phẩm mới"
+          action={
+            <Link href="/collections/all" className="home-text-link">
+              Xem tất cả
+            </Link>
+          }
+        />
 
-        <ul className="grid grid-flow-row gap-4 sm:grid-cols-2 md:grid-cols-3">
-          {items.map((product, index) => (
+        <ul className="grid grid-flow-row gap-5 sm:grid-cols-2 md:grid-cols-3 md:gap-6">
+          {items.map((product, index) => {
+            const pricing = resolveProductCardPricing(product);
+            return (
             <li key={product.barcode}>
-              <Link
-                href={`/product/${product.barcode}`}
-                className="group block"
-              >
-                {/* Image */}
-                <div className="relative aspect-[3/4] overflow-hidden border border-neutral-200 bg-neutral-50 dark:border-neutral-800 dark:bg-neutral-900">
+              <Link href={`/product/${product.barcode}`} className="group block">
+                <div className="home-product-media">
                   {product.images?.[0]?.url ? (
                     <Image
                       src={product.images[0].url}
                       alt={product.name}
                       fill
                       priority={index < 3}
-                      className="object-cover transition duration-300 group-hover:scale-105"
+                      className="object-cover transition duration-500 group-hover:scale-[1.03]"
                       sizes="(max-width: 768px) 50vw, 33vw"
                     />
                   ) : (
@@ -55,33 +53,33 @@ export async function ThreeItemGrid() {
                     </div>
                   )}
 
-                  {/* Out-of-stock overlay */}
                   {product.currentStock === 0 && (
                     <div className="absolute inset-0 flex items-center justify-center bg-black/40">
-                      <span className="rounded-full bg-white/90 px-3 py-1 text-xs font-medium text-black">
+                      <span className="rounded-none bg-white/90 px-3 py-1 text-xs font-medium text-black">
                         Hết hàng
                       </span>
                     </div>
                   )}
+                  {pricing.hasDiscount ? (
+                    <ProductDiscountBadge discountPercent={pricing.discountPercent} />
+                  ) : null}
                 </div>
 
-                {/* Info */}
-                <div className="mt-3 space-y-1">
+                <div className="mt-4 space-y-1.5">
                   {product.category?.name && (
-                    <p className="text-xs text-neutral-500 dark:text-neutral-400">
+                    <p className="text-xs uppercase tracking-[0.14em] text-neutral-500 dark:text-neutral-400">
                       {product.category.name}
                     </p>
                   )}
-                  <h3 className="truncate text-sm font-medium leading-tight text-neutral-900 dark:text-white">
+                  <h3 className="truncate text-base font-medium leading-tight text-neutral-900 dark:text-white">
                     {product.name}
                   </h3>
-                  <p className="text-sm font-semibold text-neutral-900 dark:text-white">
-                    {formatMoney(product.currentPrice)}
-                  </p>
+                  <ProductCardPrice pricing={pricing} />
                 </div>
               </Link>
             </li>
-          ))}
+            );
+          })}
         </ul>
       </div>
     </section>

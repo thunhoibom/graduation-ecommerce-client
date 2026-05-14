@@ -27,8 +27,8 @@ function CollectionTile({
       href={`/collections/${col.code}`}
       className={
         isFeatured
-          ? "group relative block h-full overflow-hidden rounded-2xl border border-neutral-200/80 bg-neutral-200 shadow-sm ring-1 ring-black/5 transition hover:border-neutral-900/20 hover:shadow-lg dark:border-neutral-800 dark:bg-neutral-800 dark:ring-white/10 dark:hover:border-neutral-500"
-          : "group relative aspect-square overflow-hidden rounded-xl border border-neutral-200/80 bg-neutral-200 shadow-sm ring-1 ring-black/5 transition hover:border-neutral-900/20 hover:shadow-md dark:border-neutral-800 dark:bg-neutral-800 dark:ring-white/10 dark:hover:border-neutral-500"
+          ? "group relative block h-full overflow-hidden rounded-none border border-neutral-200/80 bg-neutral-200 shadow-sm ring-1 ring-black/5 transition hover:border-neutral-900/20 hover:shadow-lg dark:border-neutral-800 dark:bg-neutral-800 dark:ring-white/10 dark:hover:border-neutral-500"
+          : "group relative aspect-square overflow-hidden rounded-none border border-neutral-200/80 bg-neutral-200 shadow-sm ring-1 ring-black/5 transition hover:border-neutral-900/20 hover:shadow-md dark:border-neutral-800 dark:bg-neutral-800 dark:ring-white/10 dark:hover:border-neutral-500"
       }
     >
       <div
@@ -91,7 +91,7 @@ function CollectionTile({
           <span
             className={
               isFeatured
-                ? "inline-flex shrink-0 items-center gap-1.5 self-start rounded-full border border-white/25 bg-white/10 px-3 py-1.5 text-sm font-medium text-white backdrop-blur-sm transition group-hover:border-white/40 group-hover:bg-white/15 md:self-end"
+                ? "inline-flex shrink-0 items-center gap-1.5 self-start rounded-none border border-white/25 bg-white/10 px-3 py-1.5 text-sm font-medium text-white backdrop-blur-sm transition group-hover:border-white/40 group-hover:bg-white/15 md:self-end"
                 : "mt-1 inline-flex w-max items-center gap-1 text-xs font-medium text-white/90 opacity-90 transition group-hover:opacity-100"
             }
           >
@@ -149,12 +149,12 @@ export function CollectionsShowcaseClient({ collections }: { collections: Collec
       onMouseLeave={() => setPaused(false)}
     >
       <div
-        className="relative rounded-2xl outline-none ring-offset-2 ring-offset-neutral-100 focus-within:ring-2 focus-within:ring-neutral-400 dark:ring-offset-neutral-900 dark:focus-within:ring-neutral-600"
+        className="relative rounded-none outline-none ring-offset-2 ring-offset-neutral-100 focus-within:ring-2 focus-within:ring-neutral-400 dark:ring-offset-neutral-900 dark:focus-within:ring-neutral-600"
         role="region"
         aria-roledescription="carousel"
         aria-label="Bộ sưu tập nổi bật"
       >
-        <div className="overflow-hidden rounded-2xl">
+        <div className="overflow-hidden rounded-none">
           <div
             className="flex transition-transform duration-700 ease-[cubic-bezier(0.32,0.72,0,1)] will-change-transform"
             style={{
@@ -186,7 +186,7 @@ export function CollectionsShowcaseClient({ collections }: { collections: Collec
                   aria-selected={i === active}
                   aria-label={`${col.name}${i === active ? " (đang xem)" : ""}`}
                   className={cn(
-                    "h-2 rounded-full transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-neutral-400",
+                    "h-2 rounded-none transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-neutral-400",
                     i === active ? "w-8 bg-neutral-900 dark:bg-white" : "w-2 bg-neutral-300 hover:bg-neutral-400 dark:bg-neutral-600 dark:hover:bg-neutral-500"
                   )}
                   onClick={() => setActive(i)}
@@ -196,7 +196,7 @@ export function CollectionsShowcaseClient({ collections }: { collections: Collec
             <div className="flex gap-2">
               <button
                 type="button"
-                className="rounded-full border border-neutral-300 bg-white px-3 py-1.5 text-xs font-medium text-neutral-800 hover:bg-neutral-50 dark:border-neutral-600 dark:bg-neutral-950 dark:text-neutral-100 dark:hover:bg-neutral-900"
+                className="rounded-none border border-neutral-300 bg-white px-3 py-1.5 text-xs font-medium text-neutral-800 hover:bg-neutral-50 dark:border-neutral-600 dark:bg-neutral-950 dark:text-neutral-100 dark:hover:bg-neutral-900"
                 onClick={() => go(-1)}
                 aria-label="Bộ sưu tập trước"
               >
@@ -204,7 +204,7 @@ export function CollectionsShowcaseClient({ collections }: { collections: Collec
               </button>
               <button
                 type="button"
-                className="rounded-full border border-neutral-300 bg-white px-3 py-1.5 text-xs font-medium text-neutral-800 hover:bg-neutral-50 dark:border-neutral-600 dark:bg-neutral-950 dark:text-neutral-100 dark:hover:bg-neutral-900"
+                className="rounded-none border border-neutral-300 bg-white px-3 py-1.5 text-xs font-medium text-neutral-800 hover:bg-neutral-50 dark:border-neutral-600 dark:bg-neutral-950 dark:text-neutral-100 dark:hover:bg-neutral-900"
                 onClick={() => go(1)}
                 aria-label="Bộ sưu tập sau"
               >
@@ -214,16 +214,6 @@ export function CollectionsShowcaseClient({ collections }: { collections: Collec
           </div>
         )}
       </div>
-
-      {n > 1 && (
-        <ul className="grid grid-cols-2 gap-3 sm:grid-cols-3 sm:gap-4 lg:grid-cols-4">
-          {collections.map((col) => (
-            <li key={`grid-${col.code}`}>
-              <CollectionTile col={col} variant="compact" />
-            </li>
-          ))}
-        </ul>
-      )}
     </div>
   );
 }

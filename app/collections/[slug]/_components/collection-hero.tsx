@@ -27,7 +27,7 @@ export function CollectionHero({ collection }: CollectionHeroProps) {
         <p className="text-[10px] font-semibold uppercase tracking-[0.25em] text-white/80">
           Bộ sưu tập
         </p>
-        <p className="mt-1 font-display text-2xl font-bold tracking-tight text-white md:text-3xl">
+        <p className="mt-1 text-2xl font-bold tracking-tight text-white md:text-3xl">
           {collection.name}
         </p>
       </div>

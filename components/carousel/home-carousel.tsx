@@ -5,8 +5,10 @@ import Link from "next/link";
 import Image from "next/image";
 import { CaretLeft, CaretRight } from "@phosphor-icons/react";
 import { Button } from "@/components/ui/button";
-import { formatMoney } from "@/lib/utils";
 import type { ProductListItem } from "@/types/product";
+import { resolveProductCardPricing } from "@/lib/product-pricing";
+import { ProductDiscountBadge } from "@/components/product/product-discount-badge";
+import { ProductCardPrice } from "@/components/product/product-card-price";
 
 interface HomeCarouselProps {
   products: ProductListItem[];
@@ -61,7 +63,9 @@ export function HomeCarousel({ products }: HomeCarouselProps) {
             className="flex gap-4 overflow-x-auto scroll-smooth pb-2 pl-1 pr-1 scrollbar-hide"
             style={{ scrollbarWidth: "none", msOverflowStyle: "none" }}
           >
-            {products.map((product) => (
+            {products.map((product) => {
+              const pricing = resolveProductCardPricing(product);
+              return (
               <Link
                 key={product.barcode}
                 href={`/product/${product.barcode}`}
@@ -82,7 +86,6 @@ export function HomeCarousel({ products }: HomeCarouselProps) {
                     </div>
                   )}
 
-                  {/* Out of stock overlay */}
                   {!product.currentStock && (
                     <div className="absolute inset-0 flex items-center justify-center bg-black/40">
                       <span className="rounded-full bg-white/90 px-3 py-1 text-xs font-medium text-black">
@@ -90,9 +93,11 @@ export function HomeCarousel({ products }: HomeCarouselProps) {
                       </span>
                     </div>
                   )}
+                  {pricing.hasDiscount ? (
+                    <ProductDiscountBadge discountPercent={pricing.discountPercent} />
+                  ) : null}
                 </div>
 
-                {/* Product info */}
                 <div className="mt-3 space-y-1">
                   {product.category?.name && (
                     <p className="text-xs text-neutral-500 dark:text-neutral-400">
@@ -102,12 +107,11 @@ export function HomeCarousel({ products }: HomeCarouselProps) {
                   <h3 className="truncate text-sm font-medium text-neutral-900 dark:text-white">
                     {product.name}
                   </h3>
-                  <span className="text-sm font-semibold text-neutral-900 dark:text-white">
-                    {formatMoney(product.currentPrice)}
-                  </span>
+                  <ProductCardPrice pricing={pricing} />
                 </div>
               </Link>
-            ))}
+              );
+            })}
           </div>
         </div>
       </div>

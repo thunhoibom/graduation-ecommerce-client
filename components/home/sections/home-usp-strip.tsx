@@ -47,7 +47,7 @@ const items = [
   {
     icon: IconRefresh,
     title: "Đổi trả trong 7 ngày",
-    body: "Hỗ trợ đổi size / trả hàng theo chính sách rõ ràng.",
+    body: "Hỗ trợ trả hàng và hoàn tiền theo chính sách rõ ràng.",
   },
   {
     icon: IconFabric,
@@ -58,20 +58,20 @@ const items = [
 
 export function HomeUspStrip() {
   return (
-    <section
-      className="border-y border-neutral-200/90 bg-neutral-100/80 py-10 dark:border-neutral-800 dark:bg-neutral-900/50"
-      aria-label="Cam kết dịch vụ"
-    >
-      <div className="section-shell">
-        <ul className="grid gap-8 sm:grid-cols-3 sm:gap-6">
+    <section className="home-surface-soft" aria-label="Cam kết dịch vụ">
+      <div className="section-shell py-10 md:py-12">
+        <ul className="grid gap-6 md:grid-cols-3 md:gap-8">
           {items.map(({ icon: Icon, title, body }) => (
-            <li key={title} className="flex gap-4">
-              <span className="flex size-11 items-center justify-center rounded-full border border-neutral-200 bg-white text-neutral-800 dark:border-neutral-700 dark:bg-neutral-950 dark:text-neutral-100">
+            <li
+              key={title}
+              className="flex gap-4 rounded-none border border-neutral-200/80 bg-white/80 p-5 shadow-[0_18px_40px_-32px_rgba(15,23,42,0.35)] dark:border-neutral-800 dark:bg-neutral-950/70"
+            >
+              <span className="flex size-12 shrink-0 items-center justify-center rounded-none border border-neutral-200 bg-neutral-50 text-neutral-800 dark:border-neutral-700 dark:bg-neutral-900 dark:text-neutral-100">
                 <Icon />
               </span>
               <div>
                 <p className="font-semibold tracking-tight text-neutral-900 dark:text-white">{title}</p>
-                <p className="mt-1 text-sm leading-relaxed text-neutral-600 dark:text-neutral-400">{body}</p>
+                <p className="mt-1.5 text-sm leading-relaxed text-neutral-600 dark:text-neutral-400">{body}</p>
               </div>
             </li>
           ))}

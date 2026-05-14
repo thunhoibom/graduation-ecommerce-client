@@ -322,7 +322,7 @@ export default function MockShippingWebhookPage() {
           <ul className="mt-2 list-disc space-y-1 pl-4">
             <li>transporting / delivering - Đơn chuyển sang trạng thái đang giao.</li>
             <li>delivered - Đơn chuyển hoàn tất theo workflow backend.</li>
-            <li>delivery_fail - Đơn chuyển giao thất bại.</li>
+            <li>delivery_fail - Chỉ ghi timeline; đơn vẫn đang giao, có thể giao lại hoặc chuyển vòng return.</li>
             <li>cancel - Đơn chuyển thu hồi giao hàng.</li>
             <li>returned - Đơn chuyển hoàn hàng.</li>
             <li>

@@ -25,11 +25,7 @@ const REASON_OPTIONS = [
   { value: "OTHER", label: "Lý do khác" },
 ];
 
-const REFUND_METHODS = [
-  { value: "ORIGINAL_PAYMENT", label: "Hoàn tiền qua phương thức thanh toán ban đầu" },
-  { value: "STORE_CREDIT", label: "Hoàn vào tài khoản mua sắm" },
-  { value: "BANK_TRANSFER", label: "Chuyển khoản ngân hàng (nhập STK)" },
-];
+const REFUND_METHOD = "BANK_TRANSFER" as const;
 
 function normalizeFulfillmentStatus(order: OrderPojo): string {
   const raw = (order.fulfillmentStatus ?? order.status ?? "").toUpperCase();
@@ -55,7 +51,6 @@ export default function NewReturnPage() {
   const [selectedOrderId, setSelectedOrderId] = useState<string>("");
   const [selectedItems, setSelectedItems] = useState<Set<number>>(new Set());
   const [reason, setReason] = useState("");
-  const [refundMethod, setRefundMethod] = useState("ORIGINAL_PAYMENT");
   const [notes, setNotes] = useState("");
   const [refundBankName, setRefundBankName] = useState("");
   const [refundBankAccountNumber, setRefundBankAccountNumber] = useState("");
@@ -108,11 +103,9 @@ export default function NewReturnPage() {
       toast.error("Vui lòng nhập lý do đổi/trả");
       return;
     }
-    if (refundMethod === "BANK_TRANSFER") {
-      if (!refundBankName.trim() || !refundBankAccountNumber.trim() || !refundBankAccountHolder.trim()) {
-        toast.error("Vui lòng nhập đầy đủ thông tin tài khoản ngân hàng để hoàn tiền");
-        return;
-      }
+    if (!refundBankName.trim() || !refundBankAccountNumber.trim() || !refundBankAccountHolder.trim()) {
+      toast.error("Vui lòng nhập đầy đủ thông tin tài khoản ngân hàng để hoàn tiền");
+      return;
     }
 
     setSubmitting(true);
@@ -131,10 +124,10 @@ export default function NewReturnPage() {
         orderId: selectedOrder.buyOrder!,
         reason,
         status: "PENDING",
-        refundMethod,
-        refundBankName: refundMethod === "BANK_TRANSFER" ? refundBankName.trim() : undefined,
-        refundBankAccountNumber: refundMethod === "BANK_TRANSFER" ? refundBankAccountNumber.trim() : undefined,
-        refundBankAccountHolder: refundMethod === "BANK_TRANSFER" ? refundBankAccountHolder.trim() : undefined,
+        refundMethod: REFUND_METHOD,
+        refundBankName: refundBankName.trim(),
+        refundBankAccountNumber: refundBankAccountNumber.trim(),
+        refundBankAccountHolder: refundBankAccountHolder.trim(),
         items,
       });
 
@@ -406,37 +399,10 @@ export default function NewReturnPage() {
             </div>
           )}
 
-          {/* Refund method */}
-          <div className="space-y-3">
-            <Label className="text-sm font-semibold">Phương thức hoàn tiền</Label>
-            <div className="space-y-2">
-              {REFUND_METHODS.map((m) => (
-                <label
-                  key={m.value}
-                  className={cn(
-                    "flex cursor-pointer items-start gap-3 rounded-none border p-4 transition-colors",
-                    refundMethod === m.value
-                      ? "border-neutral-900 bg-neutral-50 dark:border-white dark:bg-neutral-900"
-                      : "border-neutral-200 hover:border-neutral-400 dark:border-neutral-800"
-                  )}
-                >
-                  <input
-                    type="radio"
-                    name="refund"
-                    value={m.value}
-                    checked={refundMethod === m.value}
-                    onChange={() => setRefundMethod(m.value)}
-                    className="accent-neutral-900 mt-0.5"
-                  />
-                  <span className="text-sm text-neutral-900 dark:text-white">{m.label}</span>
-                </label>
-              ))}
-            </div>
-          </div>
-
-          {refundMethod === "BANK_TRANSFER" && (
-            <div className="space-y-4">
-              <Label className="text-sm font-semibold">Thông tin nhận hoàn tiền</Label>
+          <div className="space-y-4">
+            <p className="text-sm text-neutral-600 dark:text-neutral-400">
+              Hoàn tiền được xử lý bằng chuyển khoản ngân hàng. Vui lòng nhập tài khoản nhận hoàn.
+            </p>
               <div className="space-y-2">
                 <Label htmlFor="refund-bank-name">Tên ngân hàng *</Label>
                 <Input
@@ -468,7 +434,6 @@ export default function NewReturnPage() {
                 />
               </div>
             </div>
-          )}
 
           <Button
             onClick={handleSubmit}

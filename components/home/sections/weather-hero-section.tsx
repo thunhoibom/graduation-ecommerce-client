@@ -120,12 +120,12 @@ export async function WeatherHeroSection() {
   const tempRounded = weather?.temperature != null ? Math.round(weather.temperature) : null;
 
   return (
-    <section className="border-b border-neutral-200 bg-neutral-100/70 py-10 dark:border-neutral-800 dark:bg-neutral-900/40 md:py-12">
+    <section className="home-surface-muted home-section border-y border-neutral-200/80 dark:border-neutral-800">
       <div className="section-shell">
         <div className="mb-8 grid gap-8 lg:grid-cols-[minmax(0,1fr)_min(100%,280px)] lg:items-start">
           <div>
             <p className="section-subtitle">Theo thời tiết</p>
-            <h2 className="section-title mt-1 max-w-2xl">{heading}</h2>
+            <h2 className="section-title mt-2 max-w-2xl">{heading}</h2>
             <p className="mt-3 max-w-2xl text-sm leading-relaxed text-neutral-600 dark:text-neutral-300">
               {lead}
             </p>
@@ -145,7 +145,7 @@ export async function WeatherHeroSection() {
             </ul>
           </div>
 
-          <aside className="flex flex-col justify-between gap-4 rounded-2xl border border-neutral-200 bg-white p-5 shadow-sm dark:border-neutral-700 dark:bg-neutral-950">
+          <aside className="flex flex-col justify-between gap-4 rounded-none border border-neutral-200 bg-white p-5 shadow-sm dark:border-neutral-700 dark:bg-neutral-950">
             <div>
               <p className="text-[11px] font-semibold uppercase tracking-[0.2em] text-neutral-500 dark:text-neutral-400">
                 Thời tiết hiện tại
@@ -161,10 +161,10 @@ export async function WeatherHeroSection() {
               <p className="mt-1 text-sm text-neutral-600 dark:text-neutral-300">{skyLabel(weather?.condition)}</p>
             </div>
             <div className="flex flex-wrap gap-2">
-              <span className="rounded-full border border-neutral-300 bg-neutral-50 px-3 py-1 text-xs uppercase tracking-wide text-neutral-800 dark:border-neutral-600 dark:bg-neutral-900 dark:text-neutral-100">
+              <span className="rounded-none border border-neutral-300 bg-neutral-50 px-3 py-1 text-xs uppercase tracking-wide text-neutral-800 dark:border-neutral-600 dark:bg-neutral-900 dark:text-neutral-100">
                 {weatherTone}
               </span>
-              <span className="rounded-full border border-neutral-300 px-3 py-1 text-xs uppercase tracking-wide text-neutral-700 dark:border-neutral-600 dark:text-neutral-200">
+              <span className="rounded-none border border-neutral-300 px-3 py-1 text-xs uppercase tracking-wide text-neutral-700 dark:border-neutral-600 dark:text-neutral-200">
                 {tagChipLabel}
               </span>
             </div>
@@ -176,7 +176,7 @@ export async function WeatherHeroSection() {
             <Link
               key={item.barcode}
               href={`/product/${item.barcode}`}
-              className="group overflow-hidden rounded-xl border border-neutral-200 bg-white transition-all hover:-translate-y-0.5 hover:border-neutral-900 hover:shadow-md dark:border-neutral-800 dark:bg-neutral-950 dark:hover:border-neutral-500"
+              className="group overflow-hidden rounded-none border border-neutral-200 bg-white transition-all hover:-translate-y-0.5 hover:border-neutral-900 hover:shadow-md dark:border-neutral-800 dark:bg-neutral-950 dark:hover:border-neutral-500"
             >
               <div className="relative aspect-[3/4] bg-neutral-100 dark:bg-neutral-900">
                 {item.primaryImageUrl ? (

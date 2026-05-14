@@ -4,9 +4,11 @@ import Link from "next/link";
 import Image from "next/image";
 import { useSearchParams } from "next/navigation";
 import type { ProductListItem } from "@/types/product";
-import { formatMoney } from "@/lib/utils";
 import { cn } from "@/lib/utils";
 import { ShoppingBag } from "@phosphor-icons/react";
+import { resolveProductCardPricing } from "@/lib/product-pricing";
+import { ProductDiscountBadge } from "@/components/product/product-discount-badge";
+import { ProductCardPrice } from "@/components/product/product-card-price";
 
 interface ProductGridProps {
   products: ProductListItem[];
@@ -100,10 +102,7 @@ export function ProductGrid({
             className="group block"
           >
             {(() => {
-              const currentPrice = product.currentPrice;
-              const originalPrice = product.originalPrice ?? product.currentPrice;
-              const hasDiscount = Boolean(product.hasDiscount && currentPrice < originalPrice);
-              const discountPercent = Math.max(0, Math.min(100, product.discountPercent ?? 0));
+              const pricing = resolveProductCardPricing(product);
               return (
                 <>
             {/* Image */}
@@ -130,11 +129,9 @@ export function ProductGrid({
                   </span>
                 </div>
               )}
-              {hasDiscount && (
-                <span className="absolute left-2 top-2 rounded-none bg-red-600 px-2 py-1 text-xs font-semibold text-white">
-                  -{discountPercent}%
-                </span>
-              )}
+              {pricing.hasDiscount ? (
+                <ProductDiscountBadge discountPercent={pricing.discountPercent} />
+              ) : null}
             </div>
 
             {/* Info */}
@@ -145,14 +142,7 @@ export function ProductGrid({
               <h3 className="line-clamp-2 text-sm font-medium leading-tight">
                 {product.name}
               </h3>
-              <div className="flex items-center gap-2">
-                <p className="text-sm font-semibold">{formatMoney(currentPrice)}</p>
-                {hasDiscount && (
-                  <p className="text-xs text-neutral-500 line-through">
-                    {formatMoney(originalPrice)}
-                  </p>
-                )}
-              </div>
+              <ProductCardPrice pricing={pricing} />
             </div>
                 </>
               );

@@ -35,7 +35,7 @@ export default function ShippingPolicyPage() {
           href="/help/return-policy"
           className="text-sm font-medium text-neutral-900 underline underline-offset-4 dark:text-white"
         >
-          Xem chính sách đổi trả
+          Xem chính sách trả hàng
         </Link>
       </p>
     </div>

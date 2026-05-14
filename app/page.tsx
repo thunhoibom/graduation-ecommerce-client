@@ -11,6 +11,7 @@ import { HomeShopShortcuts } from "@/components/home/sections/home-shop-shortcut
 import { HomePromotionsStrip } from "@/components/home/sections/home-promotions-strip";
 import Footer from "@/components/layout/footer";
 import { getAbout } from "@/services/rest-api/about/about";
+import { resolveBannerUrls } from "@/lib/banner-urls";
 import { baseUrl } from "@/lib/utils";
 
 const defaultTitle = "Mono Studio — Thời trang tối giản";
@@ -36,7 +37,8 @@ export async function generateMetadata(): Promise<Metadata> {
 
   const title = about?.name ? `${about.name} — Thời trang tối giản` : defaultTitle;
   const description = about?.description?.trim() || defaultDescription;
-  const ogImage = about?.bannerImageURL ? absoluteOgImageUrl(about.bannerImageURL) : undefined;
+  const bannerUrls = resolveBannerUrls(about);
+  const ogImage = bannerUrls[0] ? absoluteOgImageUrl(bannerUrls[0]) : undefined;
 
   return {
     title,
@@ -64,16 +66,16 @@ export const revalidate = 300;
 
 export default async function HomePage() {
   return (
-    <div className="space-y-0 pb-6 md:pb-8">
+    <div className="home-surface overflow-x-clip pb-6 md:pb-8">
       <HeroSection />
       <HomeUspStrip />
-      <HomeShopShortcuts />
-      <HomePromotionsStrip />
-      <WeatherHeroSection />
-      <ThreeItemGrid />
       <CollectionsGrid />
+      <ThreeItemGrid />
       <FeaturedCarousel />
+      <HomePromotionsStrip />
       <HomeForYouSection />
+      <WeatherHeroSection />
+      <HomeShopShortcuts />
       <HomeBlogSection />
       <Footer />
     </div>

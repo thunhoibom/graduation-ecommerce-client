@@ -59,6 +59,10 @@ export async function getCart(): Promise<Cart | null> {
   }
 }
 
+export function resetCartSessionAfterCheckout(): void {
+  clearSessionToken();
+}
+
 /** DELETE /public/cart — clear entire cart */
 export async function clearCart(): Promise<void> {
   const token = getSessionToken();

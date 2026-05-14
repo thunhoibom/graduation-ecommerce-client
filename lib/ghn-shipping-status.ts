@@ -79,22 +79,21 @@ export function inferGhnWorkflowAction(status: string): string {
     case "COMPLETED":
       return "COMPLETED";
     case "DELIVERY_FAIL":
-      return "DELIVERY_FAILED";
-    case "CANCEL":
-      return "DELIVERY_CANCELLED";
-    case "RETURNED":
-      return "RETURNED";
-    case "RETURN_FAIL":
-    case "EXCEPTION":
-    case "DAMAGE":
-    case "LOST":
-      return "DELIVERY_FAILED";
     case "WAITING_TO_RETURN":
     case "RETURN":
     case "RETURN_TRANSPORTING":
     case "RETURN_SORTING":
     case "RETURNING":
+    case "RETURN_FAIL":
       return "NONE";
+    case "CANCEL":
+      return "DELIVERY_CANCELLED";
+    case "RETURNED":
+      return "RETURNED";
+    case "EXCEPTION":
+    case "DAMAGE":
+    case "LOST":
+      return "DELIVERY_FAILED";
     default:
       if (normalized.includes("UNDELIVERABLE")) return "DELIVERY_FAILED";
       if (normalized.includes("CANCEL") || normalized.includes("RECALL")) {

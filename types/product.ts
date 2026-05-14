@@ -109,6 +109,10 @@ export interface ProductSearchItem {
   barcode: string;
   description: string;
   price: number;
+  originalPrice?: number;
+  currentPrice?: number;
+  discountPercent?: number;
+  hasDiscount?: boolean;
   categoryName: string;
   categoryCodes?: string[];
   status: string;

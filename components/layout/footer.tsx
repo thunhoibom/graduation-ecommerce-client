@@ -10,7 +10,7 @@ const SECTIONS = [
     title: "Hỗ trợ",
     children: [
       { id: 101, title: "Hướng dẫn mua hàng", path: "/help/shopping-guide" },
-      { id: 102, title: "Chính sách đổi trả", path: "/help/return-policy" },
+      { id: 102, title: "Chính sách trả hàng", path: "/help/return-policy" },
       { id: 103, title: "Chính sách vận chuyển", path: "/help/shipping" },
       { id: 104, title: "Câu hỏi thường gặp", path: "/help/faq" },
     ],

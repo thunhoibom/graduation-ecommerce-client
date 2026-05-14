@@ -8,6 +8,12 @@ import { getMyOrder } from "@/services/rest-api/orders/orders";
 import { cancelMyOrder } from "@/services/rest-api/orders/orders";
 import type { OrderPojo } from "@/types/order";
 import { formatMoney } from "@/lib/utils";
+import {
+  canCustomerRequestReturn,
+  getOrderRefundedAmount,
+  isOrderFullyRefunded,
+  resolveOrderPaymentDisplay,
+} from "@/lib/order-return-eligibility";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 
@@ -110,11 +116,10 @@ export function OrderDetail({ buyOrder }: { buyOrder: number }) {
     (order.paymentStatus === "UNPAID" || order.paymentStatus === "EXPIRED" || order.paymentStatus === "PAYMENT_CANCELLED");
   const canRequestCancel = fulfillment === "PROCESSING" || fulfillment === "READY_TO_PICK";
   const canCancel = canCancelNow || canRequestCancel;
-  const canRequestReturn =
-    fulfillment === "DELIVERED" ||
-    fulfillment === "COMPLETED" ||
-    fulfillment === "DELIVERY_COMPLETE" ||
-    fulfillment === "CANCELLED";
+  const canRequestReturn = order ? canCustomerRequestReturn(order) : false;
+  const paymentInfo = order ? resolveOrderPaymentDisplay(order) : null;
+  const refundedAmount = order ? getOrderRefundedAmount(order) : 0;
+  const fullyRefunded = order ? isOrderFullyRefunded(order) : false;
 
   return (
     <div className="space-y-6">
@@ -137,9 +142,14 @@ export function OrderDetail({ buyOrder }: { buyOrder: number }) {
             Đặt ngày {formatDate(order.date)}
           </p>
         </div>
-        <span className={`self-start inline-flex rounded px-3 py-1 text-sm font-medium ${statusInfo.color}`}>
-          {statusInfo.label}
-        </span>
+        <div className="flex flex-col items-end gap-2 sm:items-end">
+          <span className={`inline-flex rounded px-3 py-1 text-sm font-medium ${statusInfo.color}`}>
+            {statusInfo.label}
+          </span>
+          {paymentInfo?.label ? (
+            <span className={`text-xs font-medium ${paymentInfo.color}`}>{paymentInfo.label}</span>
+          ) : null}
+        </div>
       </div>
 
       {/* Action: cancel */}
@@ -162,10 +172,19 @@ export function OrderDetail({ buyOrder }: { buyOrder: number }) {
         </div>
       )}
 
+      {fullyRefunded && (
+        <div className="rounded-none border border-fuchsia-200 bg-fuchsia-50 p-4 dark:border-fuchsia-900 dark:bg-fuchsia-950/20">
+          <p className="text-sm text-fuchsia-800 dark:text-fuchsia-200">
+            Đơn hàng này đã được hoàn tiền
+            {refundedAmount > 0 ? ` (${formatMoney(refundedAmount)})` : ""}.
+          </p>
+        </div>
+      )}
+
       {canRequestReturn && (
         <div className="rounded-none border border-neutral-200 bg-neutral-50 p-4 dark:border-neutral-800 dark:bg-neutral-900/40">
           <p className="text-sm text-neutral-700 dark:text-neutral-300">
-            Bạn có thể gửi yêu cầu đổi/trả cho đơn hàng này.
+            Bạn có thể gửi yêu cầu trả hàng và hoàn tiền cho đơn này.
           </p>
           <Link href={`/account/returns/new?orderId=${order.buyOrder}`}>
             <Button
@@ -173,7 +192,7 @@ export function OrderDetail({ buyOrder }: { buyOrder: number }) {
               size="sm"
               className="mt-3 rounded-none"
             >
-              Yêu cầu đổi / trả
+              Yêu cầu trả hàng
             </Button>
           </Link>
         </div>

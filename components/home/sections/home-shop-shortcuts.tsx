@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { HomeSectionHeader } from "@/components/home/sections/home-section-header";
 
 const shortcuts = [
   {
@@ -30,26 +31,23 @@ const shortcuts = [
 
 export function HomeShopShortcuts() {
   return (
-    <section className="py-10 md:py-12" aria-labelledby="home-shop-shortcuts-heading">
+    <section className="home-surface home-section" aria-labelledby="home-shop-shortcuts-heading">
       <div className="section-shell">
-        <div className="mb-6 max-w-2xl">
-          <p className="section-subtitle">Khám phá</p>
-          <h2 id="home-shop-shortcuts-heading" className="section-title mt-1">
-            Gợi ý lối mua sắm
-          </h2>
-          <p className="mt-2 text-sm text-neutral-600 dark:text-neutral-400">
-            Chọn nhanh hướng bạn quan tâm — vẫn có thể tinh chỉnh bộ lọc trong từng trang.
-          </p>
-        </div>
-        <ul className="flex flex-wrap gap-2 md:gap-3">
+        <HomeSectionHeader
+          eyebrow="Khám phá"
+          title="Gợi ý lối mua sắm"
+          description="Chọn nhanh hướng bạn quan tâm — vẫn có thể tinh chỉnh bộ lọc trong từng trang."
+        />
+
+        <ul className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5">
           {shortcuts.map((s) => (
             <li key={s.href}>
               <Link
                 href={s.href}
-                className="group flex min-h-[3.25rem] flex-col justify-center rounded-xl border border-neutral-200 bg-white px-4 py-2.5 transition-colors hover:border-neutral-900 hover:bg-neutral-50 dark:border-neutral-800 dark:bg-neutral-950 dark:hover:border-neutral-500 dark:hover:bg-neutral-900/80"
+                className="group flex min-h-[5.5rem] flex-col justify-between rounded-none border border-neutral-200/80 bg-neutral-50/80 px-4 py-4 transition duration-300 hover:-translate-y-0.5 hover:border-neutral-900 hover:bg-white hover:shadow-[0_20px_40px_-30px_rgba(15,23,42,0.35)] dark:border-neutral-800 dark:bg-neutral-900/50 dark:hover:border-neutral-500 dark:hover:bg-neutral-950"
               >
                 <span className="text-sm font-semibold text-neutral-900 dark:text-white">{s.label}</span>
-                <span className="text-xs text-neutral-500 transition-colors group-hover:text-neutral-700 dark:text-neutral-400 dark:group-hover:text-neutral-300">
+                <span className="mt-3 text-xs leading-relaxed text-neutral-500 transition-colors group-hover:text-neutral-700 dark:text-neutral-400 dark:group-hover:text-neutral-300">
                   {s.hint}
                 </span>
               </Link>

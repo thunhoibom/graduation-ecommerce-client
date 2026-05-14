@@ -15,7 +15,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { formatMoney } from "@/lib/utils";
 import { getReceipt } from "@/services/rest-api/checkout/checkout";
-import { clearCart } from "@/services/rest-api/cart/cart";
+import { resetCartSessionAfterCheckout } from "@/services/rest-api/cart/cart";
 import type { Receipt } from "@/types/checkout";
 import { useCart } from "@/components/cart/cart-context";
 import { postBehaviorEvent } from "@/services/rest-api/behavior";
@@ -43,10 +43,9 @@ function CheckoutSuccessContent() {
   const [error, setError] = useState("");
 
   useEffect(() => {
-    // Clear cart in frontend since order is placed
-    // refreshCart() updates the context state
-    // clearCart() removes the cookie/session
-    clearCart().then(() => refreshCart());
+    // Drop the browser cart session only; do not release order-linked stock holds.
+    resetCartSessionAfterCheckout();
+    refreshCart();
 
     if (!token) {
       setLoading(false);

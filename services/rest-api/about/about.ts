@@ -12,11 +12,13 @@ export interface CompanyDetailsPojo {
   description?: string;
   tagline?: string;
   bannerImageURL?: string;
+  bannerImageURLs?: string[];
   logoImageURL?: string;
   phone?: string;
   email?: string;
   address?: string;
   socialLinks?: Record<string, string>;
+  maintenanceMode?: boolean;
 }
 
 export async function getAbout(): Promise<CompanyDetailsPojo> {

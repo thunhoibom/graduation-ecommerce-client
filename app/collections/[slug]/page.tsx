@@ -10,8 +10,8 @@ import {
   searchProducts,
   type ProductFilters,
 } from "@/services/rest-api/products/products";
-import type { ProductSearchItem, ProductListItem } from "@/types/product";
-import type { ProductCategoryPojo } from "@/types/person";
+import type { ProductListItem } from "@/types/product";
+import { mapSearchItemToListItem } from "@/lib/product-pricing";
 import { ProductGrid } from "./_components/product-grid";
 import { CollectionHeader } from "./_components/collection-header";
 import { FilterSidebar } from "./_components/filter-sidebar";
@@ -25,28 +25,6 @@ import { CollectionWeatherRail } from "./_components/collection-weather-rail";
 import { TrustStrip } from "@/components/storefront/trust-strip";
 import { Badge } from "@/components/ui/badge";
 import Link from "next/link";
-
-function mapSearchItemToListItem(
-  item: ProductSearchItem,
-  fallbackCategory: string
-): ProductListItem {
-  return {
-    id: item.id ? parseInt(item.id) : undefined,
-    name: item.name,
-    barcode: item.barcode,
-    price: item.price,
-    currentPrice: item.price ?? 0,
-    category: {
-      name: item.categoryName,
-      code:
-        item.categoryCodes && item.categoryCodes.length > 0
-          ? item.categoryCodes[0]
-          : fallbackCategory,
-    } as ProductCategoryPojo,
-    images: item.primaryImageUrl ? [{ url: item.primaryImageUrl }] : [],
-    currentStock: 1,
-  };
-}
 
 interface Props {
   params: Promise<{ slug: string }>;
@@ -125,9 +103,7 @@ export default async function CollectionPage({ params, searchParams }: Props) {
 
   if (query && query.trim().length > 0) {
     const result = await searchProducts(filters);
-    products = (result.items ?? []).map((si: ProductSearchItem) =>
-      mapSearchItemToListItem(si, slug)
-    );
+    products = (result.items ?? []).map((si) => mapSearchItemToListItem(si, slug));
     totalCount = result.totalCount ?? 0;
     const apiIdx = result.pageIndex;
     gridPage =

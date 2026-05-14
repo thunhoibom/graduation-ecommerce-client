@@ -3,11 +3,11 @@
 const FAQ_ITEMS = [
   {
     q: "Làm sao để chọn đúng size?",
-    a: "Tham khảo bảng size trên từng trang sản phẩm. Nếu vẫn phân vân, hãy liên hệ hỗ trợ hoặc đặt hai size để đổi trả trong 7 ngày theo chính sách.",
+    a: "Tham khảo bảng size trên từng trang sản phẩm. Nếu vẫn phân vân, hãy liên hệ hỗ trợ hoặc xem chính sách trả hàng trên website.",
   },
   {
-    q: "Tôi có được đổi hoặc trả hàng không?",
-    a: "Áp dụng đổi/trả trong 7 ngày với sản phẩm còn nguyên tem mác và chưa qua sử dụng. Chi tiết xem mục chính sách trên website.",
+    q: "Tôi có được trả hàng không?",
+    a: "Áp dụng trả hàng và hoàn tiền trong 7 ngày với sản phẩm còn nguyên tem mác và chưa qua sử dụng. Chi tiết xem mục chính sách trên website.",
   },
   {
     q: "Thời gian giao hàng dự kiến?",

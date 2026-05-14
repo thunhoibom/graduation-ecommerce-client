@@ -6,6 +6,11 @@ import { Package, ArrowRight } from "@phosphor-icons/react";
 import { getMyOrders } from "@/services/rest-api/orders/orders";
 import type { OrderPojo } from "@/types/order";
 import { formatMoney } from "@/lib/utils";
+import {
+  getOrderRefundedAmount,
+  isOrderFullyRefunded,
+  resolveOrderPaymentDisplay,
+} from "@/lib/order-return-eligibility";
 
 export const ORDER_FULFILLMENT_LABELS: Record<string, { label: string; color: string }> = {
   PENDING:            { label: "Chờ xử lý", color: "bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-400" },
@@ -24,17 +29,6 @@ export const ORDER_FULFILLMENT_LABELS: Record<string, { label: string; color: st
   DELIVERY_CANCELLED: { label: "Đã thu hồi giao", color: "bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400" },
   REJECTED:           { label: "Đơn bị từ chối", color: "bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400" },
   RETURNED:           { label: "Đã hoàn hàng", color: "bg-pink-100 text-pink-800 dark:bg-pink-900/30 dark:text-pink-400" },
-};
-
-const PAYMENT_LABELS: Record<string, { label: string; color: string }> = {
-  UNPAID: { label: "Chưa thanh toán", color: "text-neutral-500" },
-  PAYMENT_STARTED: { label: "Đang thanh toán", color: "text-amber-600 dark:text-amber-400" },
-  PAID: { label: "Đã thanh toán", color: "text-green-600 dark:text-green-400" },
-  PAYMENT_FAILED: { label: "Thanh toán thất bại", color: "text-red-500 dark:text-red-400" },
-  PAYMENT_CANCELLED: { label: "Đã hủy thanh toán", color: "text-red-500 dark:text-red-400" },
-  EXPIRED: { label: "Hết hạn thanh toán", color: "text-red-500 dark:text-red-400" },
-  REFUNDED: { label: "Đã hoàn tiền", color: "text-fuchsia-600 dark:text-fuchsia-400" },
-  PARTIALLY_REFUNDED: { label: "Hoàn tiền một phần", color: "text-fuchsia-600 dark:text-fuchsia-400" },
 };
 
 export function formatOrderShortDate(dateStr?: string) {
@@ -118,15 +112,20 @@ export function OrderList() {
       <div className="space-y-3">
         {orders.map((order) => {
           const fulfillment = order.fulfillmentStatus ?? order.status;
-          const payment = order.paymentStatus;
           const statusInfo = ORDER_FULFILLMENT_LABELS[fulfillment ?? ""] ?? {
             label: fulfillment ?? "—",
             color: "bg-neutral-100 text-neutral-600 dark:bg-neutral-800 dark:text-neutral-400",
           };
-          const paymentInfo = PAYMENT_LABELS[payment ?? ""] ?? {
-            label: payment ?? "",
+          const paymentInfo = resolveOrderPaymentDisplay(order) ?? {
+            label: order.paymentStatus ?? "",
             color: "text-neutral-500",
           };
+          const refundedAmount = getOrderRefundedAmount(order);
+          const showDeliveredHint =
+            !isOrderFullyRefunded(order) &&
+            (fulfillment === "DELIVERY_COMPLETE" ||
+              fulfillment === "DELIVERED" ||
+              fulfillment === "COMPLETED");
 
           return (
             <Link
@@ -157,11 +156,11 @@ export function OrderList() {
                     <p className="text-sm font-semibold text-neutral-900 dark:text-white">
                       {formatMoney(order.totalValue ?? order.netValue ?? 0)}
                     </p>
-                    {(fulfillment === "DELIVERY_COMPLETE" || fulfillment === "DELIVERED" || fulfillment === "COMPLETED") && (
+                    {(showDeliveredHint) && (
                       <p className="text-[11px] text-green-600 dark:text-green-400">Đã giao</p>
                     )}
-                    {order.paymentStatus === "REFUNDED" && order.totalRefundedAmount ? (
-                      <p className="text-[11px] text-red-500">Đã hoàn {formatMoney(order.totalRefundedAmount)}</p>
+                    {refundedAmount > 0 ? (
+                      <p className="text-[11px] text-red-500">Đã hoàn {formatMoney(refundedAmount)}</p>
                     ) : null}
                   </div>
                   <ArrowRight className="size-4 shrink-0 text-neutral-400" />

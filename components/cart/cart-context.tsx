@@ -176,21 +176,6 @@ export function CartProvider({ children }: { children: ReactNode }) {
     [dispatch, recalculatePricingAndRefresh, refreshCart],
   );
 
-  const updateItem = useCallback(
-    (variantSku: string, quantity: number) => {
-      startTransition(async () => {
-        dispatch({ type: "OPTIMISTIC_UPDATE", payload: { variantSku, quantity } });
-        try {
-          const updated = await updateCartItem(variantSku, quantity);
-          await recalculatePricingAndRefresh(updated);
-        } catch {
-          await refreshCart();
-        }
-      });
-    },
-    [dispatch, recalculatePricingAndRefresh, refreshCart],
-  );
-
   const removeItem = useCallback(
     async (variantSku: string) => {
       startTransition(async () => {
@@ -204,6 +189,25 @@ export function CartProvider({ children }: { children: ReactNode }) {
       });
     },
     [dispatch, recalculatePricingAndRefresh, refreshCart],
+  );
+
+  const updateItem = useCallback(
+    (variantSku: string, quantity: number) => {
+      if (quantity <= 0) {
+        removeItem(variantSku);
+        return;
+      }
+      startTransition(async () => {
+        dispatch({ type: "OPTIMISTIC_UPDATE", payload: { variantSku, quantity } });
+        try {
+          const updated = await updateCartItem(variantSku, quantity);
+          await recalculatePricingAndRefresh(updated);
+        } catch {
+          await refreshCart();
+        }
+      });
+    },
+    [dispatch, recalculatePricingAndRefresh, refreshCart, removeItem],
   );
 
   return (

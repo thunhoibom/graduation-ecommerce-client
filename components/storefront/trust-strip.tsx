@@ -47,7 +47,7 @@ const ITEMS = [
   {
     icon: IconRefresh,
     title: "Đổi trả trong 7 ngày",
-    body: "Hỗ trợ đổi size / trả hàng theo chính sách rõ ràng.",
+    body: "Hỗ trợ trả hàng và hoàn tiền theo chính sách rõ ràng.",
   },
   {
     icon: IconFabric,

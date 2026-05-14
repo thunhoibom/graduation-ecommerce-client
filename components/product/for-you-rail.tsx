@@ -5,23 +5,11 @@ import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
 import { getOrCreateDeviceId } from "@/lib/device-id";
 import { getForYouRecommendations } from "@/services/rest-api/products/products";
-import type { ProductListItem, ProductSearchItem } from "@/types/product";
-import { cn, formatMoney } from "@/lib/utils";
-
-function mapSearchToListItem(si: ProductSearchItem): ProductListItem {
-  return {
-    id: si.id ? parseInt(si.id, 10) : undefined,
-    name: si.name,
-    barcode: si.barcode,
-    currentPrice: si.price,
-    category: {
-      name: si.categoryName,
-      code: si.categoryCodes?.[0] ?? "",
-    },
-    images: si.primaryImageUrl ? [{ url: si.primaryImageUrl }] : [],
-    currentStock: 1,
-  };
-}
+import type { ProductListItem } from "@/types/product";
+import { cn } from "@/lib/utils";
+import { mapSearchItemToListItem, resolveProductCardPricing } from "@/lib/product-pricing";
+import { ProductDiscountBadge } from "@/components/product/product-discount-badge";
+import { ProductCardPrice } from "@/components/product/product-card-price";
 
 export type ForYouRailVariant = "home" | "search" | "pdp" | "cart" | "checkout_success";
 
@@ -61,7 +49,7 @@ export function ForYouRail({ variant, query = "", excludeIds }: Props) {
     })
       .then((res) => {
         if (cancelled) return;
-        const items = (res.items ?? []).map(mapSearchToListItem);
+        const items = (res.items ?? []).map((item) => mapSearchItemToListItem(item));
         setProducts(items);
       })
       .catch(() => {
@@ -167,7 +155,9 @@ export function ForYouRail({ variant, query = "", excludeIds }: Props) {
                 const slice = products.slice(start, start + itemsPerSlide);
                 return (
                   <div key={slideIndex} className="grid w-full shrink-0 grid-cols-2 gap-4 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6">
-                    {slice.map((product) => (
+                    {slice.map((product) => {
+                      const pricing = resolveProductCardPricing(product);
+                      return (
                       <Link
                         key={product.id ?? product.barcode}
                         href={`/product/${product.barcode}`}
@@ -188,6 +178,9 @@ export function ForYouRail({ variant, query = "", excludeIds }: Props) {
                               {product.name.charAt(0)}
                             </div>
                           )}
+                          {pricing.hasDiscount ? (
+                            <ProductDiscountBadge discountPercent={pricing.discountPercent} />
+                          ) : null}
                         </div>
                         <div className="mt-2 space-y-1">
                           {product.category?.name && (
@@ -198,12 +191,11 @@ export function ForYouRail({ variant, query = "", excludeIds }: Props) {
                           <h3 className="line-clamp-2 text-sm font-medium leading-tight text-neutral-900 dark:text-white">
                             {product.name}
                           </h3>
-                          <p className="text-sm font-semibold text-neutral-900 dark:text-white">
-                            {formatMoney(product.currentPrice)}
-                          </p>
+                          <ProductCardPrice pricing={pricing} />
                         </div>
                       </Link>
-                    ))}
+                      );
+                    })}
                   </div>
                 );
               })}
@@ -256,7 +248,7 @@ export function ForYouRail({ variant, query = "", excludeIds }: Props) {
 
   if (variant === "home") {
     return (
-      <section className="border-t border-neutral-200 py-12 md:py-14 dark:border-neutral-800">
+      <section className="home-surface home-section border-t border-neutral-200/80 dark:border-neutral-800">
         <div className="section-shell">{inner}</div>
       </section>
     );

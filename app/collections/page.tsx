@@ -32,7 +32,7 @@ export default async function CollectionsPage() {
             <p className="text-xs font-medium uppercase tracking-[0.2em] text-neutral-500 dark:text-neutral-400">
               Mono Studio — 2026
             </p>
-            <h1 className="mt-4 font-display text-4xl font-bold tracking-tight text-neutral-900 dark:text-white md:text-5xl">
+            <h1 className="mt-4 text-4xl font-bold tracking-tight text-neutral-900 dark:text-white md:text-5xl">
               Bộ sưu tập
             </h1>
             <p className="mt-3 line-clamp-3 text-base leading-relaxed text-neutral-600 dark:text-neutral-400 md:text-lg">

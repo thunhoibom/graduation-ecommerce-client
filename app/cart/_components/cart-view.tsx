@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import Image from "next/image";
 import { Minus, Plus, Trash, ArrowLeft, ShoppingBag, Tag } from "@phosphor-icons/react";
 import { useState } from "react";
 import { toast } from "sonner";
@@ -31,6 +32,14 @@ function CartItemRow({ item }: CartItemRowProps) {
     setIsRemoving(false);
   };
 
+  const handleDecrease = () => {
+    if (item.quantity <= 1) {
+      void removeItem(item.variantSku);
+      return;
+    }
+    updateItem(item.variantSku, item.quantity - 1);
+  };
+
   const isLowStock =
     item.availableStock != null &&
     item.availableStock > 0 &&
@@ -49,7 +58,16 @@ function CartItemRow({ item }: CartItemRowProps) {
         href={`/product/${item.productBarcode}`}
         className="relative flex h-24 w-24 shrink-0 items-center justify-center overflow-hidden rounded-none border border-neutral-200 bg-neutral-100 dark:border-neutral-800 dark:bg-neutral-900"
       >
-        <ShoppingBag className="size-7 text-neutral-300 dark:text-neutral-700" />
+        {item.primaryImageUrl ? (
+          <Image
+            src={item.primaryImageUrl}
+            alt={item.productName}
+            fill
+            className="object-cover"
+          />
+        ) : (
+          <ShoppingBag className="size-7 text-neutral-300 dark:text-neutral-700" />
+        )}
         {isOutOfStock && (
           <div className="absolute inset-0 flex items-center justify-center bg-white/70 dark:bg-black/60">
             <span className="bg-white/90 px-2 py-0.5 text-[10px] font-medium text-black">
@@ -92,9 +110,8 @@ function CartItemRow({ item }: CartItemRowProps) {
           {/* Quantity controls */}
           <div className="flex items-center gap-1">
             <button
-              onClick={() => updateItem(item.variantSku, item.quantity - 1)}
-              disabled={item.quantity <= 1}
-              className="flex h-8 w-8 items-center justify-center rounded-none border border-neutral-200 text-neutral-600 hover:border-neutral-400 disabled:cursor-not-allowed disabled:opacity-30 dark:border-neutral-700 dark:text-neutral-400 dark:hover:border-neutral-500"
+              onClick={handleDecrease}
+              className="flex h-8 w-8 items-center justify-center rounded-none border border-neutral-200 text-neutral-600 hover:border-neutral-400 dark:border-neutral-700 dark:text-neutral-400 dark:hover:border-neutral-500"
               aria-label="Giảm số lượng"
             >
               <Minus className="size-3" />

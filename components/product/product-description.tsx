@@ -317,7 +317,7 @@ export function ProductDescription({ product }: ProductDescriptionProps) {
               href="/help/return-policy"
               className="font-medium text-neutral-900 underline underline-offset-2 dark:text-white"
             >
-              chính sách đổi trả
+              chính sách trả hàng
             </Link>{" "}
             và{" "}
             <Link

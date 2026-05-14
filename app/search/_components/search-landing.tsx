@@ -85,7 +85,7 @@ export function SearchLanding({ roots }: SearchLandingProps) {
                         sizes="(min-width: 1024px) 16vw, (min-width: 640px) 33vw, 50vw"
                       />
                     ) : (
-                      <div className="flex h-full w-full items-center justify-center font-display text-3xl font-bold text-neutral-300 dark:text-neutral-700">
+                      <div className="flex h-full w-full items-center justify-center text-3xl font-bold text-neutral-300 dark:text-neutral-700">
                         {c.name.slice(0, 1)}
                       </div>
                     )}

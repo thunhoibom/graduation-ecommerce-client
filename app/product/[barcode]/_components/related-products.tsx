@@ -2,7 +2,9 @@ import Link from "next/link";
 import Image from "next/image";
 import { getProducts } from "@/services/rest-api/products/products";
 import type { ProductListItem } from "@/types/product";
-import { formatMoney } from "@/lib/utils";
+import { resolveProductCardPricing } from "@/lib/product-pricing";
+import { ProductDiscountBadge } from "@/components/product/product-discount-badge";
+import { ProductCardPrice } from "@/components/product/product-card-price";
 
 interface RelatedProductsProps {
   categorySlug?: string;
@@ -31,7 +33,9 @@ export async function RelatedProducts({ categorySlug, currentBarcode }: RelatedP
         Sản phẩm cùng danh mục
       </h2>
       <div className="grid grid-cols-2 gap-4 md:grid-cols-4">
-        {items.map((item) => (
+        {items.map((item) => {
+          const pricing = resolveProductCardPricing(item);
+          return (
           <Link key={item.barcode} href={`/product/${item.barcode}`} className="group block">
             <div className="relative aspect-[3/4] overflow-hidden bg-neutral-100 dark:bg-neutral-900">
               {item.images?.[0]?.url ? (
@@ -55,6 +59,9 @@ export async function RelatedProducts({ categorySlug, currentBarcode }: RelatedP
                   </span>
                 </div>
               )}
+              {pricing.hasDiscount ? (
+                <ProductDiscountBadge discountPercent={pricing.discountPercent} />
+              ) : null}
             </div>
             <div className="mt-2 space-y-0.5">
               <p className="truncate text-xs text-neutral-500 dark:text-neutral-400">
@@ -63,12 +70,11 @@ export async function RelatedProducts({ categorySlug, currentBarcode }: RelatedP
               <p className="line-clamp-2 text-sm font-medium text-neutral-900 dark:text-white">
                 {item.name}
               </p>
-              <p className="text-sm font-semibold text-neutral-900 dark:text-white">
-                {formatMoney(item.currentPrice)}
-              </p>
+              <ProductCardPrice pricing={pricing} />
             </div>
           </Link>
-        ))}
+          );
+        })}
       </div>
     </section>
   );

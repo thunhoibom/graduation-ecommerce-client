@@ -19,7 +19,7 @@ export function HeroArrowButton({
 }: HeroArrowButtonProps) {
   if (variant === "primary") {
     return (
-      <Button asChild size="lg" className={cn("gap-2", className)}>
+      <Button asChild size="lg" className={cn("gap-2 rounded-none", className)}>
         <Link href={href}>
           {label}
           {arrow && (
@@ -50,7 +50,7 @@ export function HeroArrowButton({
       variant="outline"
       size="lg"
       className={cn(
-        "border-neutral-300 text-neutral-900 hover:border-neutral-900 dark:border-neutral-700 dark:text-neutral-100 dark:hover:border-neutral-100",
+        "rounded-none border-neutral-300 text-neutral-900 hover:border-neutral-900 dark:border-neutral-700 dark:text-neutral-100 dark:hover:border-neutral-100",
         className,
       )}
     >
